@@ -1,5 +1,6 @@
 function fftscale,imin,scxin,scyin,rapprec,mtfpixcor=mtfpixcor,$
-	silent=silent,scxout=scxout,scyout=scyout,dimout=dimout
+                  silent=silent,scxout=scxout,scyout=scyout,dimout=dimout,$
+                  parms=parms
 ;+
 ; NAME: FFTSCALE
 ;   Change l'echelle spatiale d'une image par FFT. Determination des
@@ -39,6 +40,7 @@ function fftscale,imin,scxin,scyin,rapprec,mtfpixcor=mtfpixcor,$
 ; HISTORY:
 ; 	By Christian Marois
 ; 	2008-03-07  Documentation in English added by Marshall Perrin
+;       07.30.2012 - Rewrite to accomodate non-even number of pixels - ds
 ;-
 
 scx=double(scxin)
@@ -59,80 +61,96 @@ endif
 odd = dimx mod 2.
 if odd then imcent = (dimx-1)/2. else imcent = (dimx/2.-0.5)
 
-if scx ge 1.d then begin
-   for i=0,1023 do begin
-      padinit=dimx+i
-      for j=0,scx*padinit-1 do begin
-         padfft=padinit+j
-         scx1=double(padfft)/double(padinit)
-         for k=0,(scx-scx1)*dimx do begin
-            padinit2=dimx+k
-            padfft2=round((scx/scx1)*padinit2)
-            scx2=double(padfft2)/double(padinit2) 
-            
-            prec=abs(scx1*scx2/scx-1.d)
-            scf=scx1*scx2
-            
-            if abs(prec) lt meilprec and scx ge 1.d and scx1 ge 1.d and scx2 ge 1.d then begin
-               padinitF=padinit
-               padfftF=padfft
-               padinit2F=padinit2
-               padfft2F=padfft2
-               if keyword_set(scxout) then scxout=scf
-               if keyword_set(scyout) then scyout=scf
-               meilprec=abs(prec)
-               scfF=scf
-               if abs(prec) lt rapprec then found=1
-               if abs(prec) lt rapprec then break
-            endif
-            
-         endfor
-         if abs(prec) lt rapprec then break
-      endfor
-      if abs(prec) lt rapprec then break
-   endfor
+if keyword_set(parms) then begin
+   if parms.scx ne scx or parms.scy ne scy or parms.dimx ne dimx or parms.dimy ne dimy then begin
+      message,'Parameter structure dimensions or scales do not match inputs or requested scales. Returning.',/continue
+      return,-1
+   endif
+   padinit = parms.padinit
+   padinit2 = parms.padinit2
+   padfft = parms.padfft
+   padfft2 = parms.padfft2
+   scf = parms.scf
+   meilprec = parms.meilprec
+
 endif else begin
-   for i=0,1023,2 do begin
-      padinit=dimx+i
-      for j=0,padinit-scx*padinit-1,2 do begin
-         padfft=padinit-j
-         scx1=double(padfft)/double(padinit)
-         for k=0,1023,2 do begin
-            padinit2=dimx+k
-            padfft2=round((scx/scx1)*padinit2)
-            scx2=double(padfft2)/double(padinit2)
-            
-            prec=abs(scx1*scx2/scx-1.d)
-            scf=scx1*scx2
-            
-            if abs(prec) lt meilprec and scx lt 1.d and padfft2 lt 1023 then begin
-               padinitF=padinit
-               padfftF=padfft
-               padinit2F=padinit2
-               padfft2F=padfft2
-               scfF=scf
-               if keyword_set(scxout) then scxout=scf
-               if keyword_set(scyout) then scyout=scf
-               meilprec=abs(prec)
-               if abs(prec) lt rapprec then found=1
-               if abs(prec) lt rapprec then break
-            endif
+   if scx ge 1.d then begin
+      for i=0,1023,2 do begin
+         padinit=dimx+i
+         for j=0,scx*padinit-1,2 do begin
+            padfft=padinit+j
+            scx1=double(padfft)/double(padinit)
+            for k=0,(scx-scx1)*dimx,2 do begin
+               padinit2=dimx+k
+               padfft2=round((scx/scx1)*padinit2)
+               scx2=double(padfft2)/double(padinit2) 
+               
+               prec=abs(scx1*scx2/scx-1.d)
+               scf=scx1*scx2
+               
+               if abs(prec) lt meilprec and scx ge 1.d and scx1 ge 1.d and scx2 ge 1.d then begin
+                  padinitF=padinit
+                  padfftF=padfft
+                  padinit2F=padinit2
+                  padfft2F=padfft2
+                  if keyword_set(scxout) then scxout=scf
+                  if keyword_set(scyout) then scyout=scf
+                  meilprec=abs(prec)
+                  scfF=scf
+                  if abs(prec) lt rapprec then found=1
+                  if abs(prec) lt rapprec then break
+               endif
+               
+            endfor
+            if abs(prec) lt rapprec then break
          endfor
          if abs(prec) lt rapprec then break
       endfor
-      if abs(prec) lt rapprec then break
-   endfor
+   endif else begin
+      for i=0,1023,2 do begin
+         padinit=dimx+i
+         for j=0,padinit-scx*padinit-1,2 do begin
+            padfft=padinit-j
+            scx1=double(padfft)/double(padinit)
+            for k=0,1023,2 do begin
+               padinit2=dimx+k
+               padfft2=round((scx/scx1)*padinit2)
+               scx2=double(padfft2)/double(padinit2)
+               
+               prec=abs(scx1*scx2/scx-1.d)
+               scf=scx1*scx2
+               
+               if abs(prec) lt meilprec and scx lt 1.d and padfft2 lt 1023 then begin
+                  padinitF=padinit
+                  padfftF=padfft
+                  padinit2F=padinit2
+                  padfft2F=padfft2
+                  scfF=scf
+                  if keyword_set(scxout) then scxout=scf
+                  if keyword_set(scyout) then scyout=scf
+                  meilprec=abs(prec)
+                  if abs(prec) lt rapprec then found=1
+                  if abs(prec) lt rapprec then break
+               endif
+            endfor
+            if abs(prec) lt rapprec then break
+         endfor
+         if abs(prec) lt rapprec then break
+      endfor
+   endelse
+
+   if found eq 0 then begin
+      if not keyword_set(silent) then print,'Pas de scale trouve... Conservation du meilleur scale'
+   endif
+
+   padinit=padinitF
+   padinit2=padinit2F
+   padfft=padfftF
+   padfft2=padfft2F
+   scf=scfF
+   parms = create_struct('padinit',padinit,'padinit2',padinit2,'padfft',padfft,'padfft2',padfft2,'scf',scf,$
+                         'dimx',dimx,'dimy',dimy,'scx',scx,'scy',scy,'meilprec',meilprec)
 endelse
-
-if found eq 0 then begin
-   if not keyword_set(silent) then print,'Pas de scale trouve... Conservation du meilleur scale'
-endif
-
-padinit=padinitF
-padinit2=padinit2F
-padfft=padfftF
-padfft2=padfft2F
-scf=scfF
 
 if not keyword_set(silent) then begin
    print,'Dim init = ',dimx,' Dim init + pad = ',padinit
@@ -151,11 +169,11 @@ if padinit ne padfft then begin
    if padinit mod 2. then initcent = (padinit-1.)/2. else initcent = (padinit/2.) - 0.5
    
    padim[initcent-imcent:initcent+imcent,initcent-imcent:initcent+imcent] = im
-   padim=subpixelshift(padim,-padinit/2.,-padinit/2.,/nofftw) 
+   padim=smartshift(padim,-padinit/2.,-padinit/2.,/nofftw) 
    
    imfft=fft(padim,1,/double)
-   imfftr=subpixelshift(real_part(imfft),padinit/2.,padinit/2.,/nofftw)
-   imffti=subpixelshift(imaginary(imfft),padinit/2.,padinit/2.,/nofftw)
+   imfftr=smartshift(real_part(imfft),padinit/2.,padinit/2.,/nofftw)
+   imffti=smartshift(imaginary(imfft),padinit/2.,padinit/2.,/nofftw)
    
    padfftr=dblarr(padfft,padfft)
    padffti=dblarr(padfft,padfft)
@@ -169,10 +187,10 @@ if padinit ne padfft then begin
       padffti = imffti[initcent-fftcent:initcent+fftcent,initcent-fftcent:initcent+fftcent]
    endelse
    
-   padfftim=dcomplex(subpixelshift(padfftr,-padfft/2.,-padfft/2.,/nofftw),subpixelshift(padffti,-padfft/2.,-padfft/2.,/nofftw))
+   padfftim=dcomplex(smartshift(padfftr,-padfft/2.,-padfft/2.,/nofftw),smartshift(padffti,-padfft/2.,-padfft/2.,/nofftw))
    
    psf=fft(padfftim,-1,/double)   
-   rpsf=subpixelshift(real_part(psf),padfft/2.,padfft/2.,/nofftw)
+   rpsf=smartshift(real_part(psf),padfft/2.,padfft/2.,/nofftw)
    
    if padfft ge dimx then begin
       im = rpsf[fftcent-imcent:fftcent+imcent,fftcent-imcent:fftcent+imcent]
@@ -182,18 +200,17 @@ if padinit ne padfft then begin
    endelse
 endif
 
-
 ;ITERATION 2
 if padinit2 ne padfft2 then begin
    padim=dblarr(padinit2,padinit2)
    if padinit2 mod 2. then initcent2 = (padinit2-1.)/2. else initcent2 = (padinit2/2.) - 0.5
 
    padim[initcent2-imcent:initcent2+imcent,initcent2-imcent:initcent2+imcent] = im
-   padim=subpixelshift(padim,-padinit2/2.,-padinit2/2.,/nofftw) 
+   padim=smartshift(padim,-padinit2/2.,-padinit2/2.,/nofftw) 
    
    imfft=fft(padim,1,/double)
-   imfftr=subpixelshift(real_part(imfft),padinit2/2.,padinit2/2.,/nofftw)
-   imffti=subpixelshift(imaginary(imfft),padinit2/2.,padinit2/2.,/nofftw)
+   imfftr=smartshift(real_part(imfft),padinit2/2.,padinit2/2.,/nofftw)
+   imffti=smartshift(imaginary(imfft),padinit2/2.,padinit2/2.,/nofftw)
    
    padfftr=dblarr(padfft2,padfft2)
    padffti=dblarr(padfft2,padfft2)
@@ -213,10 +230,10 @@ if padinit2 ne padfft2 then begin
       pixmtf1=double(mtfpix(3.6,1.6,padfft2,0.018,xc=0.,yc=0.,scfact=scalefact))
       pixmtf2=double(mtfpix(3.6,1.6,padfft2,0.018,xc=0.,yc=0.))
       padfftim=dcomplex(shift(padfftr*pixmtf2/pixmtf1,-floor(padfft2/2),-floor(padfft2/2)),shift(padffti*pixmtf2/pixmtf1,-floor(padfft2/2),-floor(padfft2/2)))
-   endif else padfftim=dcomplex(subpixelshift(padfftr,-padfft2/2.,-padfft2/2.,/nofftw),subpixelshift(padffti,-padfft2/2.,-padfft2/2.,/nofftw))
+   endif else padfftim=dcomplex(smartshift(padfftr,-padfft2/2.,-padfft2/2.,/nofftw),smartshift(padffti,-padfft2/2.,-padfft2/2.,/nofftw))
    
    psf=fft(padfftim,-1,/double) 
-   rpsf=subpixelshift(real_part(psf),padfft2/2.,padfft2/2.,/nofftw)   
+   rpsf=smartshift(real_part(psf),padfft2/2.,padfft2/2.,/nofftw)   
    fpsf=dblarr(dimx,dimy)
    
    if keyword_set(dimout) then dimx=dimout
