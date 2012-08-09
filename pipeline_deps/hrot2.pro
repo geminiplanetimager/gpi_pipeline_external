@@ -101,7 +101,7 @@ pro hrot2, oldim, oldhd, newim, newhd, angle, xc, yc, int, MISSING=missing, $
 ;       Work with CD1_1, PC1_1 and CROTA keywords W. L. July 2003
 ;       Work with angle as a 1 element vector  W.L.  May 2006
 ;-
- On_error,2
+ ;On_error,2
  compile_opt idl2
  npar = N_params()
 
@@ -121,7 +121,7 @@ pro hrot2, oldim, oldhd, newim, newhd, angle, xc, yc, int, MISSING=missing, $
 ;        if not save_err then message,'ERROR - ' + errmsg,/CON
 ;        return
 ;  endif
-dimen=[[(size(oldim))(1)],[(size(oldim))(2)]]
+dimen=[[(size(oldim))[1]],[(size(oldim))[2]]]
   if N_elements(dimen) NE 2 then begin
         errmsg =  'ERROR - Input image array must be 2-dimensional'
         if not save_err then message,'ERROR - ' + errmsg,/CON
@@ -197,7 +197,7 @@ dimen=[[(size(oldim))(1)],[(size(oldim))(2)]]
 ; Update astrometry info if it exists
 
  extast, oldhd, astr, noparams
- if strmid(astr.ctype[0],5,3) EQ 'GSS' then begin
+ if keyword_set(astr) then if strmid(astr.ctype[0],5,3) EQ 'GSS' then begin
         gsss_stdast, newhd
         extast, newhd, astr, noparams
  endif
