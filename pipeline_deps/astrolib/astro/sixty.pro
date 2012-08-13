@@ -3,7 +3,7 @@
 ; NAME:
 ;	SIXTY()
 ; PURPOSE:
-;	Converts a decimal number to sexigesimal.
+;	Converts a decimal number to sexagesimal.
 ; EXPLANATION:
 ;	Reverse of the TEN() function.
 ;
@@ -14,7 +14,7 @@
 ;	SCALAR -- Decimal quantity.  
 ; OUTPUTS:
 ;	Function value returned = real vector of three elements, 
-;	sexigesimal equivalent of input decimal quantity.    Double
+;	sexagesimal equivalent of input decimal quantity.    Double
 ;       precision if the input is double, otherwise floating point.
 ;	By default, a negative number is signified by making the first non-zero
 ;	element of the output vection negative, but this can be modfied with

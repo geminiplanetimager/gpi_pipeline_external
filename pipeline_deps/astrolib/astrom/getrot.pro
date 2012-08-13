@@ -6,9 +6,9 @@ pro getrot, hdr, rot, cdelt, DEBUG = debug, SILENT = silent, ALT=alt      ;GET R
 ;     Return the rotation and plate scale of an image from its FITS header
 ; EXPLANATION:
 ;     Derive the counterclockwise rotation angle, and the X and Y scale
-;     factors of an image, from a FITS image header.   Input parameter 
+;     factors of an image, from a FITS image header.   The input parameter 
 ;     may be either a FITS image header or an astrometry structure (as 
-;     obtained by EXTAST.PRO)
+;     obtained by extast.pro)
 ;
 ; CALLING SEQUENCE:
 ;     GETROT, Hdr, [ Rot, CDelt, /SILENT, DEBUG =  ]   
@@ -51,17 +51,19 @@ pro getrot, hdr, rot, cdelt, DEBUG = debug, SILENT = silent, ALT=alt      ;GET R
 ;       standard) then this is used for the scale factor.
 ;       
 ;       If the header contains CD keywords but no CDELT keywords (as in IRAF
-;       headers) then the scale factor is derived from the CD matrix. 
+;       headers) then the scale factor is derived from the CD matrix.
+;
+;       In case of skew (different rotations of the X and Y axes), the rotations
+;       are averaged together if they are less than 2 degrees.   Otherwise,
+;       a warning is given and the X rotation is used.  
 ;
 ; PROCEDURES USED:
 ;       EXTAST, GSSS_EXTAST
 ; REVISION HISTORY:
 ;       Written W. Landsman STX January 1987 
-;       Convert to IDL V2. M. Greason, STX, May 1990
 ;       Option to return both rotations added.  J. D. Offenberg, STX, Aug 1991
 ;       Use new astrometry structure   W. Landsman  Mar 1994
 ;       Recognize a GSSS header        W. Landsman  June 1994
-;       Converted to IDL V5.0   W. Landsman   September 1997
 ;       Correct rotation determination with unequal CDELT values WL October 1998
 ;       Consistent conversion between CROTA and CD matrix  WL  October 2000
 ;       Correct CDELT computations for rotations near 90 deg WL November 2002
@@ -71,6 +73,7 @@ pro getrot, hdr, rot, cdelt, DEBUG = debug, SILENT = silent, ALT=alt      ;GET R
 ;       Added ALT keyword W. Landsman May 2005
 ;       Account for any rotation of the native system by examining the value
 ;        of LONGPOLE       H. Taylor/W. Landsman
+;       Account for case where X,Y rotations differ by 2*!pi WL. Aug 2011
 ;-
  Compile_opt IDL2
  On_error,2
@@ -81,11 +84,12 @@ pro getrot, hdr, rot, cdelt, DEBUG = debug, SILENT = silent, ALT=alt      ;GET R
         return
  endif
 
- if not keyword_set(DEBUG) then debug = 0
+ tpi = 2*!dpi
+ if ~keyword_set(DEBUG) then debug = 0
  radeg = 180.0/!DPI
  sz = size(hdr,/STR)                ;Did user supply a FITS header or a CD matrix?
 
- if ((sz.N_dimensions eq 1) and $
+ if ((sz.N_dimensions eq 1) && $
      (sz.type_name EQ 'STRING')) then begin     ;FITS header?
 
         extast,hdr,astr,alt=alt             ;Extract astrometry from header,
@@ -108,8 +112,8 @@ endif else $
 
  if astr.cdelt[0] NE 1.0 then begin
         cdelt = astr.cdelt
-        cd[0,0] = cd[0,0]*cdelt[0] & cd[0,1] =   cd[0,1]*cdelt[0]
-        cd[1,1] = cd[1,1]*cdelt[1] & cd[1,0] =   cd[1,0]*cdelt[1]
+        cd[0,0] *= cdelt[0] & cd[0,1] *= cdelt[0]
+        cd[1,1] *= cdelt[1] & cd[1,0] *= cdelt[1]
  endif else  cd = astr.cd/RADEG                                        
  
  ctype = strmid(astr.ctype[0],0,4)
@@ -118,10 +122,10 @@ endif else $
       cd = reverse(cd,1)
  det = cd[0,0]*cd[1,1] - cd[0,1]*cd[1,0]
  if det LT 0 then sgn = -1 else sgn = 1
- if not keyword_set(SILENT) then if det GT 0 then $
+ if ~keyword_set(SILENT) then if det GT 0 then $
    message,'WARNING - Astrometry is for a right-handed coordinate system',/INF
  cdelt = fltarr(2)
- if (cd[1,0] eq 0) and (cd[0,1] eq 0) then begin ;Unrotated coordinates?
+ if (cd[1,0] eq 0) && (cd[0,1] eq 0) then begin ;Unrotated coordinates?
    rot = 0.
    rot2 = 0.
    cdelt[0] = cd[0,0]
@@ -131,11 +135,18 @@ endif else $
    rot2 = atan( -cd[1,0],  cd[1,1] )
   
 
- if (abs(rot) NE  abs(rot2)) then begin
+ if rot NE rot2 then begin          ;Handle unequal rotations
       if keyword_set(debug) then $
         print,'X axis rotation:',rot*!RADEG, ' Y axis rotation:',rot2*!RADEG
-      if debug eq 2 then rot = [rot,rot2] else $
-      if (rot - rot2)*!RADEG LT 2 then rot = (rot + rot2)/2.
+      if debug eq 2 then rot = [rot,rot2] else begin
+      
+      if abs(rot - rot2)*!RADEG LT 2 then rot = (rot + rot2)/2. else $
+      if abs(rot - rot2- tpi)*!radeg lt 2  then rot = (rot +rot2 -tpi)/2. else $
+      if abs(rot - rot2 +tpi)*!radeg lt 2  then rot = (rot +rot2 +tpi)/2. else $
+         message,/INF, $
+	 'WARNING: X and Y axis rotations differ by more than 2 degrees'
+      endelse
+      
  endif
 
   cdelt[0] =   sgn*sqrt(cd[0,0]^2 + cd[0,1]^2)
@@ -147,7 +158,7 @@ endif else $
  rot = float(rot)
  cdelt = float(cdelt*RADEG)
 
- if N_params() EQ 1 or keyword_set(DEBUG) then begin
+ if N_params() EQ 1 || keyword_set(DEBUG) then begin
         if debug LT 2 then print,'Rotation (counterclockwise)',rot,' degrees'
         print,'Sampling interval X axis',cdelt[0]*3600.,' arc seconds/pixel'
         print,'                  Y axis',cdelt[1]*3600.,' arc seconds/pixel'

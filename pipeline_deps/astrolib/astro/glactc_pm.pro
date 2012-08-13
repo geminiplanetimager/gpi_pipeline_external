@@ -8,16 +8,17 @@ pro glactc_pm,ra,dec,mu_ra,mu_dec,year,gl,gb,mu_gl,mu_gb,j, $
 ;        motion (also converts coordinates).
 ; EXPLANATION:
 ;       Program to convert proper motion in equatorial coordinates (ra,dec)
-;       to proper motion in 
-;       Galactic coordinates (gl, gb) or Supergalacic Coordinates  (sgl,sgb) 
-;       or back to equatorial coordinates (j=2).
-;       The proper motion unit is arbitrary.
+;       to proper motion in Galactic coordinates (gl, gb) or Supergalacic 
+;       Coordinates  (sgl,sgb)  or back to equatorial coordinates (j=2).
+;       The proper motion unit is arbitrary, but be sure to set /MUSTAR if
+;       units are the projection of the proper motion on the RA, Dec axis.
 ;       It does precession on the coordinates but does not
 ;       take care of precession of the proper motions which is usually a
 ;       very small effect.
 ;
 ; CALLING SEQUENCE: 
-;       GLACTC_PM, ra, dec, mu_ra,mu_dec,year, gl, gb, mu_gl, mu_gb, j, [ /DEGREE, /FK4, /SuperGalactic, /mustar ]
+;       GLACTC_PM, ra, dec, mu_ra,mu_dec,year, gl, gb, mu_gl, mu_gb, j, 
+;                  [ /DEGREE, /FK4, /SuperGalactic, /mustar ]
 ;
 ; INPUT PARAMETERS: 
 ;       year     equinox of ra and dec, scalar       (input)
@@ -27,7 +28,7 @@ pro glactc_pm,ra,dec,mu_ra,mu_dec,year,gl,gb,mu_gl,mu_gb,j, $
 ;
 ; INPUTS OR OUTPUT PARAMETERS: ( depending on argument J )
 ;       ra       Right ascension, hours (or degrees if /DEGREES is set), 
-;                         scalar or vector
+;                         scalar or vector.  
 ;       dec      Declination, degrees,scalar or vector
 ;       mu_ra    right ascension proper motion any proper motion unit
 ;					(angle/time)
@@ -51,134 +52,141 @@ pro glactc_pm,ra,dec,mu_ra,mu_dec,year,gl,gb,mu_gl,mu_gb,j, $
 ;              local supercluster. The North pole in SuperGalactic coordinates 
 ;              has Galactic coordinates l = 47.47, b = 6.32, and the origin is 
 ;              at Galactic coordinates l = 137.37, b= 0 
-;		/mustar - if set then input and output of mu_ra and mu_dec are the 
+;	/mustar - if set then input and output of mu_ra and mu_dec are the 
 ;                projections of mu in the ra or dec direction rather than
-;				the d(ra)/dt or d(mu)/dt.  So mu_ra becomes mu_ra*cos(dec)
+;		the d(ra)/dt or d(mu)/dt.  So mu_ra becomes mu_ra*cos(dec)
 ;               and mu_gl becomes mu_gl*cos(gb).
 ;              
 ; EXAMPLES:
 ;       Find the SuperGalactic proper motion of M33 given its
-;       equatorial proper motion mu* =(-29.2, 45.2) microas/yr.
+;       equatorial proper motion mu* =(-29.3, 45.2) microas/yr.
 ;       Where the (*) indicates ra component is actual mu_ra*cos(dec) 
-;		(Position: RA (J2000): 01 33 50.9, Dec (J2000): 30 39 35.8)
+;		(Position: RA (J2000): 01 33 50.9, Dec (J2000): 30 39 36.8)
 ;
-;       IDL> glactc_pm, ten(1,33,50.9),ten(30,39,35.8),-29.2,45.2,2000,$
-;				sgl,sgb,mu_sgl,mu_sgb,1,/Supergalactic
+;       IDL> glactc_pm, ten(1,33,50.9),ten(30,39,36.8),-29.3,45.2, 2000,$
+;				sgl,sgb,mu_sgl,mu_sgb,1,/Supergalactic,/mustar
 ;       ==> SGL = 328.46732 deg, SGB = -0.089896901 deg, 
-;			mu_sgl = 35.02 microas/yr, mu_sgb = 38.09 microas/yr.
+;			mu_sgl = 33.732 muas/yr, mu_gb = 41.996 muas/yr.
 ;         And for the roundtrip:
 ;       IDL> glactc_pm, ra,dec,mu_ra,mu_dec,2000,$
-;       IDL>  
-;        ==> ra=1.5641376 hrs., dec= 30.65999 deg,
-;            mu_ra= -29.20 muas/yr, mu_dec=i 45.20 muas/yr
+;       IDL>  sgl,sgb,mu_sgl,mu_sgb,2,/Supergalactic,/mustar
+;        ==> ra=1.5641376 hrs., dec= 30.660277 deg,
+;            mu_ra= -29.300000 muas/yr, mu_dec=i 45.200000 muas/yr
 ;
 ; PROCEDURE CALLS:
 ;       BPRECESS, JPRECESS, PRECESS
 ; HISTORY: 
 ;       Written                Ed Shaya, U of MD,  Oct 2009.
 ;       Adapted from GLACTC  to make proper motion transformations, 
+;       Correct occasional sign error in galactic longitude E. Shaya  Nov 2011
 ;-
-if N_params() lt 6 then begin
-     print,'Syntax - glactc_pm,ra,dec,mu_ra,mu_dec,year,gl,gb,mu_gl,mu_gb, j, [/DEGREE, /FK4, /mustar]'
-     print,'j = 1: ra,dec,mu_ra,mu_dec --> gl,gb,mu_gl,mu_gb'
-	 print, 'j = 2:  gl,gb,mu_gl,mu_gb --> ra,dec,mu_ra,mu_dec'
-     return
-endif
-radeg = 180.0d/!DPI
+IF n_PARAMS() LT 6 THEN BEGIN
+	PRINT,'Syntax - glactc_pm,ra,dec,mu_ra,mu_dec,year,gl,gb,mu_gl,mu_gb, j, [/DEGREE, /FK4, /mustar]'
+	PRINT,'j = 1: ra,dec,mu_ra,mu_dec --> gl,gb,mu_gl,mu_gb'
+	PRINT, 'j = 2:  gl,gb,mu_gl,mu_gb --> ra,dec,mu_ra,mu_dec'
+	RETURN
+ENDIF
+Radeg = 180.0d/!DPI
 ;
 ; Galactic pole at ra 12 hrs 49 mins, dec 27.4 deg, equinox B1950.0
 ; position angle from Galactic center to equatorial pole = 123 degs.
 
- if keyword_set(SuperGalactic) then begin
+IF KEYWORD_SET(SuperGalactic) THEN BEGIN
     rapol = 283.18940711d/15.0d & decpol = 15.64407736d
     dlon =  26.73153707 
- endif else begin 
+ENDIF ELSE BEGIN 
    rapol = 12.0d0 + 49.0d0/60.0d0 
    decpol = 27.4d0
    dlon = 123.0d0
- endelse
-   sdp = sin(decpol/radeg)
-   cdp = sqrt(1.0d0-sdp*sdp)
-   radhrs=radeg/15.0d0
+ENDELSE
+sdp = SIN(decpol/radeg)
+cdp = SQRT(1.0d0-sdp*sdp)
+radhrs=radeg/15.0d0
 
- ;
 ; Branch to required type of conversion.   Convert coordinates to B1950 as 
 ; necessary
-case j of                   
-    1:  begin
-        if not keyword_set(degree) then  ras = ra*15.0d else ras =ra
+CASE j OF                   
+    1: BEGIN
+        IF ~KEYWORD_SET(degree) THEN  ras = ra*15.0d ELSE ras =ra
         decs = dec
-        if not keyword_set(fk4) then begin
-                 if year NE 2000 then precess,ras,decs,year,2000
-                 bprecess,ras,decs,ra2,dec2
-                 ras = ra2
-                 decs = dec2
-       endif else if year NE 1950 then precess,ras,decs,year,1950,/fk4
-		raIndeg = ras
+        IF ~KEYWORD_SET(fk4) THEN BEGIN
+        	IF year NE 2000 THEN precess,ras,decs,year,2000
+        	bprecess,ras,decs,ra2,dec2
+        	ras = ra2
+        	decs = dec2
+        ENDIF ELSE IF year NE 1950 THEN precess,ras,decs,year,1950,/fk4
+	raIndeg = ras
         ras = ras/radeg - rapol/radhrs 
-        sdec = sin(decs/radeg)
-        cdec = sqrt(1.0d0-sdec*sdec)
-        sgb = sdec*sdp + cdec*cdp*cos(ras)
-        gb = radeg * asin(sgb)
-        cgb = sqrt(1.0d0-sgb*sgb)
-        sine = cdec * sin(ras) / cgb
+        sdec = SIN(decs/radeg)
+        cdec = SQRT(1.0d0-sdec*sdec)
+        sgb = sdec*sdp + cdec*cdp*COS(ras)
+        gb = radeg * ASIN(sgb)
+        cgb = SQRT(1.0d0-sgb*sgb)
+        sine = cdec * SIN(ras) / cgb
         cose = (sdec-sdp*sgb) / (cdp*cgb)
-        gl = dlon - radeg*atan(sine,cose)
-        ltzero=where(gl lt 0.0, Nltzero)
-        if Nltzero ge 1 then gl[ltzero]=gl[ltzero]+360.0d0
+        gl = dlon - radeg*ATAN(sine,cose)
+        ltzero=WHERE(gl lt 0.0, Nltzero)
+        IF Nltzero GE 1 THEN gl[ltzero]=gl[ltzero]+360.0d0
 
-; 		Calculate proper motions transforms for j = 1
+; 	Calculate proper motions transforms for j = 1
 ;       Take derivative of sgb line above:
-        if not keyword_set(mustar) then mu_ra = mu_ra*cdec
-		mu_gb =  mu_dec*(cdec*sdp-sdec*cdp*cos(ras))/cgb $
-			  - mu_ra*cdp*sin(ras)/cgb
-;		Get mu_gl by using the known length of the vector.		  
-		mu_gl = sqrt(mu_dec^2 + mu_ra^2 - mu_gb^2)
+        IF ~KEYWORD_SET(mustar) THEN mu_ra = mu_ra*cdec
+	mu_gb =  mu_dec*(cdec*sdp-sdec*cdp*COS(ras))/cgb $
+		  - mu_ra*cdp*SIN(ras)/cgb
+;	Get mu_gl by using the known length of the vector.
+	mu_gl = SQRT(mu_dec^2 + mu_ra^2 - mu_gb^2)
+        IF ~KEYWORD_SET(mustar) THEN mu_gl = mu_gl/cgb
+
 ;       However, sqrt gives an ambiguous sign.
-;		Determine the sign by seeing which direction it is going in gl.
-	    glactc, raIndeg, decs, year, gl0, gb0,1,/degree,Supergalactic=Supergalactic
-		radelta = 1d-2*mu_ra/abs(mu_ra)
-		decdelta = decs + 1d-2*mu_dec/abs(mu_ra)
-	    glactc, raIndeg+radelta, decs+decdelta, year, gl2, gb2, 1,/degree,Supergalactic=Supergalactic
-		if (gl2 lt gl0) then mu_gl = -mu_gl
-        if not keyword_set(mustar) then mu_gl = mu_gl/cgb
-        return
-        end
-    2:  begin
-        sgb = sin(gb/radeg)
-        cgb = sqrt(1.0d0-sgb*sgb)
-        sdec = sgb*sdp + cgb*cdp*cos((dlon-gl)/radeg)
-        dec = radeg * asin(sdec)
-        cdec = sqrt(1.0d0-sdec*sdec)
-        sinf = cgb * sin((dlon-gl)/radeg) / cdec
+;	Determine the sign by seeing which direction it is going in gl.
+	glactc,raIndeg,decs,year,gl0,gb0,1,/degree,Supergalactic=Supergalactic
+	ra_delta = 1d-2*mu_ra/ABS(mu_ra)
+	dec_delta = 1d-2*mu_dec/ABS(mu_ra)
+	glactc, raIndeg+ra_delta, decs+dec_delta, year, gl2, gb2, 1,$
+		/degree,Supergalactic=Supergalactic
+	IF (gl2 LT gl0) THEN mu_gl = -ABS(mu_gl)
+
+
+        RETURN
+        END
+    2: BEGIN
+        sgb = SIN(gb/radeg)
+        cgb = SQRT(1.0d0-sgb*sgb)
+        sdec = sgb*sdp + cgb*cdp*COS((dlon-gl)/radeg)
+        dec = radeg * ASIN(sdec)
+        cdec = SQRT(1.0d0-sdec*sdec)
+        sinf = cgb * SIN((dlon-gl)/radeg) / cdec
         cosf = (sgb-sdp*sdec) / (cdp*cdec)
-        ra = rapol + radhrs*atan(sinf,cosf)
+        ra = rapol + radhrs*ATAN(sinf,cosf)
         ra = ra*15.0d
 
-; 		Calculate proper motions for j=2, see above (j=1 case)
-        if not keyword_set(mustar) then mu_gl = mu_gl*cgb
-		mu_dec =  mu_gb*(cgb*sdp-sgb*cdp*cos((dlon-gl)/radeg))/cdec $
-			+ mu_gl*cdp*sin((dlon-gl)/radeg)/cdec
-		mu_ra = sqrt(mu_gl^2 + mu_gb^2 - mu_dec^2)
-		mu_gl_delta = 1d-2*mu_gl/abs(mu_gl)
-		mu_gb_delta = 1d-2*mu_gb/abs(mu_gl)
-	    glactc, ra2, dec2, 1950d0, gl+mu_gl_delta, gb+mu_gb_delta, 2,$
-			/degree,Supergalactic=Supergalactic
-		print,ra2,ra
-		if (ra2 lt ra) then mu_ra = -mu_ra
-        if not keyword_set(mustar) then mu_ra = mu_ra/cdec
-         if not keyword_set(fk4) then begin
-                    ras = ra & decs = dec
-                  jprecess,ras,decs,ra,dec
-                  if year NE 2000 then precess,ra,dec,2000,year
-        endif else if year NE 1950 then begin
-                  precess,ra,dec,1950,year,/fk4
-        endif 
-                   
-        gt36 = where(ra gt 360.0, Ngt36)
-        if Ngt36 ge 1 then ra[gt36] = ra[gt36] - 360.0d0
-        if not keyword_set(degree) then      ra = ra / 15.0D0
-        return
-        end
-endcase
-end
+;	Calculate proper motions for j=2, see above (j=1 case)
+        IF ~KEYWORD_SET(mustar) THEN mu_gl = mu_gl*cgb
+	mu_dec =  mu_gb*(cgb*sdp-sgb*cdp*COS((dlon-gl)/radeg))/cdec $
+		+ mu_gl*cdp*SIN((dlon-gl)/radeg)/cdec
+	mu_ra = SQRT(mu_gl^2 + mu_gb^2 - mu_dec^2)
+        IF ~KEYWORD_SET(mustar) THEN mu_ra = mu_ra/cdec
+
+;       However, sqrt gives an ambiguous sign.
+;	Determine the sign by seeing which direction it is going in gl.
+	glactc,raIndeg,decs0,year,gl,gb,2,/degree,Supergalactic=Supergalactic
+	mu_gl_delta = 1d-2*mu_gl/ABS(mu_gl)
+	mu_gb_delta = 1d-2*mu_gb/ABS(mu_gl)
+	glactc, ra2, dec2, 1950d0, gl+mu_gl_delta, gb+mu_gb_delta, 2,$
+		/degree,Supergalactic=Supergalactic
+	IF (ra2 LT raIndeg) THEN mu_ra = -ABS(mu_ra)
+
+        IF ~KEYWORD_SET(fk4) THEN BEGIN
+        	ras = ra & decs = dec
+        	jprecess,ras,decs,ra,dec
+        	IF year NE 2000 THEN precess,ra,dec,2000,year
+        ENDIF ELSE BEGIN
+		IF year NE 1950 THEN precess,ra,dec,1950,year,/fk4
+	ENDELSE 
+        gt36 = WHERE(ra GT 360.0, Ngt36)
+        IF Ngt36 GE 1 THEN ra[gt36] = ra[gt36] - 360.0d0
+        IF ~KEYWORD_SET(degree) THEN ra = ra/15.0D0
+        RETURN
+        END
+ENDCASE
+END

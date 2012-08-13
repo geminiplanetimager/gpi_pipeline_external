@@ -117,9 +117,11 @@
 ;       Version 6, Wayne Landsman, GSFC. C. Yamauchi (ISAS) 23 Feb 2006
 ;               Support 64bit integers
 ;       Version 7, C. Markwardt, GSFC, Allow unsigned integers, which
-;          have special TSCAL/TZERO values.  Feb 2009
+;               have special TSCAL/TZERO values.  Feb 2009
+;       Version 8,  P.Broos (PSU), Wayne Landsman (GSFC) Mar 2010
+;               Do *not* force TTYPE* keyword to uppercase
 ; Version     :
-;       Version 7, Feb 2009
+;       Version 8, Mar 2010
 ;-
 ;
 	ON_ERROR,2
@@ -329,7 +331,7 @@
 ;
 	IF N_PARAMS() GE 4 THEN BEGIN
 		If N_PARAMS() EQ 4 THEN COMMENT="Label for column "+COL
-		FXADDPAR,HEADER,'TTYPE'+COL,STRUPCASE(TTYPE),COMMENT
+		FXADDPAR,HEADER,'TTYPE'+COL,TTYPE,COMMENT
 	ENDIF
 ;
 ;  If the number of dimensions of the data array are greater than one, then add

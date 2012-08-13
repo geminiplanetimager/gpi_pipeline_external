@@ -83,18 +83,19 @@
 ;     CROTA2 keyword, added ALT keyword.   W. Landsman May 2005
 ;     Update distortion parameters if present  W. Landsman August 2007
 ;     Don't update BSCALE/BZERO for unsigned integer W.Landsman Mar 2008
+;     Use post-V6.0 notation   W. Landsman  Nov 2011
 ;- 
  On_error,2
  compile_opt idl2
 
  npar = N_params()      ;Check # of parameters
- if (npar EQ 3) or (npar EQ 5) or (npar EQ 0) then begin
+ if (npar EQ 3) || (npar EQ 5) || (npar EQ 0) then begin
      print,'Syntax - HREBIN, oldim, oldhd,[ newim, newhd, OUTSIZE=, ' + $
                            '/SAMPLE, ERRMSG= ]'
      return
  endif
 
- if not keyword_set(SAMPLE) then sample = 0
+ if ~keyword_set(SAMPLE) then sample = 0
  save_err = arg_present(errmsg)      ;Does user want to return error messages?
 
 ; If only 1 parameter is supplied, then assume it is a FITS header
@@ -110,12 +111,12 @@
 
      check_FITS, oldim, oldhd, dimen, /NOTYPE, ERRMSG = errmsg
      if errmsg NE '' then begin
-        if not save_err then message,'ERROR - ' + errmsg,/CON
+        if ~save_err then message,'ERROR - ' + errmsg,/CON
         return
      endif
      if N_elements(dimen) NE 2 then begin 
            errmsg = 'Input image array must be 2-dimensional'
-           if not save_err then message,'ERROR - ' + errmsg,/CON
+           if ~save_err then message,'ERROR - ' + errmsg,/CON
            return
      endif
       xsize = dimen[0]  &  ysize = dimen[1]
@@ -139,8 +140,8 @@
 ;  If an image array supplied then apply the REBIN  or FREBIN functions
 ; If output size is a multiple of input size then use REBIN else use FREBIN
 
-  exact = (((xsize mod newx) EQ 0) or ((newx mod xsize) EQ 0)) and $
-          (((ysize mod newy) EQ 0) or ((newy mod ysize) EQ 0))
+  exact = (~(xsize mod newx)  || ~(newx mod xsize)) && $
+          (~(ysize mod newy)  || ~(newy mod ysize)  )
 
  if npar GT 1 then begin
  if exact then begin
@@ -193,11 +194,11 @@
 ; effects are introduced, which require a different calculation of the updated
 ; CRPIX1 and CRPIX2 values.
 
- if (exact) and (not keyword_set(SAMPLE)) and (xratio GT 1) then $
+ if (exact) && (~keyword_set(SAMPLE)) && (xratio GT 1) then $
       crpix1 = (crpix[0]-1.0)*xratio + 1.0                  else $
       crpix1 = (crpix[0]-0.5)*xratio + 0.5
 
- if (exact) and (not keyword_set(SAMPLE)) and (yratio GT 1) then $
+ if (exact) && (~keyword_set(SAMPLE)) && (yratio GT 1) then $
       crpix2 = (crpix[1]-1.0)*yratio + 1.0                  else $
       crpix2 = (crpix[1]-0.5)*yratio + 0.5
 
@@ -252,10 +253,10 @@
 
  bscale = sxpar( oldhd, 'BSCALE')
  bzero = sxpar( oldhd, 'BZERO')
- unsgn = (tname EQ 'UINT') or (tname EQ 'ULONG') 
+ unsgn = (tname EQ 'UINT') || (tname EQ 'ULONG') 
 
- if not unsgn then begin 
- if (bscale NE 0) and (bscale NE 1) then $
+ if ~unsgn then begin 
+ if (bscale NE 0) && (bscale NE 1) then $
     sxaddpar, newhd, 'BSCALE', bscale/pix_ratio, 'Calibration Factor'
  if (bzero NE 0) then sxaddpar, newhd, 'BZERO', bzero/pix_ratio, $
        ' Additive Constant for Calibration'

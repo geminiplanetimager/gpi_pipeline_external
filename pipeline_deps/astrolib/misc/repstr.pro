@@ -8,7 +8,8 @@ function repstr,obj,in,out
 ;	Meant to emulate the string substitution capabilities of text editors
 ;
 ;       For a more sophisticated routine that allows regular expressions look
-;       at STR_REPLACE()  http://www.ittvis.com/codebank/search.asp?FID=311
+;       at MG_STRREPLACE() 
+;       http://docs.idldev.com/idllib/strings/mg_streplace.html
 ; CALLING SEQUENCE:
 ;	result = repstr( obj, in, out )
 ;
@@ -35,7 +36,6 @@ function repstr,obj,in,out
 ; MODIFICATION HISTORY:
 ;	Written by Robert S. Hill, ST Systems Corp., 12 April 1989.
 ;	Accept vector object strings, W. Landsman   HSTX,   April, 1996
-;	Converted to IDL V5.0   W. Landsman   September 1997
 ;       Convert loop to LONG, vectorize STRLEN call W. Landsman June 2002
 ;       Correct bug in optimization, case where STRLEN(OBJ) EQ
 ;         STRLEN(IN), C. Markwardt, Jan 2003
@@ -43,6 +43,8 @@ function repstr,obj,in,out
 ;                 D. Finkbeiner, W. Landsman  April 2003
 ;       Allow third parameter to be optional again W. Landsman  August 2003
 ;       Remove limitation of 9999 characters, C. Markwardt Dec 2003
+;       Test for empty "in" string (causing infinite loop) W. Landsman Jan 2010
+;       Streamline code W Landsman Dec 2011
 ;-
  On_error,2
  compile_opt idl2
@@ -54,6 +56,7 @@ function repstr,obj,in,out
 
  if N_elements(out) EQ 0 then out = ''
  l1 = strlen(in)
+ if l1 EQ 0 then message,'ERROR - empty input string not allowed'
  l2 = strlen(out)
  diflen = l2- l1
  Nstring = N_elements(obj)
@@ -62,15 +65,15 @@ function repstr,obj,in,out
  for i= 0L ,Nstring-1 do begin
  last_pos = 0
  pos = 0
- while ( pos LE lo[i]) and (pos GE 0) do begin
+ while ( pos LE lo[i]) do begin
    pos = strpos(object[i],in,last_pos)
    if (pos GE 0) then begin
 	      first_part = strmid(object[i],0,pos)
 	      last_part  = strmid(object[i],pos+l1)
 	      object[i] = first_part + out + last_part
-   endif 
-  last_pos = pos + l2
-  lo[i] = lo[i] + diflen           ;Length of string may have changed
+              last_pos = pos + l2
+              lo[i] += diflen      ;Length of string may have changed
+   endif else break
  endwhile
  endfor
 

@@ -1,11 +1,12 @@
 ;;
 ;; IDLWAVE catalog for library Astrolib
 ;; Automatically Generated -- do not edit.
-;; Created by idlwave_catalog on Wed Jul 20 12:43:25 2011
+;; Created by idlwave_catalog on Sun Aug 12 19:32:03 2012
 ;;
 (setq idlwave-library-catalog-libname "Astrolib")
 (setq idlwave-library-catalog-routines
- '(("asinh" fun nil (lib "asinh.pro" nil "Astrolib") "Result = %s(x)" (nil))
+ '(("PERMUTE" fun nil (lib "permute.pro" nil "Astrolib") "Result = %s(N, Seed)" (nil))
+   ("asinh" fun nil (lib "asinh.pro" nil "Astrolib") "Result = %s(x)" (nil))
    ("AVG" fun nil (lib "avg.pro" nil "Astrolib") "Result = %s(ARRAY, DIMENSION)" (nil ("DOUBLE") ("NAN")))
    ("cic" fun nil (lib "cic.pro" nil "Astrolib") "Result = %s(value, posx, nx, posy, ny, posz, nz)" (nil ("AVERAGE") ("ISOLATED") ("NO_MESSAGE") ("WRAPAROUND")))
    ("cspline" fun nil (lib "cspline.pro" nil "Astrolib") "Result = %s(xx, yy, tt)" (nil ("Deriv")))
@@ -60,4 +61,4 @@
    ("trapzd" pro nil (lib "trapzd.pro" nil "Astrolib") "%s, func, a, b, s, step" (nil ("_EXTRA")))
    ("tsc" fun nil (lib "tsc.pro" nil "Astrolib") "Result = %s(value, posx, nx, posy, ny, posz, nz)" (nil ("AVERAGE") ("ISOLATED") ("NO_MESSAGE") ("WRAPAROUND")))
    ("TSUM" fun nil (lib "tsum.pro" nil "Astrolib") "Result = %s(X, Y, IMIN, IMAX)" (nil))
-   ("ZBRENT" fun nil (lib "zbrent.pro" nil "Astrolib") "Result = %s(x1, x2)" (nil ("FUNC_NAME") ("MAX_ITERATIONS") ("TOLERANCE")))))
+   ("ZBRENT" fun nil (lib "zbrent.pro" nil "Astrolib") "Result = %s(x1, x2)" (nil ("_EXTRA") ("FUNC_NAME") ("MAX_ITERATIONS") ("TOLERANCE")))))

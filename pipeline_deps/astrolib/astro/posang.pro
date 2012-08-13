@@ -58,12 +58,14 @@ PRO POSANG,u,ra1,dc1,ra2,dc2,angle
 ;        ISARRAY()
 ;   HISTORY:
 ;       Modified from GCIRC, R. S. Hill, RSTX, 1 Apr. 1998
+;       Use V6.0 notation W.L. Mar 2011
 ;
 ;-
-On_error,2                            ;Return to caller
+ On_error,2                            ;Return to caller
+ compile_opt idl2
 
-npar = n_params(0)
-IF (npar ne 6) and (npar ne 5) THEN BEGIN
+ npar = N_params()
+ IF (npar lt 5)  THEN BEGIN
    print,'Calling sequence:  POSANG,U,RA1,DC1,RA2,DC2,ANGLE'
    print,'   U = 0  ==> Everything in radians'
    print, $
@@ -71,9 +73,9 @@ IF (npar ne 6) and (npar ne 5) THEN BEGIN
    RETURN
 ENDIF
 
-scalar = (not isarray(ra1) ) and (not isarray(ra2) )
+scalar = (~isarray(ra1) ) && (~isarray(ra2) )
 IF scalar THEN BEGIN
-    IF (ra1 eq ra2) and (dc1 eq dc2) THEN BEGIN
+    IF (ra1 eq ra2) && (dc1 eq dc2) THEN BEGIN
        angle = 0.0d0
        IF npar eq 5 THEN $
            print,'Positions are equal:  ', ra1, dc1
@@ -106,11 +108,11 @@ angle  = atan(sin(radif),cos(dcrad1)*tan(dcrad2)-sin(dcrad1)*cos(radif))
 
 IF (u ne 0) THEN angle = angle/d2r  
 
-IF (npar eq 5) and (scalar) THEN BEGIN
-    IF (u ne 0) and (abs(angle) ge 0.1) $
+IF (npar eq 5) && (scalar) THEN BEGIN
+    IF (u ne 0) && (abs(angle) ge 0.1) $
        THEN fmt = '(F14.8)' $
        ELSE fmt = '(E15.8)'
-    IF (u ne 0) THEN units = ' degrees' ELSE units = ' radians'
+    units = (u ne 0) ? ' degrees' : ' radians'   
     print,'Position angle of target 2 about target 1 is ' $
         + string(angle,format=fmt) + units
 ENDIF

@@ -1,9 +1,8 @@
-/FITS directory                                                  June-2009
+/FITS directory                                                  Jan-2012
 
 FITS (Flexible Image Transport Sytem) is a standardized data format which is
 widely used in astronomy.   Information on the FITS format can be obtained 
-from the NRAO FITS archive at http://fits.cv.nrao.edu or from the FITS support
-office at http://fits.gsfc.nasa.gov/.  
+from the FITS supportoffice at http://fits.gsfc.nasa.gov/.  
 
 The IDL Astronomy Library contains a variety of procedures for reading, 
 writing, and modifying FITS files.   Information on how to use these procedures
@@ -16,7 +15,7 @@ primary images and image extensions) or structures (for binary or ASCII tables).
 The procedure MWRFITS() will write an IDL structure to any type of FITS file,
 with many  options available (binary or ASCII table, default generation of
 column names). These procedures were originally written by Tom  McGlynn
-(USRA/Goddard) but are not maintianed by Wayne Landsman.   Further  information
+(USRA/Goddard) but are now maintained by Wayne Landsman.   Further  information
 on MRDFITS is available in the mrdfits.txt file in this directory or at 
 http://idlastro.gsfc.nasa.gov/mrdfits.html.
 
@@ -28,7 +27,7 @@ the !PATH
 	MRD_STRUCT()                              (in pro/structure)
 
 
-   (2) The procedure READFITS can be used to read FITS headers and arrays into
+   (2) The function READFITS can be used to read FITS headers and arrays into
 IDL variables.   Additional procedures in the pro/fits_table directory
 are then required to interpret binary and ASCII tables.   The FT* procedures in 
 the /fits_table directory are used to interpret a FITS ASCII table, and the
@@ -47,8 +46,8 @@ ASCII tables.    Further information on these procedures is available in the
 LaTeX file fits_bintable.tex in the /text directory.
 
   (4) The five procedures FITS_CLOSE, FITS_HELP, FITS_OPEN, FITS_READ, and
-FITS_WRITE were written by D. Lindler (NASA/Goddard) and are used by
-the STIS/NICMOS instrument teams on the Hubble Space Telescope (HST).     These
+FITS_WRITE were originally written by D. Lindler (NASA/Goddard) for handling
+data from the Hubble Space Telescope (HST).     These
 procedures are especially efficient for FITS files with many extensions, and
 they also recognize conventions used in HST FITS files that are not part of the
 standard FITS definition.   Like READFITS/WRITEFITS, these procedures require

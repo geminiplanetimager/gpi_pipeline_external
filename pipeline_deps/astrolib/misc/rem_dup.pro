@@ -49,6 +49,9 @@ function rem_dup, a, flag
 ;	August 1997  -- Changed loop index to type LONG
 ;	October 1997 -- Also changed NGOOD index to LONG
 ;       April 2007 - Use faster algorithm when Flag vector not set, W. Landsman
+;       Feb 2011 - Remove spurious line W.L.
+;       Jan 2012 - Call BSORT() to ensure original order maintained for equal
+;            values
 ;-
 ;-------------------------------------------------------------------------------
 ;
@@ -62,8 +65,7 @@ function rem_dup, a, flag
 
  n = N_elements(a)			;number of values in a
  if n lt 2 then return, lonarr(1)	;only one value in a
- if npar lt 2 then flag = intarr(n)     ;default flags
- sub = sort(a)			;sorted subscripts
+ sub = Npar GE 2 ? sort(a) : bsort(a)                      ;sorted subscripts
  aa = a[sub]			;sorted a
 ;
 ; loop on aa
@@ -79,7 +81,7 @@ ff = flag[sub]			;sorted flags
 	if aa[i] ne val then begin
 		val = aa[i]
 		f = ff[i]
-		ngood = ngood+1
+		ngood++
 		good[ngood] = i
 	  end else begin
 		if ff[i] gt f then begin

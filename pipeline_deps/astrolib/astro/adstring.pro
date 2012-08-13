@@ -3,7 +3,7 @@ Function adstring,ra_dec,dec,precision, TRUNCATE = truncate,PRECISION=prec
 ; NAME:
 ;       ADSTRING
 ; PURPOSE:
-;       Return RA and Dec as character string(s) in sexigesimal format.
+;       Return RA and Dec as character string(s) in sexagesimal format.
 ; EXPLANATION:
 ;       RA and Dec may be entered as either a 2 element vector or as
 ;       two separate vectors (or scalars).  One can also specify the precision 
@@ -48,13 +48,13 @@ Function adstring,ra_dec,dec,precision, TRUNCATE = truncate,PRECISION=prec
 ;       RESULT - Character string(s) containing HR,MIN,SEC,DEC,MIN,SEC formatted
 ;               as ( 2I3,F5.(p+1),2I3,F4.p ) where p is the PRECISION 
 ;               parameter.    If only a single scalar is supplied it is 
-;               converted to a sexigesimal string (2I3,F5.1).
+;               converted to a sexagesimal string (2I3,F5.1).
 ;
 ; EXAMPLE:
 ;       (1) Display CRVAL coordinates in a FITS header, H
 ;
 ;       IDL> crval = sxpar(h,'CRVAL*')  ;Extract 2 element CRVAL vector (degs)
-;       IDL> print, adstring(crval)     ;Print CRVAL vector sexigesimal format
+;       IDL> print, adstring(crval)     ;Print CRVAL vector sexagesimal format
 ;
 ;       (2)  print,adstring(30.42,-1.23,1)  ==>  ' 02 01 40.80  -01 13 48.0'
 ;            print,adstring(30.42,+0.23)    ==>  ' 02 01 40.8   +00 13 48.0'    
@@ -121,7 +121,7 @@ Function adstring,ra_dec,dec,precision, TRUNCATE = truncate,PRECISION=prec
      radec, ra, dec, ihr, imin, xsec, ideg, imn, xsc
      if N_elements(precision) EQ 0 then precision = 0
      precision = precision > 0 < 4         ;No more than 4 decimal places
- if not keyword_set(truncate) then begin
+ if ~keyword_set(truncate) then begin
      roundsec = [59.5,59.95,59.995,59.9995,59.99995,59.999995]
      carry = where(xsec GT roundsec[precision+1], Ncarry)
      if Ncarry GT 0 then begin
@@ -154,7 +154,7 @@ Function adstring,ra_dec,dec,precision, TRUNCATE = truncate,PRECISION=prec
    imn = abs(imn)  & xsc = abs(xsc)
    if ( precision EQ 0 ) then begin 
            secfmt = '(I03.2)' 
-           if not keyword_set(truncate) then begin
+           if ~keyword_set(truncate) then begin
            xsc = round(xsc)
            carry = where(xsc EQ 60, Ncarry)
            if Ncarry GT 0 then begin                 ;Updated April 2002
@@ -167,7 +167,7 @@ Function adstring,ra_dec,dec,precision, TRUNCATE = truncate,PRECISION=prec
          secfmt = '(F0' + string( 3+precision,'(I1)') + '.' + $
                          string(   precision,'(I1)') + ')'
 			 
-         if not keyword_set(truncate) then begin
+         if ~keyword_set(truncate) then begin
          ixsc = fix(xsc + 0.5/10^precision)
          carry = where(ixsc GE 60, Ncarry)
          if Ncarry GT 0 then begin

@@ -1,16 +1,18 @@
-pro remove,index, v1, v2, v3, v4, v5, v6, v7
+pro remove,index, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, $
+     v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25
 ;+
 ; NAME:
 ;       REMOVE
 ; PURPOSE:
-;       Contract a vector or up to 7 vectors by removing specified elements   
+;       Contract a vector or up to 25 vectors by removing specified elements   
 ; CALLING SEQUENCE:
-;       REMOVE, index, v1,[ v2, v3, v4, v5, v6, v7]     
+;       REMOVE, index, v1,[ v2, v3, v4, v5, v6, ... v25]     
 ; INPUTS:
 ;       INDEX - scalar or vector giving the index number of elements to
 ;               be removed from vectors.  Duplicate entries in index are
 ;               ignored.    An error will occur if one attempts to remove
-;               all the elements of a vector.
+;               all the elements of a vector.     REMOVE will return quietly
+;               (no error message) if index is !NULL or undefined.
 ;
 ; INPUT-OUTPUT:
 ;       v1 - Vector or array.  Elements specifed by INDEX will be 
@@ -19,7 +21,7 @@ pro remove,index, v1, v2, v3, v4, v5, v6, v7
 ;               INDEX.
 ;
 ; OPTIONAL INPUT-OUTPUTS:
-;       v2,v3,...v7 - additional vectors containing
+;       v2,v3,...v25 - additional vectors containing
 ;               the same number of elements as v1.  These will be
 ;               contracted in the same manner as v1.
 ;
@@ -47,29 +49,38 @@ pro remove,index, v1, v2, v3, v4, v5, v6, v7
 ; REVISION HISTORY:
 ;       Written W. Landsman        ST Systems Co.       April 28, 1988
 ;       Cleaned up code          W. Landsman            September, 1992
-;       Converted to IDL V5.0   W. Landsman   September 1997
 ;       Major rewrite for improved speed   W. Landsman    April 2000
+;       Accept up to 25 variables, use SCOPE_VARFETCH internally
+;              W. Landsman   Feb 2010
+;       Fix occasional integer overflow problem  V. Geers  Feb 2011
+;       Quietly return if index is !null or undefined W.L. Aug 2011
+;             
 ;-
  On_error,2
+ compile_opt idl2,strictarrsubs
 
  npar = N_params()
+ nvar = npar-1
  if npar LT 2 then begin
-      print,'Syntax - remove, index, v1, [v2, v3, v4, v5, v6, v7]'
+      print,'Syntax - remove, index, v1, [v2, v3, v4,..., v25]'
       return
  endif
 
- npts = N_elements(v1)
+ if N_elements(index) EQ 0 then return
 
- max_index = max(index, MIN = min_index)
+  vv = 'v' + strtrim( indgen(nvar)+1, 2) 
+  npts = N_elements(v1)
+   
+  max_index = max(index, MIN = min_index)
 
- if ( min_index LT 0 ) or (max_index GT npts-1) then message, $
+ if ( min_index LT 0 ) || (max_index GT npts-1) then message, $
              'ERROR - Index vector is out of range'
 
- if ( max_index Eq min_index ) then begin 
+ if ( max_index Eq min_index ) then begin   ;Remove only 1 element?
      Ngood = 0  
     if npts EQ 1 then message, $ 
          'ERROR - Cannot delete all elements from a vector'
-  endif else begin  ;Remove only 1 element?
+  endif else begin 
          
 
 ;  Begin case where more than 1 element is to be removed.   Use HISTOGRAM
@@ -88,80 +99,26 @@ pro remove,index, v1, v2, v3, v4, v5, v6, v7
 
  imin = min_index - 1
  imax = max_index + 1
- i0 = (min_index EQ 0) + 2*(max_index EQ npts-1)       
-
+ i0 = (min_index EQ 0) + 2*(max_index EQ npts-1) 
  case i0 of 
  3: begin
-    v1 = v1[keep]
-    if Npar GE 3 then v2 = v2[keep]
-    if Npar GE 4 then v3 = v3[keep]
-    if Npar GE 5 then v4 = v4[keep]
-    if Npar GE 6 then v5 = v5[keep]
-    if Npar GE 7 then v6 = v6[keep]
-    if Npar GE 8 then v7 = v7[keep]
-    end
+    for i=0, nvar-1 do  $
+         (SCOPE_VARFETCH(vv[i],LEVEL=0)) = $
+	 (SCOPE_VARFETCH(vv[i],LEVEL=0))[keep]
+     return	 
+     end
 
- 1: begin
-    if Ngood GT 0 then $
-        v1 = [v1[keep],v1[imax:*] ] else v1 = v1[imax:*]
-    if Npar GE 3 then if Ngood GT 0 then  $
-        v2 = [v2[keep],v2[imax:*] ] else v2 = v2[imax:*]
-    if Npar GE 4 then if NGood GT 0 then $
-        v3 = [v3[keep],v3[imax:*] ] else v3 = v3[imax:*]
-    if Npar GE 5 then if NGood GT 0 then $
-        v4 = [v4[keep],v4[imax:*] ] else v4 = v4[imax:*]
-    if Npar GE 6 then if NGood GT 0 then $
-        v5 = [v5[keep],v5[imax:*] ] else v5 = v5[imax:*]
-    if Npar GE 7 then if NGood GT 0 then $
-        v6 = [v6[keep],v6[imax:*] ] else v6 = v6[imax:*]
-    if Npar GE 8 then if NGood GT 0 then $
-        v7 = [v7[keep],v7[imax:*] ] else v7 = v7[imax:*]
-    end
+ 1:  ii = Ngood EQ 0 ? imax + lindgen(npts-imax) : $
+                      [keep, imax + lindgen(npts-imax) ]
+ 2:  ii = Ngood EQ 0 ? lindgen(imin+1)               :  $
+                       [lindgen(imin+1), keep ]
+ 0:   ii = Ngood EQ 0 ? [lindgen(imin+1), imax + lindgen(npts-imax) ]  : $
+                      [lindgen(imin+1), keep, imax + lindgen(npts-imax) ]
+ endcase 
 
-  2: begin 
-     if NGood GT 0 then $
-        v1 = [v1[0:imin], v1[keep] ] else v1 = v1[0:imin]
-     if Npar GE 3 then if NGood GT 0 then $
-        v2 = [v2[0:imin], v2[keep] ] else v2 = v2[0:imin]
-     if Npar GE 4 then if Ngood GT 0 then $
-        v3 = [v3[0:imin], v3[keep] ] else v3 = v3[0:imin]
-     if Npar GE 5 then if Ngood GT 0 then $
-        v4 = [v4[0:imin], v4[keep] ] else v4 = v4[0:imin]
-     if Npar GE 6 then if Ngood GT 0 then $
-        v5 = [v5[0:imin], v5[keep] ] else v5 = v5[0:imin]
-     if Npar GE 7 then if Ngood GT 0 then $
-        v6 = [v6[0:imin], v6[keep] ] else v6 = v6[0:imin]
-     if Npar GE 8 then if Ngood GT 0 then $
-        v7 = [v7[0:imin], v7[keep] ] else v7 = v7[0:imin]
-   end
-
- 0: begin
-    if NGood GT 0 then $
-         v1 = [v1[0:imin], v1[keep], v1[imax:*] ] else $
-         v1 = [v1[0:imin], v1[imax:*] ] 
-    if Npar GE 3 then if NGood GT 0 then $
-         v2 = [v2[0:imin], v2[keep], v2[imax:*] ] else $
-         v2 = [v2[0:imin], v2[imax:*] ] 
-    if Npar GE 4 then if NGood GT 0 then $
-         v3 = [v3[0:imin], v3[keep], v3[imax:*] ] else $
-         v3 = [v3[0:imin], v3[imax:*] ] 
-    if Npar GE 5 then if NGood GT 0 then $
-         v4 = [v4[0:imin], v4[keep], v4[imax:*] ] else $
-         v4 = [v4[0:imin], v4[imax:*] ] 
-    if Npar GE 6 then if NGood GT 0 then $
-         v5 = [v5[0:imin], v5[keep], v5[imax:*] ] else $
-         v5 = [v5[0:imin], v5[imax:*] ] 
-    if Npar GE 7 then if NGood GT 0 then $
-         v6 = [v6[0:imin], v6[keep], v6[imax:*] ] else $
-         v6 = [v6[0:imin], v6[imax:*] ] 
-    if Npar GE 8 then if NGood GT 0 then $
-         v7 = [v7[0:imin], v7[keep], v7[imax:*] ] else $
-         v7 = [v7[0:imin], v7[imax:*] ] 
-
-    end
- endcase
-
-    
+      for i=0,nvar-1 do  $
+         (SCOPE_VARFETCH(vv[i],LEVEL=0)) =    $
+	        (SCOPE_VARFETCH(vv[i],LEVEL=0))[ii]
  
  return
  end

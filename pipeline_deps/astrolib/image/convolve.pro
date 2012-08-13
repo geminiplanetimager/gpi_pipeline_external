@@ -65,32 +65,40 @@ function convolve, image, psf, FT_PSF=psf_FT, FT_IMAGE=imFT, NO_FT=noft, $
 ;                               Kyle Penner        October 2009
 ;       Add /No_PAD keyword for better speed and memory usage when edge effects
 ;            are not important.    W. Landsman      March 2010
+;       Add warning when kernel type does not match integer array
+;             W. Landsman Feb 2012
 ;-
         compile_opt idl2
         sp = size( psf_FT,/str )  &  sif = size( imFT, /str )
         sim = size( image )  
 
 
-        if (sim[0] NE 2) OR keyword_set( noft ) then begin
+        if (sim[0] NE 2) || keyword_set( noft ) then begin
                 if keyword_set( auto ) then begin
                         message,"auto-correlation only for images with FFT",/INF
                         return, image
-                  endif else if keyword_set( correlate ) then $
+                 endif
+		 dtype = size(image,/type)
+		 if dtype LE 3 then if size(psf,/type) NE dtype then $
+		    message,/CON, $
+		 'WARNING - ' + size(psf,/TNAME) +  $
+		 ' kernel converted to type ' + size(image,/tname)    
+		 if keyword_set( correlate ) then $
                                 return, convol( image, psf ) $
-                        else    return, convol( image, rotate( psf, 2 ) )
+                 else    return, convol( image, rotate( psf, 2 ) )
            endif
 
        if keyword_Set(No_Pad) then begin 
  
         sc = sim/2  &  npix = N_elements( image )
-        if (sif.N_dimensions NE 2) OR ((sif.type NE 6) AND (sif.type NE 9)) OR $
-           (sif.dimensions[0] NE sim[1]) OR (sif.dimensions[1] NE sim[2]) then imFT = FFT( image,-1 )
+        if (sif.N_dimensions NE 2) || ((sif.type NE 6) && (sif.type NE 9)) || $
+           (sif.dimensions[0] NE sim[1]) || (sif.dimensions[1] NE sim[2]) then imFT = FFT( image,-1 )
 
         if keyword_set( auto ) then $
          return, shift( npix*real_part(FFT( imFT*conj( imFT ),1 )), sc[1],sc[2] )
 
-        if (sp.N_dimensions NE 2) OR ((sp.type NE 6) AND (sp.type NE 9)) OR $
-           (sp.dimensions[0] NE sim[1]) OR (sp.dimensions[1] NE sim[2]) then begin
+        if (sp.N_dimensions NE 2) || ((sp.type NE 6) && (sp.type NE 9)) || $
+           (sp.dimensions[0] NE sim[1]) || (sp.dimensions[1] NE sim[2]) then begin
                 sp = size( psf )
                 if (sp[0] NE 2) then begin
                         message,"must supply PSF matrix (2nd arg.)",/INFO
@@ -119,8 +127,8 @@ function convolve, image, psf, FT_PSF=psf_FT, FT_IMAGE=imFT, NO_FT=noft, $
         ; the spooky factor of 4 in npix is because we're going to pad the image
         ; with zeros
 
-         if (sif.N_dimensions NE 2) OR ((sif.type NE 6) AND (sif.type NE 9)) OR $
-           (sif.dimensions[0] NE sim[1]) OR (sif.dimensions[1] NE sim[2]) then begin
+         if (sif.N_dimensions NE 2) || ((sif.type NE 6) && (sif.type NE 9)) || $
+           (sif.dimensions[0] NE sim[1]) || (sif.dimensions[1] NE sim[2]) then begin
 
             ; here is where we make an array with twice the dimensions of image and
             ; pad with zeros -- thanks to Daniel Eisenstein for this fix
@@ -139,8 +147,8 @@ function convolve, image, psf, FT_PSF=psf_FT, FT_IMAGE=imFT, NO_FT=noft, $
      endif
 
 
-        if (sp.N_dimensions NE 2) OR ((sp.type NE 6) AND (sp.type NE 9)) OR $
-           (sp.dimensions[0] NE sim[1]) OR (sp.dimensions[1] NE sim[2]) then begin
+        if (sp.N_dimensions NE 2) || ((sp.type NE 6) && (sp.type NE 9)) OR $
+           (sp.dimensions[0] NE sim[1]) || (sp.dimensions[1] NE sim[2]) then begin
                 sp = size( psf )
                 if (sp[0] NE 2) then begin
                         message,"must supply PSF matrix (2nd arg.)",/INFO

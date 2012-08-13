@@ -98,7 +98,7 @@ pro precess, ra, dec, equinox1, equinox2, PRINT = print, FK4 = FK4, $
   array  = size(ra,/N_dimen) GE 2
   if array then dimen = size(ra,/dimen)
 
-  if not keyword_set( RADIAN) then begin
+  if ~keyword_set( RADIAN) then begin
           ra_rad = ra*deg_to_rad     ;Convert to double precision if not already
           dec_rad = dec*deg_to_rad 
   endif else begin
@@ -142,7 +142,7 @@ pro precess, ra, dec, equinox1, equinox2, PRINT = print, FK4 = FK4, $
 
  endelse
 
-  if not keyword_set(RADIAN) then begin
+  if ~keyword_set(RADIAN) then begin
         ra = ra_rad/deg_to_rad
         ra = ra + (ra LT 0.)*360.D            ;RA between 0 and 360 degrees
         dec = dec_rad/deg_to_rad

@@ -61,12 +61,12 @@
 ;                 Ignored if PASS_METHOD is 'POINTER'.
 ;
 ; OPTIONAL INPUT KEYWORDS: 
-;       DEFAULT_FLOAT = If set, then scaling with TSCAL/TZERO is done with
-;                   floating point rather than double precision.
 ;       ROW     = Either row number in the binary table to read data from,
 ;                 starting from row one, or a two element array containing a
 ;                 range of row numbers to read.  If not passed, then the entire
 ;                 column is read in.
+;       /DEFAULT_FLOAT = If set, then scaling with TSCAL/TZERO is done with
+;                 floating point rather than double precision.
 ;       /NOIEEE = If set, then then IEEE floating point data will not
 ;                be converted to the host floating point format (and
 ;                this by definition implies NOSCALE).  The user is
@@ -166,8 +166,9 @@
 ;      integers, Oct 2003
 ;   Add DEFAULT_FLOAT keyword to select float values instead of double
 ;      for TSCAL'ed, June 2004
-;  read 64bit integer columns, E. Hivon, Mar 2008
-;
+;   Read 64bit integer columns, E. Hivon, Mar 2008
+;   Add support for columns with TNULLn keywords, C. Markwardt, Apr 2010
+;   Add support for files larger than 2 GB, C. Markwardt, 2012-04-17
 ;
 ;-
 ;
@@ -178,6 +179,7 @@
 PRO FXBREADM_CONV, BB, DD, CTYPE, PERROW, NROWS, $
                    NOIEEE=NOIEEE, NOSCALE=NOSCALE, VARICOL=VARICOL, $
                    NANVALUE=NANVALUE, TZERO=TZERO, TSCAL=TSCAL, $
+                   TNULL_VALUE=TNULL, TNULL_FLAG=TNULLQ, $
                    DEFAULT_FLOAT=DF
 
   COMMON FXBREADM_CONV_COMMON, DTYPENAMES
@@ -203,6 +205,13 @@ PRO FXBREADM_CONV, BB, DD, CTYPE, PERROW, NROWS, $
       (CTYPE EQ 2 OR CTYPE EQ 3 or ctype eq 14): BEGIN
           IF NOT KEYWORD_SET(NOIEEE) OR KEYWORD_SET(VARICOL) THEN $
             IEEE_TO_HOST, DD 
+          ;; Check for TNULL values
+          ;; We will convert to NAN values later (or if the user
+          ;; requested a different value we will use that)
+          IF KEYWORD_SET(TNULLQ) THEN BEGIN
+              W = WHERE(DD EQ TNULL,COUNT)
+              IF N_ELEMENTS(NANVALUE) EQ 0 THEN NANVALUE = !VALUES.D_NAN
+          ENDIF
       END
 
       ;; Floating and complex types
@@ -482,10 +491,10 @@ PRO FXBREADM, UNIT, COL, $
 ;  If ROW was not passed, then set it equal to the entire range.  Otherwise,
 ;  extract the range.
 ;
-        IF N_ELEMENTS(ROW) EQ 0 THEN ROW = [1L, NAXIS2[ILUN]]
+        IF N_ELEMENTS(ROW) EQ 0 THEN ROW = [1LL, NAXIS2[ILUN]]
         CASE N_ELEMENTS(ROW) OF
-                1:  ROW2 = LONG(ROW[0])
-                2:  ROW2 = LONG(ROW[1])
+                1:  ROW2 = LONG64(ROW[0])
+                2:  ROW2 = LONG64(ROW[1])
                 ELSE:  BEGIN
                         MESSAGE = 'ROW must have one or two elements'
                         IF N_ELEMENTS(ERRMSG) NE 0 THEN BEGIN
@@ -494,7 +503,7 @@ PRO FXBREADM, UNIT, COL, $
                         END ELSE MESSAGE, MESSAGE
                         END
         ENDCASE
-        ROW1 = LONG(ROW[0])
+        ROW1 = LONG64(ROW[0])
 ;
 ;  If ROW represents a range, then make sure that the row range is legal, and
 ;  that reading row ranges is allowed (i.e., the column is not variable length.
@@ -533,11 +542,14 @@ PRO FXBREADM, UNIT, COL, $
 ;
 ;  Compose information about the output
 ;
+        HEADER = HEAD[*,ILUN]
         COLNDIM = LONARR(NUMCOLS)
         COLDIM  = LONARR(NUMCOLS, 20) ;; Maximum of 20 dimensions in output
         COLTYPE = LONARR(NUMCOLS)
         BOFF1   = LONARR(NUMCOLS)
         BOFF2   = LONARR(NUMCOLS)
+        TNULL_FLG = INTARR(NUMCOLS) ;; 1 if TNULLn column is present
+        TNULL_VAL = DBLARR(NUMCOLS) ;; value of TNULLn column if present
         NROWS = ROW2-ROW1+1
         FOR I = 0L, NUMCOLS-1 DO BEGIN
 
@@ -600,6 +612,17 @@ PRO FXBREADM, UNIT, COL, $
             ELSE $
               BOFF2[I] = BYTOFF[ICOL[I]+1,ILUN]-1
 
+            ;; TNULLn keywords for integer type columns
+            IF (COLTYPE[I] GE 1 AND COLTYPE[I] LE 3) OR $
+              (COLTYPE[I] GE 12 AND COLTYPE[I] LE 15) THEN BEGIN
+                TNULLn = 'TNULL'+STRTRIM(ICOL[I]+1,2)
+                VALUE = FXPAR(HEADER,TNULLn, Count = N_VALUE)
+                IF N_VALUE GT 0 THEN BEGIN
+                    TNULL_FLG[I] = 1
+                    TNULL_VAL[I] = VALUE
+                ENDIF
+            ENDIF
+            
             LOOP_END_DIMS:
 
         ENDFOR
@@ -644,10 +667,10 @@ PRO FXBREADM, UNIT, COL, $
 ;
 ;  Find the position of the first byte of the data array in the file.
 ;
-        OFFSET0 = NHEADER[ILUN] + NAXIS1[ILUN]*(ROW1-1)
-        POS = 0L
+        OFFSET0 = NHEADER[ILUN] + NAXIS1[ILUN]*(ROW1-1LL)
+        POS = 0LL
         NROWS0 = NROWS
-        J = 0L
+        J = 0LL
         FIRST = 1
         ;; Here, we constrain the buffer to be at least 16 rows long.
         ;; If we fill up 32 kB with fewer than 16 rows, then there
@@ -673,6 +696,8 @@ PRO FXBREADM, UNIT, COL, $
         BB = BYTARR(NAXIS1[ILUN], NR)
         POINT_LUN, UNIT, OFFSET0+OFFSET1
         READU, UNIT, BB
+;        FXGSEEK, UNIT, OFFSET0+OFFSET1
+;        FXGREAD, UNIT, BB
 
 ;
 ;  Now select out the desired columns
@@ -700,7 +725,9 @@ PRO FXBREADM, UNIT, COL, $
             FXBREADM_CONV, BB[BOFF1[I]:BOFF2[I], *], DD, COLTYPE[I], PERROW, NR,$
               NOIEEE=KEYWORD_SET(NOIEEE), NOSCALE=KEYWORD_SET(NOSCALE), $
               TZERO=TZERO[ICOL[I], ILUN], TSCAL=TSCAL[ICOL[I], ILUN], $
-              VARICOL=VARICOL[I], DEFAULT_FLOAT=DEFAULT_FLOAT, _EXTRA=EXTRA
+              VARICOL=VARICOL[I], DEFAULT_FLOAT=DEFAULT_FLOAT, $
+              TNULL_VALUE=TNULL_VAL[I], TNULL_FLAG=TNULL_FLG[I], $
+              _EXTRA=EXTRA
 
             ;; Initialize the output variable on the first chunk
             IF FIRST THEN BEGIN
@@ -752,13 +779,13 @@ PRO FXBREADM, UNIT, COL, $
             NTOT  = ROUND(TOTAL(NVALS)) ;; Total number of values
             IF NTOT EQ 0 THEN BEGIN
                 DD = {N_ELEMENTS: 0L, N_ROWS: NROWS0, $
-                      INDICES: LONARR(NROWS0+1), DATA: 0L}
+                      INDICES: LON64ARR(NROWS0+1), DATA: 0L}
                 GOTO, FILL_VARICOL
             ENDIF
 
             ;; Compute the width in bytes of the data value
             TYPE = IDLTYPE[ICOL[I], ILUN]
-            WID = WIDARR[TYPE < 10]
+            WID = LONG64(WIDARR[TYPE < 10])
             IF WID EQ 0 THEN BEGIN
                 OUTSTATUS[I] = 0
                 MESSAGE = 'ERROR: Column '+COLNAMES[I]+' has unknown data type'
@@ -769,11 +796,11 @@ PRO FXBREADM, UNIT, COL, $
             ENDIF
 
             ;; Coalesce the data pointers
-            BOFF1 = PDATA[1,*]
+            BOFF1 = LONG64(PDATA[1,*])
             BOFF2 = BOFF1 + NVALS*WID
             WH = WHERE(BOFF1[1:*] NE BOFF2, CT)
-            IF CT GT 0 THEN BI = [-1L, WH, N_ELEMENTS(BOFF1)-1] $
-            ELSE            BI = [-1L,     N_ELEMENTS(BOFF1)-1]
+            IF CT GT 0 THEN BI = [-1LL, WH, N_ELEMENTS(BOFF1)-1] $
+            ELSE            BI = [-1LL,     N_ELEMENTS(BOFF1)-1]
             CT = CT + 1
 
             ;; Create the output array
@@ -782,9 +809,9 @@ PRO FXBREADM, UNIT, COL, $
             BB = BYTARR(NB)                           ;; Byte array
 
             ;; Initialize the counter variables used in the read-loop
-            CC = 0L & CC1 = 0L & K = 0L
+            CC = 0LL & CC1 = 0LL & K = 0LL
             BUFFROWS = ROUND(BUFFERSIZE/WID) > 128L
-            BASE = NHEADER[ILUN]+HEAP[ILUN]
+            BASE = LONG64(NHEADER[ILUN]+HEAP[ILUN])
 
             ;; Read data from file
             WHILE CC LT NB DO BEGIN
@@ -793,6 +820,8 @@ PRO FXBREADM, UNIT, COL, $
 
                 POINT_LUN, UNIT, BASE+BOFF1[BI[K]+1]+CC1
                 READU, UNIT, BB1
+;                FXGSEEK, UNIT, BASE+BOFF1[BI[K]+1]+CC1
+;                FXGREAD, UNIT, BB1
                 BB[CC] = TEMPORARY(BB1)
 
                 CC  = CC  + NB1
@@ -818,8 +847,8 @@ PRO FXBREADM, UNIT, COL, $
             
             ;; Construct the indices; unfortunately we need to make an
             ;; accumulant with a FOR loop
-            INDICES = LONARR(NROWS0+1)
-            FOR K = 1L, NROWS0 DO $
+            INDICES = LON64ARR(NROWS0+1)
+            FOR K = 1LL, NROWS0 DO $
               INDICES[K] = INDICES[K-1] + NVALS[K-1]
 
             ;; Construct a structure with additional data

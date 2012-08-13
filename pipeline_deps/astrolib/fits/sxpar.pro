@@ -16,9 +16,9 @@ function SXPAR, hdr, name, abort, COUNT=matches, COMMENT = comments, $
 ;
 ;      Name = String name of the parameter to return.   If Name is of the
 ;             form 'keyword*' then an array is returned containing values of
-;             keywordN where N is an integer.  The value of keywordN will be
-;             placed in RESULT(N-1).  The data type of RESULT will be the
-;             type of the first valid match of keywordN found.
+;             keywordN where N is a positive (non-zero) integer.  The value of 
+;             keywordN will be placed in RESULT[N-1].  The data type of RESULT 
+;             will be the type of the first valid match of keywordN found.
 ;
 ; OPTIONAL INPUTS:
 ;       ABORT - string specifying that SXPAR should do a RETALL
@@ -119,6 +119,7 @@ function SXPAR, hdr, name, abort, COUNT=matches, COMMENT = comments, $
 ;             of mixed data type are returned with the highest type.
 ;       W.Landsman Aug 2008  Use vector form of VALID_NUM()
 ;       W. Landsman Jul 2009  Eliminate internal recursive call
+;       W. Landsman Apr 2012  Require vector numbers be greater than 0
 ;-
 ;----------------------------------------------------------------------
  On_error,2
@@ -141,7 +142,7 @@ function SXPAR, hdr, name, abort, COUNT=matches, COMMENT = comments, $
 ;       Check for valid header
 
 ;Check header for proper attributes.
-  if ( size(hdr,/N_dimen) NE 1 ) or ( size(hdr,/type) NE 7 ) then $
+  if ( size(hdr,/N_dimen) NE 1 ) || ( size(hdr,/type) NE 7 ) then $
            message,'FITS Header (first parameter) must be a string array'
 
   nam = strtrim( strupcase(name) )      ;Copy name, make upper case     
@@ -172,7 +173,7 @@ function SXPAR, hdr, name, abort, COUNT=matches, COMMENT = comments, $
 ;  a number.  Store the positions of the located keywords in NFOUND, and the
 ;  value of the number field in NUMBER.
 
-        histnam = (nam eq 'HISTORY ') or (nam eq 'COMMENT ') or (nam eq '') 
+        histnam = (nam eq 'HISTORY ') || (nam eq 'COMMENT ') || (nam eq '') 
         keyword = strmid( hdr, 0, 8)
  
         if vector then begin
@@ -183,6 +184,9 @@ function SXPAR, hdr, name, abort, COUNT=matches, COMMENT = comments, $
 		if matches GT 0 then begin 
 		     nfound = nfound[igood]
                      number = long(numst[igood])
+		     g = where(number GT 0, matches)
+ 		     if matches GT 0 then number = number[g]
+
 		endif 
            endif
 
@@ -192,7 +196,7 @@ function SXPAR, hdr, name, abort, COUNT=matches, COMMENT = comments, $
 
         endif else begin
             nfound = where(keyword EQ nam, matches)
-             if (matches GT 1) and ~histnam then        $
+             if (matches GT 1) && ~histnam then        $
                 if ~keyword_set(silent) then $
                 message,/informational, 'Warning - keyword ' +   $
                 nam + ' located more than once in ' + abort
@@ -239,7 +243,7 @@ function SXPAR, hdr, name, abort, COUNT=matches, COMMENT = comments, $
 ; SXPAR) 4. /NOCONTINE is not set
 
     if ~keyword_set(nocontinue) then begin
-                off = off + 1
+                off++
                 val = strtrim(value,2)
 
                 if (strlen(val) gt 0) && $
@@ -292,14 +296,14 @@ function SXPAR, hdr, name, abort, COUNT=matches, COMMENT = comments, $
 
 NOT_COMPLEX:
                 On_IOerror, GOT_VALUE
-                  if (strpos(value,'.') GE 0) or (strpos(value,'E') GT 0) $
-                  or (strpos(value,'D') GE 0) then begin  ;Floating or double?
-                      if ( strpos(value,'D') GT 0 ) or $  ;Double?
+                  if (strpos(value,'.') GE 0) || (strpos(value,'E') GT 0) $
+                  || (strpos(value,'D') GE 0) then begin  ;Floating or double?
+                      if ( strpos(value,'D') GT 0 ) || $  ;Double?
                          ( strlen(value) GE 8 ) then value = double(value) $
                                                 else value = float(value)
                        endif else begin                   ;Long integer
                             lmax = 2.0d^31 - 1.0d
-                            lmin = -2.0d31
+                            lmin = -2.0d^31      ;Typo fixed Feb 2010
                             value = double(value)
                             if (value GE lmin) && (value LE lmax) then $
                                 value = long(value)

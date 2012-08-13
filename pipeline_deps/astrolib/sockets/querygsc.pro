@@ -10,7 +10,7 @@ function Querygsc, target, dis,magrange = magrange, HOURS = hours, $
 ; EXPLANATION:
 ;   Uses the IDL SOCKET command to query the GSC 2.3.2 database over the Web.    
 ;
-;   Alternatively, the user can query the GSC 2.3.2 catalog using
+;   Alternatively, (and more reliably) one can query the GSC 2.3.2 catalog using
 ;   queryvizier.pro and the VIZIER database, e.g.  
 ;     IDL> st = queryvizier('GSC2.3',[23,35],10,/all)
 ; 
@@ -47,7 +47,7 @@ function Querygsc, target, dis,magrange = magrange, HOURS = hours, $
 ;   info - IDL structure containing information on the GSC stars within the 
 ;          specified distance of the specified center.   There are (currently)
 ;          23 tags in this structure  -- for further information see
-;          www-gsss.stsci.edu/Catalogs/GSC/GSC2/gsc23/gsc23_release_notes.htm
+;          http://gsss.stsci.edu/Catalogs/GSC/GSC2/gsc23/gsc23_release_notes.htm
 ;
 ;          .HSTID - GSC 2.3 name for HST operations
 ;          .GSC1ID - GSC1 name

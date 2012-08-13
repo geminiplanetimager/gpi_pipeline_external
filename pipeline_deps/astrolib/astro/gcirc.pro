@@ -5,7 +5,7 @@ PRO gcirc,u,ra1,dc1,ra2,dc2,dis
 ; PURPOSE:
 ;     Computes rigorous great circle arc distances.  
 ; EXPLANATION:
-;     Input position can either be either radians, sexigesimal RA, Dec or
+;     Input position can either be either radians, sexagesimal RA, Dec or
 ;     degrees.   All computations are double precision. 
 ;
 ; CALLING SEQUENCE:
@@ -110,8 +110,8 @@ PRO gcirc,u,ra1,dc1,ra2,dc2,dis
 
  IF (u ne 0) THEN dis = dis/as2r
 
- IF (npar eq 5) and (N_elements(dis) EQ 1) THEN BEGIN
-    IF (u ne 0) and (dis ge 0.1) and (dis le 1000)  $
+ IF (npar eq 5) && (N_elements(dis) EQ 1) THEN BEGIN
+    IF (u ne 0) && (dis ge 0.1) && (dis le 1000)  $
        THEN fmt = '(F10.4)' $
        ELSE fmt = '(E15.8)'
     IF (u ne 0) THEN units = ' arcsec' ELSE units = ' radians'

@@ -3,16 +3,16 @@ pro radec,ra,dec,ihr,imin,xsec,ideg,imn,xsc, hours = hours
 ; NAME:
 ;	RADEC
 ; PURPOSE:
-;	To convert RA and Dec  from decimal to sexigesimal units.
+;	To convert RA and Dec  from decimal to sexagesimal units.
 ; EXPLANATION: 
-;	The conversion is to sexigesimal hours for RA,  and sexigesimal 
+;	The conversion is to sexagesimal hours for RA,  and sexagesimal 
 ;	degrees for declination.
 ;
 ; CALLING SEQUENCE:
 ;	radec, ra, dec, ihr, imin, xsec, ideg, imn, xsc, [/HOURS}
 ;
 ; INPUTS:
-;	ra   - right ascension, scalar or vector, in DEGREES unless the
+;	ra   - Right ascension, scalar or vector, in DEGREES unless the
 ;              /HOURS keyword is set
 ;	dec  - declination in decimal DEGREES, scalar or vector, same number
 ;		of elements as RA

@@ -37,7 +37,6 @@
 ;******************************************************************************************;
 ;
 ;+
-; :Description:
 ;   This simple just identifies a routine as a Coyote Graphic routine. It is written
 ;   primarily so I can identify such routines before I assign a background color to
 ;   a graphics window.
@@ -45,12 +44,6 @@
 ; :Categories:
 ;    Graphics
 ;    
-; :Params:
-;    None.
-;       
-; :Keywords:
-;     None.
-;          
 ; :Examples:
 ;    Used in graphics programs::
 ;       IDL> IF CoyoteGraphic() THEN background = 'white'
@@ -61,8 +54,8 @@
 ;           1645 Sheely Drive
 ;           Fort Collins, CO 80526 USA
 ;           Phone: 970-221-0438
-;           E-mail: davidf@dfanning.com
-;           Coyote's Guide to IDL Programming: http://www.dfanning.com
+;           E-mail: david@idlcoyote.com
+;           Coyote's Guide to IDL Programming: http://www.idlcoyote.com
 ;
 ; :History:
 ;     Change History::
@@ -74,28 +67,35 @@
 FUNCTION CoyoteGraphic, routine
 
     list = [ $
-      'CTLOAD', $
-      'DCBAR', $
       'CGARROW', $
       'CGAXIS', $
       'CGCOLOR', $
-      'FSC_COLOR', $
+      'CGBARPLOT', $
+      'CGBOXPLOT', $
       'CGCOLORBAR', $
-      'FSC_COLORBAR', $
       'CGCOLORFILL', $
       'CGCONTOUR', $
+      'CGDCBAR', $
       'CGDISPLAY', $
       'CGERASE', $
+      'CGHISTOPLOT', $
       'CGIMAGE', $
+      'CGLOADCT', $
       'CGPLOT', $
       'CGPLOTS', $
+      'CGSCATTER2D', $
       'CGSURF', $
       'CGSURFACE', $
+      'CGSYMBOL', $
       'CGTEXT', $
       'CGCONTROL', $
       'CGDELETE', $
       'CGWINDOW', $
       'CGSET', $  
+      'CTLOAD', $
+      'DCBAR', $
+      'FSC_COLOR', $
+      'FSC_COLORBAR', $
       'HISTOPLOT', $
       'TVIMAGE', $
       'TVSCALE', $

@@ -51,8 +51,8 @@ pro sxhwrite,name,h
 
 ; Check for valid qualifier
 
- if ( strlen(qual) NE 3 ) or ( strupcase(strmid(qual,2,1)) NE 'H' ) then $
-        message,'Qualifier on file name must be 3 characters, ending in H'
+ if ( strlen(qual) NE 3 ) || ( strupcase(strmid(qual,2,1)) NE 'H' ) then $
+        message,'Qualifier on file name must be 3 characters, ending in h'
 
  hname = disk + dir + file + '.' + qual           ;header file name
 
@@ -60,6 +60,7 @@ pro sxhwrite,name,h
 
  ZPARCHECK, 'SXHWRITE', h, 2, 7, 1, 'FITS header'
 
+ sxdelpar,'XTENSION',h       ;For SDAS header SIMPLE must be the first line
  SXADDPAR, h, 'SIMPLE', 'F', ' Written by IDL:  ' + systime()
 
 ; Determine if an END line occurs, and add one if necessary

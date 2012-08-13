@@ -36,9 +36,11 @@
 ;******************************************************************************************;
 ;
 ;+
-; :Description:
-;   Provides a device-independent and color-model-independent way to draw an axis into
-;   a graphics window. It is a wrapper to the AXIS command.
+; Provides a device-independent and color-model-independent way to draw an axis into
+; a graphics window. It is a wrapper to the AXIS command.
+; 
+; The program requires the `Coyote Library <http://www.idlcoyote.com/documents/programs.php>`
+; to be installed on your machine.
 ;
 ; :Categories:
 ;    Graphics
@@ -69,26 +71,37 @@
 ;         Set this keyword to indicate xloc and yloc are in normalized coordinates.
 ;     save: in, optional, type=boolean
 ;         Set this keyword to save the scaling parameters set by the axis for subsequent use.
+;     t3d: in, optional, type=boolean, default=0
+;         Set this keyword to rotate the axis is the 3D data space set up with !P.T.
+;     title: in, optional, type=string, default=""
+;         The title or annotation that appears on the axis.
 ;     window: in, optional, type=boolean
 ;         Set this keyword to add the command to the in the current cgWindow application.
 ;     xaxis: in, optional, type=integer, default=0
 ;         If set to 0, the axis is drawn under the plot with the tick marks pointing up; if set 
 ;         to 1, the axis is drawn on top of the plot with the tick marks pointing down.
-;     xlog: in, optional, type-boolean, default=0
+;     xlog: in, optional, type=boolean, default=0
 ;         Set this keyword to specify a logarithmic axis type.
+;     xtitle: in, optional, type=string
+;         An alternative way to set the `Title` keyword for X axes. Use `Title` instead.
 ;     yaxis: in, optional, type=integer, default=0
-;         If set to 0, the axis is drawn under the plot with the tick marks pointing up; if set 
-;         to 1, the axis is drawn on top of the plot with the tick marks pointing down.
-;     ylog: in, optional, type-boolean, default=0
+;         If set to 0, the axis is drawn on the left of the plot with the tick marks pointing 
+;         to the right. If set to 1, the axis is drawn on the right of the plot with the tick 
+;         marks pointing to the left.
+;     ylog: in, optional, type=boolean, default=0
 ;         Set this keyword to specify a logarithmic axis type.
 ;     ynozero: in, optional, type=boolean, default=0
 ;         Set this keyword to prevent the Y axis from starting at 0.
+;     ytitle: in, optional, type=string
+;         An alternative way to set the `Title` keyword for Y axes. Use `Title` instead.
 ;     zaxis: in, optional, type=integer, default=0
 ;         Set to 0-3 to position the Z axis in various locatons. See the AXIS documentation.
-;     zlog: in, optional, type-boolean, default=0
+;     zlog: in, optional, type=boolean, default=0
 ;         Set this keyword to specify a logarithmic axis type.
-;     _extra: in, optional
-;          Any keywords appropriate for the XYOUTS command.
+;     ztitle: in, optional, type=string
+;         An alternative way to set the `Title` keyword for Z axes. Use `Title` instead.
+;     _ref_extra: in, optional
+;          Any keywords appropriate for the AXIS command.
 ;     
 ;          
 ; :Examples:
@@ -102,14 +115,17 @@
 ;           1645 Sheely Drive
 ;           Fort Collins, CO 80526 USA
 ;           Phone: 970-221-0438
-;           E-mail: davidf@dfanning.com
-;           Coyote's Guide to IDL Programming: http://www.dfanning.com
+;           E-mail: david@idlcoyote.com
+;           Coyote's Guide to IDL Programming: http://www.idlcoyote.com
 ;
 ; :History:
 ;     Change History::
 ;        Written, 25 Janauray 2011. DWF.
 ;        Modified error handler to restore the entry decomposition state if there is an error. 17 March 2011. DWF
 ;        Modifed the way I am handling brain dead AXIS command. 30 May 2011. DWF.
+;        Modified to use cgDefaultColor for default color selection. 24 Dec 2011. DWF.
+;        Added T3D keyword. 1 March 2012. DWF.
+;        Added the ability to use escape characters in plot titles to specify cgSymbol symbols. 27 July 2012. DWF.
 ;
 ; :Copyright:
 ;     Copyright (c) 2011, Fanning Software Consulting, Inc.
@@ -122,6 +138,7 @@ PRO cgAxis, xloc, yloc, zloc, $
             FONT=font, $
             NORMAL=normal, $
             SAVE=save, $
+            T3D=t3d, $
             TITLE=title, $
             XAXIS=xaxis, $
             XLOG=xlog, $
@@ -145,7 +162,14 @@ PRO cgAxis, xloc, yloc, zloc, $
         IF N_Elements(currentState) NE 0 THEN SetDecomposedState, currentState
         RETURN
     ENDIF
-        
+    
+    ; If doing this in 3D space, FONT should be set to 1 in PostScript
+    ; if you are doing this in hardware fonts. Otherwise, the font won't
+    ; rotate properly.
+    IF Keyword_Set(t3d) && (!D.Name EQ 'PS') THEN BEGIN
+        IF (N_Elements(font) EQ 0) && (!P.Font EQ 0) THEN font = 1.0
+    ENDIF
+    
     ; Should this be added to a resizeable graphics window?
     IF Keyword_Set(window) AND ((!D.Flags AND 256) NE 0) THEN BEGIN
     
@@ -159,6 +183,7 @@ PRO cgAxis, xloc, yloc, zloc, $
             FONT=font, $
             NORMAL=normal, $
             SAVE=save, $
+            T3D=t3d, $
             TITLE=title, $
             XAXIS=xaxis, $
             XLOG=xlog, $
@@ -177,6 +202,10 @@ PRO cgAxis, xloc, yloc, zloc, $
     ENDIF
         
     ; Did the user specify a title with the TITLE keyword?
+    IF (N_ElementS(title) NE 0) THEN title = cgCheckForSymbols(title)
+    IF (N_Elements(xtitle) NE 0) THEN xtitle = cgCheckForSymbols(xtitle)
+    IF (N_Elements(ytitle) NE 0) THEN ytitle = cgCheckForSymbols(ytitle)
+    IF (N_Elements(ztitle) NE 0) THEN ztitle = cgCheckForSymbols(ztitle)
     IF (N_Elements(xtitle) EQ 0) && (N_Elements(title) NE 0) THEN xtitle = title
     IF (N_Elements(ytitle) EQ 0) && (N_Elements(title) NE 0) THEN ytitle = title
     IF (N_Elements(ztitle) EQ 0) && (N_Elements(title) NE 0) THEN ztitle = title
@@ -201,21 +230,7 @@ PRO cgAxis, xloc, yloc, zloc, $
     TVLCT, rr, gg, bb, /Get
 
     ; Choose a color.
-    IF N_Elements(sColor) EQ 0 THEN BEGIN
-           IF !D.Name EQ 'PS' THEN BEGIN
-                sColor = 'OPPOSITE' 
-           ENDIF ELSE BEGIN
-                IF (!D.Window GE 0) AND ((!D.Flags AND 256) NE 0) THEN BEGIN
-                    pixel = cgSnapshot(!D.X_Size-1,  !D.Y_Size-1, 1, 1)
-                    IF (Total(pixel) EQ 765) THEN sColor = 'BLACK'
-                    IF (Total(pixel) EQ 0) THEN sColor = 'WHITE'
-                    IF N_Elements(sColor) EQ 0 THEN sColor = 'OPPOSITE'
-                ENDIF ELSE sColor = 'OPPOSITE'
-           ENDELSE
-     ENDIF
-    IF N_Elements(sColor) EQ 0 THEN color = !P.Color ELSE  color = sColor
-    IF Size(color, /TYPE) EQ 3 THEN IF GetDecomposedState() EQ 0 THEN color = Byte(color)
-    IF Size(color, /TYPE) LE 2 THEN color = StrTrim(Fix(color),2)
+    color = cgDefaultColor(scolor, MODE=currentState)
      
     ; Draw the axis.
     IF Size(color, /TNAME) EQ 'STRING' THEN thisColor = cgColor(color) ELSE thisColor = color
@@ -231,6 +246,7 @@ PRO cgAxis, xloc, yloc, zloc, $
             FONT=font, $
             NORMAL=normal, $
             SAVE=save, $
+            T3D=t3d, $
             XAXIS=xaxis, $
             XLOG=xlog, $
             XTITLE=xtitle, $
@@ -250,6 +266,7 @@ PRO cgAxis, xloc, yloc, zloc, $
             FONT=font, $
             NORMAL=normal, $
             SAVE=save, $
+            T3D=t3d, $
             XAXIS=xaxis, $
             XLOG=xlog, $
             XTITLE=xtitle, $
@@ -269,6 +286,7 @@ PRO cgAxis, xloc, yloc, zloc, $
             FONT=font, $
             NORMAL=normal, $
             SAVE=save, $
+            T3D=t3d, $
             XAXIS=xaxis, $
             XLOG=xlog, $
             XTITLE=xtitle, $
@@ -288,6 +306,7 @@ PRO cgAxis, xloc, yloc, zloc, $
             FONT=font, $
             NORMAL=normal, $
             SAVE=save, $
+            T3D=t3d, $
             XAXIS=xaxis, $
             XLOG=xlog, $
             XTITLE=xtitle, $

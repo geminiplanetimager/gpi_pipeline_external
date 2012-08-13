@@ -3,7 +3,7 @@
 ; NAME:
 ;	TEN()
 ; PURPOSE:
-;	Converts a sexigesimal number or string to decimal.
+;	Converts a sexagesimal number or string to decimal.
 ; EXPLANATION:
 ;	Inverse of the SIXTY() function.
 ;
@@ -19,10 +19,10 @@
 ;       X = TEN(HRMNSC_STRING)
 ;
 ; INPUTS:
-;	HOUR_OR_DEG,MIN,SEC -- Scalars giving sexigesimal quantity in 
+;	HOUR_OR_DEG,MIN,SEC -- Scalars giving sexagesimal quantity in 
 ;		in order from largest to smallest.    
 ;                         or
-;       HRMNSC_STRING - String giving sexigesmal quantity separated by
+;       HRMNSC_STRING - String giving sexagesmal quantity separated by
 ;               spaces or colons e.g. "10 23 34" or "-3:23:45.2"
 ;               Any negative values should begin with a minus sign.
 ; OUTPUTS:

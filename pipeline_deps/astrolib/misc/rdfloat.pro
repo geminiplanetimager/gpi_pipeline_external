@@ -47,7 +47,7 @@ pro rdfloat,name,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16,v17, $
 ;
 ; EXAMPLES:
 ;      Each row in a file 'position.dat' contains a star number and 6 columns
-;      of data giving an RA and Dec in sexigesimal format.   Read into IDL 
+;      of data giving an RA and Dec in sexagesimal format.   Read into IDL 
 ;      variables.     
 ;
 ;       IDL> rdfloat,'position.dat',ID,hr,min,sec,deg,dmin,dsec  
@@ -120,7 +120,7 @@ pro rdfloat,name,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16,v17, $
    readf, lun, bigarr
    free_lun, lun
 
-   if not keyword_set(SILENT) then $
+   if ~keyword_set(SILENT) then $
        message, strtrim(nlines,2) + ' lines of data read',/INF
 
    Nvector = (N_params()-1) < ncol

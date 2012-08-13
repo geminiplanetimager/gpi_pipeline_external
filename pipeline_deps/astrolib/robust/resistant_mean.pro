@@ -53,7 +53,7 @@ PRO RESISTANT_Mean,Y,CUT,Mean,Sigma,Num_Rej,goodvec = goodvec, $
 ;       The mean should be near 0, and meansig should be near 0.01 ( =
 ;        1/sqrt(10000) ).     
 ; PROCEDURES USED:
-;       MEAN() - compute simple mean, in ITTVIS library
+;       MEAN() - compute simple mean, in Exelis library
 ; REVISION HISTORY:
 ;       Written, H. Freudenreich, STX, 1989; Second iteration added 5/91.
 ;       Use MEDIAN(/EVEN)    W. Landsman   April 2002
@@ -65,6 +65,9 @@ PRO RESISTANT_Mean,Y,CUT,Mean,Sigma,Num_Rej,goodvec = goodvec, $
 ;       Use of double precision S. Bianchi February 2008
 ;       More double precision B. Carcich December 2009
 ;       Added DIMENSION keyword (from M. Desnoyer) B. Carcich December 2009
+;       Use IDL's MEAN() function instead of AVG() W. Landsman Jan 2012
+;       Use of Dimension keyword yielded transpose of correct value
+;                     W. Landsman  July 2012
 ;-
 
  On_Error,2
@@ -80,10 +83,10 @@ PRO RESISTANT_Mean,Y,CUT,Mean,Sigma,Num_Rej,goodvec = goodvec, $
  indouble = size(Y,/tname) EQ 'DOUBLE'          ;Is input double precision?
  
 ; Average over a single dimension?
-   if n_elements(DIMENSION)  then DIM = long(DIMENSION[0]) $
+   if N_elements(DIMENSION)  then DIM = long(DIMENSION[0]) $
    else if n_elements(SUMDIM) then DIM = long(SUMDIM[0]) 
- if sz[0] gt 1L and sz[0] lt 5L and (N_elements(DIM) EQ 1) then begin
-   if DIM lt 1L or dim gt sz[0] then begin
+ if (sz[0] gt 1L) && (sz[0] lt 5L) && (N_elements(DIM) EQ 1) then begin
+   if (DIM lt 1L) || (dim gt sz[0]) then begin
      message,/continue, 'Invalid dimension number'
      print,'Syntax - Resistant_Mean, Vector, Sigma_cut, Mean'
      print,'        , [ Sigma_mean, Num_Rejected, Dimension={1|2} ]'
@@ -96,7 +99,7 @@ PRO RESISTANT_Mean,Y,CUT,Mean,Sigma,Num_Rej,goodvec = goodvec, $
    colhgt = sz[sz[0]+2]/rowlen
    sd = size([0d0])
    Num_Rej = make_array(od[0],od[1],od[2],od[3],val=0L)
-   if keyword_set(double) or indouble then v=0d0 else v=0.
+   if keyword_set(double) || indouble then v=0d0 else v=0.
    Mean = make_array(od[0],od[1],od[2],od[3],val=v)
    Sigma = Mean
    ;;;
@@ -104,6 +107,7 @@ PRO RESISTANT_Mean,Y,CUT,Mean,Sigma,Num_Rej,goodvec = goodvec, $
    else iwCUT = make_array(colhgt,val=0L)
    ;;;
    ijkL=0L
+  
    for i=0L,od[0]-1L do begin
    for j=0L,od[1]-1L do begin
    for k=0L,od[2]-1L do begin
@@ -121,11 +125,14 @@ PRO RESISTANT_Mean,Y,CUT,Mean,Sigma,Num_Rej,goodvec = goodvec, $
      Mean[ijkL] = M
      Sigma[ijkL] = S
      Num_Rej[ijkL] = N
-     ijkL=ijkL+1L
+     ijkL++
    endfor
    endfor
    endfor
    endfor
+   mean  = transpose(mean)
+   sigma = transpose(sigma)
+   num_rej = transpose(num_rej)
    return
  endif
 
@@ -146,7 +153,7 @@ PRO RESISTANT_Mean,Y,CUT,Mean,Sigma,Num_Rej,goodvec = goodvec, $
  YMed    = MEDIAN(Y,/EVEN, DOUBLE=double)
  AbsDev  = ABS(Y-YMED)
  MedAbsDev = MEDIAN(AbsDev,/EVEN, DOUBLE=double)/MADscale
- IF MedAbsDev LT MADlim THEN MedAbsDev = AVG(AbsDev, DOUBLE=double)/MADscale2
+ IF MedAbsDev LT MADlim THEN MedAbsDev = MEAN(AbsDev, DOUBLE=double)/MADscale2
 
  Cutoff    = Cut*MedAbsDev
 

@@ -1,4 +1,4 @@
-function helio_rv,HJD,T,P,V0,K,e,omega,single=single
+function helio_rv,HJD,T,P,V0,K,e,omega
 ;+ 
 ; NAME:
 ;    HELIO_RV
@@ -8,19 +8,19 @@ function helio_rv,HJD,T,P,V0,K,e,omega,single=single
 ;
 ; EXPLANATION:
 ;    This function will return the heliocentric radial velocity of a 
-;    spectroscopic binary star at a given heliocentric Julian date (HJD) 
+;    spectroscopic binary star at a given heliocentric date 
 ;    given its orbit.
 ;
 ; CALLING SEQUENCE:
 ;
-;  Result = HELIO_RV ( Reduced_HJD ,T ,Period ,Gamma , K, [,e ,Omega ] )
+;  Result = HELIO_RV ( JD ,T ,Period ,Gamma , K, [,e ,Omega ] )
 ;
 ; INPUT:
 ;
-; Reduced_HJD   - Reduced_HJD of observation
-; T             - Reduced_HJD of periastron passage (max. +ve velocity
-;                 for circular orbits)
-; Period        - the period in days
+; JD            - Time of observation
+; T             - Time of periastron passage (max. +ve velocity
+;                 for circular orbits), same time system as JD
+; Period        - the period in same units as JD
 ; Gamma         - systemic velocity
 ; K             - velocity semi-amplitude in the same units as Gamma.
 ; e             - eccentricity of the orbit, default is 0.
@@ -34,8 +34,13 @@ function helio_rv,HJD,T,P,V0,K,e,omega,single=single
 ;
 ; RESTRICTIONS:
 ;
-;  To ensure consistency with the routines JULDATE and HELIO_JD, the
-;  reduced HJD must be used throughtout.
+;  The user should ensure consistency with all time systems being
+;  used (i.e. JD and T should be in the same units and time system).
+;  Generally, users should reduce large time values by subtracting 
+;  a large constant offset, which may improve numerical accuracy.
+;  
+;  If using the the routines JULDATE and HELIO_JD, the reduced HJD
+;  time system must be used throughtout.
 ;
 ; EXAMPLES:
 ;
@@ -47,7 +52,7 @@ function helio_rv,HJD,T,P,V0,K,e,omega,single=single
 ; IDL> juldate ,[94,10,25,17,30],JD                 ;Get Geocentric julian date
 ; IDL> hjd = helio_jd(jd,ten(04,38,16)*15.,ten(20,41,05)) ; Convert to HJD
 ; IDL> print, helio_rv(hjd,46487.5303D,2.0563056D,-6.0,59.3)
-;      -63.661180
+;      -62.965569
 ;
 ; NB. 1. The routines JULDATE and HELIO_JD return a reduced HJD (HJD - 2400000)
 ;        and so T and P must be specified in the same fashion.
@@ -79,30 +84,29 @@ function helio_rv,HJD,T,P,V0,K,e,omega,single=single
 ;  BUG - omega was altered by the routine - corrected Feb 95,Pierre Maxted
 ;  Iteration for E changed to that  given by Reidel , Feb 95,Pierre Maxted
 ;  /SINGLE keyword removed.                           May 96,Pierre Maxted
+;;       
+;  Removed limitation of time system on HJD, C. Markwardt, 2011-04-15
 ;
-;       Converted to IDL V5.0   W. Landsman   September 1997
+;  Change convergence test from relative to absolute precision on E
+;                                                     Pierre Maxted, Apr 12
 ;-
 ;
 ; 
   ON_ERROR, 2   ; Return to caller
+  compile_opt idl2
 ;
 ; Check suitable no. of parameters have been entered.
 ;
   if N_params() ne 5 and N_params() ne 7 then begin
-   print,'Syntax - Result = HELIO_RV (Reduced_HJD ,T ,Period ,Gamma, K)'
+   print,'Syntax - Result = HELIO_RV (JD ,T ,Period ,Gamma, K)'
    print,'         OR'
-   print,'         Result = HELIO_RV (Reduced_HJD ,T ,Period ,Gamma, K ,e ,Omega)'
+   print,'         Result = HELIO_RV (JD ,T ,Period ,Gamma, K ,e ,Omega)'
    print,'Further help - type doc_library,"HELIO_RV".'
  endif else begin
 ;
-; Check reduced HJD has been used
-;
-  if (max(HJD) ge 1D5) then message,'Full HJD entered, use reduced HJD.'
-  if (T ge 1D5) then message,'T entered as full HJD, use reduced HJD.'
-;
 ; Circular orbits
 ;
-  if not keyword_set(omega) and not keyword_set(e) then begin
+  if ~keyword_set(omega) and ~keyword_set(e) then begin
    e = 0.0
    omega = 0.0
   endif 
@@ -117,14 +121,11 @@ function helio_rv,HJD,T,P,V0,K,e,omega,single=single
 ;
 ; Now refine this estimate using  formulae given by Reidel.
 ;
- i=0
  repeat begin
- i=i+1
   E0=E1 
   M0 = E0 - e*sin(E0)
   E1 = E0 + (M-M0)/(1.0 - e*cos(E0))
-  TEST = max(abs( (E1-E0)/E1[where (E1 ne 0.0)]))
- endrep until TEST lt 1D-8
+ endrep until max(abs(E1-E0)) lt 1D-8
 ;
 ; Now calculate nu
 ;

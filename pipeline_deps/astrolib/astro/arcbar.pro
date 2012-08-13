@@ -17,8 +17,8 @@ Pro arcbar, hdr, arclen, LABEL = label, SIZE = size, THICK = thick, DATA =data, 
 ;               or arcseconds (if /SECONDS is set) 
 ;
 ; OPTIONAL KEYWORD INPUTS:
-;       COLOR - integer scalar specifying the color to draw the arcbar (using
-;               PLOTS), default = !P.COLOR
+;       COLOR - name  or integer scalar specifying the color to draw the arcbar 
+;               See cgColor for a list of available color names
 ;       /DATA - if set and non-zero, then the POSITION keyword is given in data
 ;              units
 ;       LABEL - string giving user defined label for bar.  Default label is size
@@ -48,7 +48,7 @@ Pro arcbar, hdr, arclen, LABEL = label, SIZE = size, THICK = thick, DATA =data, 
 ;       If data coordinates are not set, then ARCBAR assumes that the displayed
 ;       image size is given by the NAXIS1 keyword in the FITS header.
 ; PROCEDURE CALLS:
-;       AD2XY, EXTAST, GSSSADXY, SXPAR()
+;       AD2XY, EXTAST, GSSSADXY, SXPAR(), cgPlot, cgText
 ; REVISON HISTORY:
 ;       written by L. Taylor (STX) from ARCBOX (Boothman)
 ;       modified for Version 2 IDL,                     B. Pfarr, STX, 4/91
@@ -62,6 +62,7 @@ Pro arcbar, hdr, arclen, LABEL = label, SIZE = size, THICK = thick, DATA =data, 
 ;       Use device-independent label offset  W. Landsman   August 2001
 ;       Allow font keyword to be passed.  T. Robishaw Apr. 2006
 ;       Remove obsolete TVCURSOR command  W. Landsman Jul 2007
+;       Use Coyote Graphics W. Landsman  February 2011
 ;-
 ;
  compile_opt idl2
@@ -77,10 +78,11 @@ Pro arcbar, hdr, arclen, LABEL = label, SIZE = size, THICK = thick, DATA =data, 
 
  if N_params() LT 2 then arclen = 1      ;default size = 1 arcmin
 
- if not keyword_set( SIZE ) then size = 1.0
- if not keyword_set( THICK ) then thick = !P.THICK
- if not keyword_set( COLOR ) then color = !P.COLOR
- if not keyword_set( FONT ) then font = !P.FONT
+ setdefaultvalue,size, 1.0
+ setdefaultvalue, thick, !P.THICK
+ setdefaultvalue, size, 1.0
+ setdefaultvalue, thick, !P.THICK
+ setdefaultvalue, font, !P.FONT
 
  a = bastr.crval[0]
  d = bastr.crval[1]
@@ -106,7 +108,7 @@ Pro arcbar, hdr, arclen, LABEL = label, SIZE = size, THICK = thick, DATA =data, 
 
  dmini2 = round(dmin * arclen)
 
- if not keyword_set( POSITION) then begin
+ if ~keyword_set( POSITION) then begin
           print,'Position the cursor where you want the bar to begin'
           print,'Hit right mouse button when ready'
           cursor,xi,yi,1,/device
@@ -125,25 +127,25 @@ Pro arcbar, hdr, arclen, LABEL = label, SIZE = size, THICK = thick, DATA =data, 
  xf = xi + dmini2
  dmini3 = dmini2/10             ;Height of vertical end bars = total length/10.
 
- plots,[xi,xf],[yi,yi], COLOR=color, /DEV, THICK=thick
- plots,[xf,xf],[ yi+dmini3, yi-dmini3 ], COLOR=color, /DEV, THICK=thick
- plots,[xi,xi],[ yi+dmini3, yi-dmini3 ], COLOR=color, /DEV, THICK=thick
+ cgPlots,[xi,xf],[yi,yi], COLOR=color, /DEV, THICK=thick
+ cgPlots,[xf,xf],[ yi+dmini3, yi-dmini3 ], COLOR=color, /DEV, THICK=thick
+ cgPlots,[xi,xi],[ yi+dmini3, yi-dmini3 ], COLOR=color, /DEV, THICK=thick
 
- if not keyword_set(Seconds) then begin
+ if ~keyword_set(Seconds) then begin
  if (!D.NAME EQ 'PS') and (FONT EQ 0) then $        ;Postscript Font?
         arcsym='!9'+string(162B)+'!X' else arcsym = "'" 
  endif else begin
  if (!D.NAME EQ 'PS') and (FONT EQ 0) then $        ;Postscript Font?
         arcsym = '!9'+string(178B)+'!X' else arcsym = "''" 
  endelse
- if not keyword_set( LABEL) then begin
+ if ~keyword_set( LABEL) then begin
      if (arclen LT 1) then arcstr = string(arclen,format='(f4.2)') $
         else arcstr = string(arclen)
      label = strtrim(arcstr,2) + arcsym 
  endif
 
- yoffset = round(!D.Y_CH_SIZE/3.)
- xyouts,(xi+xf)/2, yi+yoffset, label, SIZE = size,COLOR=color,/DEV,  $
+ yoffset = round(!D.Y_CH_SIZE/2.)
+ cgTEXT,(xi+xf)/2, yi+yoffset, label, SIZE = size,COLOR=color,/DEV,  $
        alignment=0.5, CHARTHICK=thick, FONT=font
 
  return

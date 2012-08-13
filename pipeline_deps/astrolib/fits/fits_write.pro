@@ -131,7 +131,7 @@ pro fits_write,file_or_fcb,data,header_in,extname=extname,extver=extver, $
         message = ''
         s = size(file_or_fcb) & fcbtype = s[s[0]+1]
 	fcbsize = n_elements(file_or_fcb)
-        if (fcbsize ne 1) or ((fcbtype ne 7) and (fcbtype ne 8)) then begin
+        if (fcbsize ne 1) || ((fcbtype ne 7) && (fcbtype ne 8)) then begin
                 message = 'Invalid Filename or FCB supplied'
                 goto,error_exit
         end
@@ -186,7 +186,7 @@ pro fits_write,file_or_fcb,data,header_in,extname=extname,extver=extver, $
 	if naxis gt 0 then axis = s[1:naxis]
 	idltype = s[naxis+1]
 
-	if (idltype gt 5) and (idltype NE 12) and (idltype NE 13) then begin
+	if (idltype gt 5) && (idltype NE 12) && (idltype NE 13) then begin
 		message='Data array is an invalid type'
 		goto,error_exit
 	endif
@@ -233,7 +233,7 @@ pro fits_write,file_or_fcb,data,header_in,extname=extname,extver=extver, $
 	hpos2 = where(keywords eq 'BEGIN EX') & hpos2 = hpos2[0] ;begin ext.
 	hpos3 = where(keywords eq 'END     ') & hpos3 = hpos3[0] ;end of header	
 
-	if (hpos1 gt 0) and (hpos2 lt hpos1) then begin
+	if (hpos1 gt 0) && (hpos2 lt hpos1) then begin
 		message,'Invalid header BEGIN EXTENSION HEADER ... out of place'
 		goto,error_exit
 	endif
@@ -248,12 +248,12 @@ pro fits_write,file_or_fcb,data,header_in,extname=extname,extver=extver, $
 ; was written
 ;
 	if (fcb.nextend eq -1) then begin		;no pdu written yet?
-	    if (hpos2 gt 0) or (Axtension ne '') or (Aextname ne '') or $
-	       (Aextver ne 0) or (Aextlevel ne 0) then begin
+	    if (hpos2 gt 0) || (Axtension ne '') || (Aextname ne '') || $
+	       (Aextver ne 0) || (Aextlevel ne 0) then begin
 ;
 ; write null image PDU
 ;
-			if (hpos1 gt 0) and (hpos2 gt (hpos1+1)) then $
+			if (hpos1 gt 0) && (hpos2 gt (hpos1+1)) then $
 				hmain = [header[hpos1+1:hpos2-1],'END     ']
 			fits_write,fcb,0,hmain,/no_abort,message=message
 			if message NE '' then goto,error_exit
@@ -284,7 +284,7 @@ pro fits_write,file_or_fcb,data,header_in,extname=extname,extver=extver, $
 	end else begin    ;PCOUNT, GCOUNT are mandatory for extensions
  		sxaddpar,h,'PCOUNT',0
  		sxaddpar,h,'GCOUNT',1
-                if (Axtension eq 'BINTABLE')  or $
+                if (Axtension eq 'BINTABLE') || $
                    (Axtension eq 'TABLE   ') then begin
                        tfields = sxpar(header,'TFIELDS') > 0              
                        sxaddpar,h,'TFIELDS',tfields
@@ -298,7 +298,7 @@ pro fits_write,file_or_fcb,data,header_in,extname=extname,extver=extver, $
         if idltype EQ 13 then $
                sxaddpar,header,'BZERO',2147483648,'Data is unsigned long'
         if idltype GE 12 then sxdelpar,header,'BSCALE'
-	if (idltype EQ 4) or (idltype EQ 5) then $
+	if (idltype EQ 4) || (idltype EQ 5) then $
 	          sxdelpar,header,['BSCALE','BZERO']
 ;
 ; delete special keywords from user supplied header
@@ -340,7 +340,7 @@ write_header:
 ;
 ; convert to IEEE
 ;
-            unsigned = (idltype EQ 12) or (idltype EQ 13)
+            unsigned = (idltype EQ 12) || (idltype EQ 13)
             if idltype EQ 12 then newdata = fix(data - 32768)
             if idltype EQ 13 then newdata = long(data - 2147483648)
 ;

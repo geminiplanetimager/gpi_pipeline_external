@@ -9,8 +9,9 @@
 ;       between two structure arrays (may have different struct.definitions),
 ;       and return a structured List of fields found different.
 ;
-;       The ITTVIS contrib library has a faster but less powerful procedure
-;       struct_equal.pro, see http://www.ittvis.com/codebank/search.asp?FID=541
+;       The Exelis contrib library has a faster but less powerful procedure
+;       struct_equal.pro, see 
+;       http://www.exelisvis.com/Default.aspx?tabid=1540&id=1175
 ;
 ; CALLING SEQUENCE:
 ;       diff_List = compare_struct( struct_A, struct_B [ EXCEPT=, /BRIEF,

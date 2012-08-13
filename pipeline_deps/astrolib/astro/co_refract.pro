@@ -104,6 +104,7 @@
 ;    Corrected slight bug associated with scalar vs. vector temperature and 
 ;               pressure inputs. 6/10/2002
 ;    Fixed problem with vector input when /TO_OBSERVED set W. Landsman Dec 2005
+;    Allow arrays with more than 32767 elements W.Landsman/C.Dickinson Feb 2010
 ;-
 function co_refract_forward, a, P=P, T=T
 
@@ -115,6 +116,7 @@ function co_refract_forward, a, P=P, T=T
 ;    P:  Pressure [in millibars]. Default is 1010 millibars. [scalar or vector]
 ;    T:  Ground Temp [in Celsius].  Default is 0 Celsius. [scalar or vector]
 
+compile_opt idl2
 d2r = !dpi/180.
 if n_elements(P) eq 0 then P = 1010.
 if n_elements(T) eq 0 then T = 283.
@@ -142,6 +144,7 @@ function co_refract, a, altitude=altitude, pressure=pressure,  $
 ; This is the main window.  Calls co_refract_forward either iteratively or a 
 ; single time depending on the direction we are going for refraction.
 
+compile_opt idl2
 o = keyword_set(To_observed)
 alpha = 0.0065 ; temp lapse rate [deg C per meter]
 
@@ -164,7 +167,7 @@ endif else begin
 ; if there are multiple elevations but only one temp and pressure entered, 
 ; expand those to be arrays of the same size.
 	P = pressure + a*0. & T = temperature + a*0.
-        for i=0,na-1 do begin
+        for i=0L,na-1 do begin
                 ;calculate initial refraction guess
                 dr = co_refract_forward(a[i],P=P[i],T=T[i])
             cur = a[i] + dr ; guess of observed location

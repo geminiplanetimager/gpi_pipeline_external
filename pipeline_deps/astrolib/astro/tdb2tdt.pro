@@ -164,7 +164,7 @@
 ;   Documented and vectorized, 30 Jun 2001
 ;   
 ;
-;  $Id: tdb2tdt.pro,v 1.1.1.1 2011/10/19 16:28:55 LAB Exp $
+;  $Id: tdb2tdt.pro,v 1.4 2001/07/01 07:37:40 craigm Exp $
 ;
 ;-
 ; Copyright (C) 2001, Craig Markwardt

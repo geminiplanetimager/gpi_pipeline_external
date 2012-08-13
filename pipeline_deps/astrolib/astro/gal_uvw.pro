@@ -24,6 +24,8 @@ pro gal_uvw, u, v, w, distance = distance, LSR = lsr, ra=ra,dec=dec, $
 ;      Dec - Declination in *Degrees*
 ;     (2) Proper Motion
 ;      PMRA = Proper motion in RA in arc units (typically milli-arcseconds/yr)
+;            If given mu_alpha --proper motion in seconds of time/year - then
+             this is equal to 15*mu_alpha*cos(dec)
 ;      PMDEC = Proper motion in Declination (typically mas/yr)
 ;     (3) Radial Velocity
 ;      VRAD = radial velocity in km/s
@@ -34,9 +36,11 @@ pro gal_uvw, u, v, w, distance = distance, LSR = lsr, ra=ra,dec=dec, $
 ;            typically milliarcseconds (mas)
 ;
 ; OPTIONAL INPUT KEYWORD:
-;      /LSR - If this keyword is set, then the output velocities will be 
-;             corrected for the solar motion (U,V,W)_Sun = (-10.00,+5.25,+7.17)  
-;             (Dehnen & Binney, 1998) to the local standard of rest
+;      /LSR - If this keyword is set, then the output velocities will be
+;             corrected for the solar motion (U,V,W)_Sun = (-8.5, 13.38, 6.49) 
+;            (Coskunoglu et al. 2011 MNRAS) to the local standard of rest.
+;            Note that the value of the solar motion through the LSR remains
+;            poorly determined.
 ;  EXAMPLE:
 ;      (1) Compute the U,V,W coordinates for the halo star HD 6755.  
 ;          Use values from Hipparcos catalog, and correct to the LSR
@@ -67,7 +71,9 @@ pro gal_uvw, u, v, w, distance = distance, LSR = lsr, ra=ra,dec=dec, $
 ;        and update the Sun velocity           Sergey Koposov June 2008
 ;	   vectorization of the loop -- performance on large arrays 
 ;        is now 10 times higher                Sergey Koposov December 2008
+;      More recent value of solar motion WL/SK   Jan 2011
 ;-
+ compile_opt idl2
  if N_Params() EQ 0 then begin
        print,'Syntax - GAL_UVW, U, V, W, [/LSR, RA=, DEC=, PMRA= ,PMDEC=, VRAD='
        print,'                  Distance=, PLX='
@@ -99,9 +105,9 @@ pro gal_uvw, u, v, w, distance = distance, LSR = lsr, ra=ra,dec=dec, $
          [ 0.8734370902, -0.4448296300, -0.1980763734], $
          [ 0.4838350155,  0.7469822445, +0.4559837762] ]
 
- vec1=vrad
- vec2=k*pmra/plx
- vec3=k*pmdec/plx
+ vec1 = vrad
+ vec2 = k*pmra/plx
+ vec3 = k*pmdec/plx
 
  u = ( A_G[0,0]*cosa*cosd+A_G[0,1]*sina*cosd+A_G[0,2]*sind)*vec1+$
      (-A_G[0,0]*sina     +A_G[0,1]*cosa                   )*vec2+$
@@ -113,11 +119,11 @@ pro gal_uvw, u, v, w, distance = distance, LSR = lsr, ra=ra,dec=dec, $
      (-A_G[2,0]*sina     +A_G[2,1]*cosa                   )*vec2+$
      (-A_G[2,0]*cosa*sind-A_G[2,1]*sina*sind+A_G[2,2]*cosd)*vec3
 
- lsr_vel=[-10.00,5.25,7.17]
+ lsr_vel=[-8.5,13.38,6.49]
  if keyword_set(lsr) then begin
-	u=u+lsr_vel[0]
-	v=v+lsr_vel[1]
- 	w=w+lsr_vel[2]
+	u = u+lsr_vel[0]
+	v = v+lsr_vel[1]
+ 	w = w+lsr_vel[2]
  end
 
  return

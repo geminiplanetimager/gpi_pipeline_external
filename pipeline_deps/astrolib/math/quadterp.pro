@@ -73,7 +73,8 @@ PRO quadterp, xtab, ytab, xint, yint, MISSING = MISSING
 ;       YINT is a scalar if XINT is a scalar   W. Landsman Dec 1999
 ;       Use VALUE_LOCATE instead of TABINV W. Landsman  Feb. 2000
 ;-
- On_error,0
+ On_error,2
+ compile_opt idl2
 
  if N_params() LT 4 then begin
      print,'Syntax - QUADTERP, xtab, ytab, xint, yint, [ MISSING = ]'

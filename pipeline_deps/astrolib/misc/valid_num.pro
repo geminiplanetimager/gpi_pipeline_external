@@ -40,7 +40,7 @@
 ;                       VALID_NUM to replace STRNUMBER in FITS routines.
 ;          Version 3 Wayne Landsman rewrite to use STREGEX, vectorize
 ;          Version 4 W.L. (fix from C. Markwardt) Better Stregex expression, 
-;                    was missing numbers like '134.' before
+;                    was missing numbers like '134.' before Jan 1 2010
 ;-            
 
 FUNCTION valid_num, string, value, INTEGER=integer

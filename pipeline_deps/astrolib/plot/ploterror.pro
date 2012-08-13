@@ -40,8 +40,11 @@ PRO ploterror, x, y, xerr, yerr, NOHAT=hat, HATLENGTH=hln, ERRTHICK=eth, $
 ;              THICK plotting keyword.
 ;     ERRSTYLE  = the line style to use when drawing the error bars.  Uses
 ;              the same codes as LINESTYLE.
-;     ERRCOLOR =  scalar integer (0 - !D.N_TABLE) or string (e.g. 'red')
-;              specifying the color to use for the error bars
+;     ERRCOLOR =  String (e.g. 'red') or scalar integer (0 - !D.N_TABLE)
+;              specifying the color to use for the error bars.   See CGCOLOR()
+;              for a list of possible color names.  See 
+;              http://www.idlcoyote.com/cg_tips/legcolor.php
+;              for a warning about the use of indexed color
 ;     NSKIP = Integer specifying the error bars to be plotted.   For example,
 ;              if NSKIP = 2 then every other error bar is plotted; if NSKIP=3
 ;              then every third error bar is plotted.   Default is to plot
@@ -121,6 +124,7 @@ PRO ploterror, x, y, xerr, yerr, NOHAT=hat, HATLENGTH=hln, ERRTHICK=eth, $
 ;     W. Landsman  Add Coyote Graphics                              Feb 2011
 ;     W. Landsman Make keyword name ERRCOLOR instead of ECOLOR 
 ;                 Speedup when no ERRCOLOR defined                  Feb 2011
+;     D. Fanning Use PLOTS instead of CGPLOTS for speed             Jan 2012
 ;-
 ;                       Check the parameters.
  On_error, 2
@@ -132,6 +136,18 @@ PRO ploterror, x, y, xerr, yerr, NOHAT=hat, HATLENGTH=hln, ERRTHICK=eth, $
         print, "Syntax: ploterror, [x,] y, [xerr], yerr"
         RETURN
  ENDIF
+ 
+IF Keyword_Set(window) THEN BEGIN
+
+   currentWindow = cgQuery(/CURRENT, COUNT=wincnt)
+   IF wincnt EQ 0 THEN replaceCmd = 0 ELSE replaceCmd=1
+   cgWindow, 'ploterror', x, y, xerr, yerr, NOHAT=hat, HATLENGTH=hln, ERRTHICK=eth, $
+      ERRSTYLE=est, TYPE=itype, XRANGE = xrange, XLOG=xlog, YLOG=ylog, $
+      NSKIP = nskip, NOCLIP = noclip, ERRCOLOR= ecol, YRANGE = yrange, $
+      NSUM = nsum, _EXTRA = pkey, REPLACECMD=replaceCmd
+   RETURN
+   
+ENDIF
 
 ; Error bar keywords (except for HATLENGTH; this one will be taken care of 
 ; later, when it is time to deal with the error bar hats).
@@ -144,7 +160,7 @@ PRO ploterror, x, y, xerr, yerr, NOHAT=hat, HATLENGTH=hln, ERRTHICK=eth, $
  setdefaultvalue, nskip, 1
  setdefaultvalue, nsum, !p.nsum
  setdefaultvalue, traditional, 0
-
+ 
 ;				Other keywords.
 
  IF (keyword_set(itype)) THEN BEGIN
@@ -245,12 +261,8 @@ PRO ploterror, x, y, xerr, yerr, NOHAT=hat, HATLENGTH=hln, ERRTHICK=eth, $
 ; smoothing with FREBIN
 
  cgPlot, xx, yy, XRANGE = xrange, YRANGE = yrange, XLOG = xlog, YLOG = ylog, $
-         _EXTRA = pkey, NOCLIP = noclip, NSum= 1, WINDOW = window, $
-	  TRADITIONAL=traditional
-     if keyword_set(window) then  begin 
-          cgcontrol, execute = 0
-          wset,cgquery(/current)
-     endif	  
+         _EXTRA = pkey, NOCLIP = noclip, NSum= 1, TRADITIONAL=traditional
+
 ;	Plot the error bars.   Compute the hat length in device coordinates
 ;       so that it remains fixed even when doing logarithmic plots.
 
@@ -265,38 +277,39 @@ PRO ploterror, x, y, xerr, yerr, NOHAT=hat, HATLENGTH=hln, ERRTHICK=eth, $
     sv_psym = !P.PSYM & !P.PSYM = 0
     
     if ylog EQ 1 then ylo = ylo > 10^min(ycrange)    
-    if (xlog EQ 1) and (np EQ 4) then  xlo = xlo > 10^min(xcrange)    
+    if (xlog EQ 1) && (np EQ 4) then  xlo = xlo > 10^min(xcrange)    
 	                   
 ; Only draw error bars for X values within XCRANGE
     if xlog EQ 1 then xcrange = 10^xcrange
     g = where((xx GT xcrange[0]) and (xx LE xcrange[1]), Ng)
 
-    if (Ng GT 0) and (Ng NE n) then begin  
+    if (Ng GT 0) && (Ng NE n) then begin  
           istart = min(g, max = iend)  
     endif else begin
           istart = 0L & iend = n-1
     endelse
     
-;    If N_elements(ecol) EQ 0 then ecol = cgcolor('opposite')
+    ecol = cgDefaultColor(ecol, Default='opposite')
+    IF Size(ecol, /TNAME) EQ 'STRING' THEN ecol = cgColor(ecol)
 					 
  FOR i = istart, iend, Nskip DO BEGIN     
 
-    cgplots, [xx[i],xx[i]], [ylo[i],yhi[i]], LINESTYLE=est,THICK=eth,  $
-		NOCLIP = noclip, ADDCMD= window, COLOR = ecol
+    Plots, [xx[i],xx[i]], [ylo[i],yhi[i]], LINESTYLE=est,THICK=eth,  $
+		NOCLIP = noclip, COLOR = ecol
 ;                                                         Plot X-error bars 
-    if np EQ 4 then cgplots, [xlo[i],xhi[i]],[yy[i],yy[i]],LINESTYLE=est, $
-		THICK=eth, COLOR = ecol, ADDCMD=window, NOCLIP = noclip
+    if np EQ 4 then Plots, [xlo[i],xhi[i]],[yy[i],yy[i]],LINESTYLE=est, $
+		THICK=eth, COLOR = ecol, NOCLIP = noclip
 	IF (hat NE 0) THEN BEGIN
 		IF (N_elements(hln) EQ 0) THEN hln = !D.X_VSIZE/100. 
 		exx1 = data_low[0,i] - hln/2.
 		exx2 = exx1 + hln
 		
-		cgplots, [exx1,exx2], [data_low[1,i],data_low[1,i]], $  
-		  COLOR=ecol, ADDCMD=window, $
-                      LINESTYLE=est,THICK=eth,/DEVICE, noclip = noclip
-		cgplots, [exx1,exx2], [data_hi[1,i],data_hi[1,i]], $
-		 COLOR = ecol, ADDCMD = window, $
-                       LINESTYLE=est,THICK=eth,/DEVICE, noclip = noclip
+		Plots, [exx1,exx2], [data_low[1,i],data_low[1,i]], $  
+		  COLOR=ecol, $
+      LINESTYLE=est,THICK=eth,/DEVICE, noclip = noclip
+		Plots, [exx1,exx2], [data_hi[1,i],data_hi[1,i]], $
+		 COLOR = ecol, $
+     LINESTYLE=est,THICK=eth,/DEVICE, noclip = noclip
 
 ;                                                        Plot Y-error bars
 
@@ -304,18 +317,15 @@ PRO ploterror, x, y, xerr, yerr, NOHAT=hat, HATLENGTH=hln, ERRTHICK=eth, $
                    IF (N_elements(hln) EQ 0) THEN hln = !D.Y_VSIZE/100.
                    eyy1 = x_low[1,i] - hln/2.
                    eyy2 = eyy1 + hln
-                   cgplots, [x_low[0,i],x_low[0,i]], [eyy1,eyy2],COLOR = ecol, $
-                         LINESTYLE=est,THICK=eth,/DEVICE, NOCLIP = noclip, $
-			 ADDCMD= window
-                   cgplots, [x_hi[0,i],x_hi[0,i]], [eyy1,eyy2],COLOR = ecol, $
-                         LINESTYLE=est,THICK=eth,/DEVICE, NOCLIP = noclip, $
-			 ADDCMD = window
+                   Plots, [x_low[0,i],x_low[0,i]], [eyy1,eyy2],COLOR = ecol, $
+                         LINESTYLE=est,THICK=eth,/DEVICE, NOCLIP = noclip
+                   Plots, [x_hi[0,i],x_hi[0,i]], [eyy1,eyy2],COLOR = ecol, $
+                         LINESTYLE=est,THICK=eth,/DEVICE, NOCLIP = noclip
                 ENDIF
 	ENDIF
     NOPLOT:
  ENDFOR
  !P.PSYM = sv_psym
-  if keyword_set(window) then cgcontrol,execute=1
 ;
  RETURN
  END

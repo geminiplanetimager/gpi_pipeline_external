@@ -50,7 +50,7 @@ FUNCTION  ROBUST_SIGMA,Y, ZERO=REF, GOODVEC = Q
  MAD = MEDIAN( ABS(Y-Y0), /EVEN )/0.6745
 
 ; If the MAD=0, try the MEAN absolute deviation:
- IF MAD LT EPS THEN MAD = AVG( ABS(Y-Y0) )/.80
+ IF MAD LT EPS THEN MAD = MEAN( ABS(Y-Y0) )/.80
  IF MAD LT EPS THEN RETURN, 0.0
 
 ; Now the biweighted value:

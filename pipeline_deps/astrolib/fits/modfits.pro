@@ -7,8 +7,11 @@ pro MODFITS, filename, data, header, EXTEN_NO = exten_no, ERRMSG = errmsg, $
 ; PURPOSE:
 ;      Modify a FITS file by updating the header and/or data array.  
 ; EXPLANATION:
-;      The size of the supplied FITS header or data array
-;      does not need to match the size of the existing header or data array.
+;      Update the data and/or header in a specified FITS extension or primary
+;      HDU.
+;    
+;      The size of the supplied FITS header or data array does not
+;      need to match the size of the existing header or data array.
 ;
 ; CALLING SEQUENCE:
 ;      MODFITS, Filename_or_fcb, Data, [ Header, EXTEN_NO =, EXTNAME= , ERRMSG=]
@@ -92,10 +95,8 @@ pro MODFITS, filename, data, header, EXTEN_NO = exten_no, ERRMSG = errmsg, $
 ;       header in a FITS files, and FXBGROW to enlarge the size of a binary 
 ;       table.
 ;       
-;       This version of MODFITS must be used with a post Sep 2006 version of FITS_OPEN.
-;
 ; RESTRICTIONS:
-;       (1) Cannot be used to modifiy the data in FITS files with random 
+;       (1) Cannot be used to modify the data in FITS files with random 
 ;           groups or variable length binary tables.   (The headers in such
 ;           files *can* be modified.)
 ;
@@ -104,6 +105,9 @@ pro MODFITS, filename, data, header, EXTEN_NO = exten_no, ERRMSG = errmsg, $
 ;           the new data.
 ;
 ;       (3) Does not work with compressed files
+;
+;       (4) The Checksum keywords will not be updated if the array to be 
+;           updated is supplied as a structure (e.g. from MRDFITS). 
 ; PROCEDURES USED:
 ;       Functions:   N_BYTES(), SXPAR()
 ;       Procedures:  BLKSHIFT, CHECK_FITS, FITS_OPEN, FITS_READ
@@ -133,6 +137,9 @@ pro MODFITS, filename, data, header, EXTEN_NO = exten_no, ERRMSG = errmsg, $
 ;       Check for new END position after adding CHECKSUM  W.L. July 2008
 ;       Added EXTNAME input keyword  W.L. July 2008
 ;       Allow data to be an IDL structure  A. Conley/W.L. June 2009
+;       Use V6.0 notation, add /NOZERO to BLKSHIFT W.L. Feb 2011
+;       Don't try to update Checksums when structure supplied W.L. April 2011
+;       Allow structure with only 1 element  W.L.  Feb 2012
 ;-
   On_error,2                    ;Return to user
   compile_opt idl2
@@ -145,9 +152,10 @@ pro MODFITS, filename, data, header, EXTEN_NO = exten_no, ERRMSG = errmsg, $
       return
    endif
 
-   if not keyword_set( EXTEN_NO ) then exten_no = 0
+   if ~keyword_set( EXTEN_NO ) then exten_no = 0
    if N_params() LT 2 then Header = 0
    nheader = N_elements(Header)
+   updated = 0b
 
 ;Make sure END statement is the last line in supplied FITS header   
    
@@ -162,17 +170,17 @@ pro MODFITS, filename, data, header, EXTEN_NO = exten_no, ERRMSG = errmsg, $
    
    ndata = N_elements(data)
    dtype = size(data,/TNAME)
-   printerr =  not arg_present(ERRMSG) 
+   printerr =  ~arg_present(ERRMSG) 
    fcbsupplied = size(filename,/TNAME) EQ 'STRUCT'
 
-   if (nheader GT 1) and (ndata GT 1) and (dtype NE 'STRUCT') then begin
+   if (nheader GT 1) && (ndata GT 1) && (dtype NE 'STRUCT') then begin
         check_fits, data, header, /FITS, ERRMSG = MESSAGE
         if message NE '' then goto, BAD_EXIT
    endif
 
 ; Open file and read header information
          
-   if (exten_no EQ 0) and (not keyword_set(EXTNAME)) then begin 
+   if (exten_no EQ 0) && (~keyword_set(EXTNAME)) then begin 
          if nheader GT 0 then $
              if strmid( header[0], 0, 8)  NE 'SIMPLE  ' then begin 
                  message = $
@@ -190,7 +198,7 @@ pro MODFITS, filename, data, header, EXTEN_NO = exten_no, ERRMSG = errmsg, $
 
 ; Was a file name or file control block supplied?
 
-   if not fcbsupplied then begin 
+   if ~fcbsupplied then begin 
        fits_open, filename, io,/update,/No_Abort,message=message
        if message NE '' then GOTO, BAD_EXIT
     endif else begin 
@@ -222,6 +230,7 @@ pro MODFITS, filename, data, header, EXTEN_NO = exten_no, ERRMSG = errmsg, $
    if message NE '' then goto, BAD_EXIT
     dochecksum = sxpar(oldheader,'CHECKSUM', Count = N_checksum)
    checksum = N_checksum GT 0  
+   
 
 ; Update header, including any CHECKSUM keywords if present 
 
@@ -233,7 +242,8 @@ pro MODFITS, filename, data, header, EXTEN_NO = exten_no, ERRMSG = errmsg, $
         if dtype EQ 'ULONG' then $
               sxaddpar,header,'BZERO',2147483648,'Data is unsigned long'
         if checksum then begin 
-               if Ndata GT 1 then FITS_ADD_CHECKSUM, header, data else $
+               if (Ndata GT 1) && (dtype NE 'STRUCT') then $
+	        FITS_ADD_CHECKSUM, header, data else $
                 FITS_ADD_CHECKSUM, header 
         endif
 ; Position of 'END' card may have changed - Bug fix July 2008	
@@ -242,7 +252,7 @@ pro MODFITS, filename, data, header, EXTEN_NO = exten_no, ERRMSG = errmsg, $
         newbytes = N_elements(header)*80 
         block = (newbytes-1)/2880 - (Noldheader-1)/2880
         if block NE 0 then begin  
-            BLKSHIFT, io.unit, start_d, block*2880L
+            BLKSHIFT, io.unit, start_d, block*2880L, /NOZERO
             start_d = start_d + block*2880L
 	    io.start_data[exten_no:*] = io.start_data[exten_no:*] + block*2880L
             io.nbytes = io.nbytes + block*2880L
@@ -258,15 +268,16 @@ pro MODFITS, filename, data, header, EXTEN_NO = exten_no, ERRMSG = errmsg, $
          writeu, unit, bhdr
         remain = newbytes mod 2880
 	if remain GT 0 then writeu, unit, replicate( 32b, 2880 - remain)
+	updated = 1b
  
    endif 
 
-   if ndata GT 1 then begin
+   if (ndata GT 1) || (dtype EQ 'STRUCT') then begin
  
         newbytes = N_BYTES(data)    ;total number of bytes in supplied data
         block = (newbytes-1)/2880 - (nbytes-1)/2880
-        if block NE 0 and exten_no NE io.nextend then begin
-              BLKSHIFT, io.unit, start_h, block*2880L
+        if (block NE 0) && (exten_no NE io.nextend) then begin
+              BLKSHIFT, io.unit, start_h, block*2880L,/NOZERO
 	      io.nbytes = io.nbytes + block*2880L
 	      io.start_header[exten_no+1:*] = block*2880L + $
 		        io.start_header[exten_no+1:*]
@@ -274,7 +285,7 @@ pro MODFITS, filename, data, header, EXTEN_NO = exten_no, ERRMSG = errmsg, $
 		        io.start_data[exten_no+1:*]
         endif
       
-        if nheader EQ 0 then begin
+        if (nheader EQ 0) && (dtype NE 'STRUCT') then begin
                 check_fits,data,oldheader,/FITS,ERRMSG = message
                 if message NE '' then goto, BAD_EXIT
         endif
@@ -294,16 +305,17 @@ pro MODFITS, filename, data, header, EXTEN_NO = exten_no, ERRMSG = errmsg, $
              endif
 	     writeu, unit, replicate( padnum, 2880 - remain)
 	endif
+	updated = 1b
     endif       
 
-   if not fcbsupplied then FITS_CLOSE,io  else filename = io
-        
+   if ~fcbsupplied then FITS_CLOSE,io  else filename = io
+   if ~updated then message,'FITS file not modified',/INF    
    
          
    return 
 
 BAD_EXIT:
-    if N_elements(io) GT 0 then if not fcbsupplied then fits_close,io
+    if N_elements(io) GT 0 then if ~fcbsupplied then fits_close,io
     if printerr then message,'ERROR - ' + message,/CON else errmsg = message
     if fcbsupplied then fname = filename.filename else fname = filename
     message,'FITS file ' + fname + ' not modified',/INF

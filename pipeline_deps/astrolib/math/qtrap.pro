@@ -52,6 +52,7 @@ pro  qtrap, func, A, B, S, EPS=eps, MAX_ITER = max_iter, _EXTRA = _Extra
 ;       Pass keyword to function via _EXTRA facility  W. Landsman July 1999
 ;-
  On_error,2                                      ;Return to caller
+ compile_opt idl2
 
  if N_params() LT 4 then begin
     print,'Syntax - QTRAP, func, A, B, S, [ Eps = , MAX_ITER = ]
@@ -64,8 +65,8 @@ pro  qtrap, func, A, B, S, EPS=eps, MAX_ITER = max_iter, _EXTRA = _Extra
  zparcheck, 'QTRAP', A, 2, [1,2,3,4,5], 0, 'Lower limit of Integral'
  zparcheck, 'QTRAP', B, 3, [1,2,3,4,5], 0, 'Upper limit of Integral'
 
- if not keyword_set( EPS ) then eps = 1.e-6
- if not keyword_set( MAX_ITER ) then max_iter = 20
+ if ~keyword_set( EPS ) then eps = 1.e-6
+ if ~keyword_set( MAX_ITER ) then max_iter = 20
  olds = -1.e30
 
  for i = 0, max_iter-1 do begin

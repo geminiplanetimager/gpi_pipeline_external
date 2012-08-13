@@ -45,7 +45,7 @@ pro xyad, hdr, x, y, a, d, PRINT = print, GALACTIC = galactic, ALT = alt, $
 ;             Default value is 1, and the keyword is ignored if results are not 
 ;             displayed at the terminal 
 ;       /PRINT - If this keyword is set and non-zero, then results are displayed
-;               at the terminal.in both decimal and sexigesimal notation.
+;               at the terminal.in both decimal and sexagesimal notation.
 ;
 ;       The default for XYAD is to return the coordinate system present in
 ;       in the FITS header.    However, the following mutually exclusive 

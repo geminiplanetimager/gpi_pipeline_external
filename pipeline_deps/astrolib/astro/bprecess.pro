@@ -76,9 +76,9 @@ pro Bprecess, ra, dec, ra_1950, dec_1950, MU_RADEC = mu_radec,  $
 ;       Vectorized, W. Landsman                February, 1994
 ;       Treat case where proper motion not known or exactly zero  November 1994
 ;       Handling of arrays larger than 32767   Lars L. Christensen, march, 1995
-;       Converted to IDL V5.0   W. Landsman   September 1997
 ;       Fixed bug where A term not initialized for vector input 
 ;            W. Landsman        February 2000
+;       Use V6.0 notation  W. Landsman Mar 2011
 ;       
 ;-   
   On_error,2
@@ -98,7 +98,7 @@ pro Bprecess, ra, dec, ra_1950, dec_1950, MU_RADEC = mu_radec,  $
   N = N_elements( ra )
   if N EQ 0 then message,'ERROR - First parameter (RA vector) is undefined'
 
-  if not keyword_set( RAD_VEL) then rad_vel = dblarr(N) else begin
+  if ~keyword_set( RAD_VEL) then rad_vel = dblarr(N) else begin
         rad_vel = rad_vel*1.
         if N_elements( RAD_VEL) NE N then message, $
         'ERROR - RAD_VEL keyword vector must contain ' + strtrim(N,2) +' values'
@@ -111,10 +111,10 @@ pro Bprecess, ra, dec, ra_1950, dec_1950, MU_RADEC = mu_radec,  $
         mu_radec = mu_radec*1.
   endif
 
-  if not keyword_set( Parallax) then parallax = dblarr(N) else $
+  if ~keyword_set( Parallax) then parallax = dblarr(N) else $
         parallax = parallax*1.
 
-  if not keyword_set(Epoch) then epoch = 2000.0d0
+  if ~keyword_set(Epoch) then epoch = 2000.0d0
 
   radeg = 180.D/!DPI
   sec_to_radian = 1.d0/radeg/3600.d0
@@ -166,7 +166,7 @@ pro Bprecess, ra, dec, ra_1950, dec_1950, MU_RADEC = mu_radec,  $
  r1 = R_1[0:2]  
  r1_dot = R_1[3:5] 
 
- if not keyword_set(Mu_radec) then begin
+ if ~keyword_set(Mu_radec) then begin
         r1 = r1 + sec_to_radian * r1_dot * (epoch - 1950.0d)/100.
         A = A + sec_to_radian * A_dot * (epoch - 1950.0d)/100.
  endif

@@ -16,8 +16,8 @@
 ;       1645 Sheely Drive
 ;       Fort Collins, CO 80526 USA
 ;       Phone: 970-221-0438
-;       E-mail: davidf@dfanning.com
-;       Coyote's Guide to IDL Programming: http://www.dfanning.com
+;       E-mail: david@idlcoyote.com
+;       Coyote's Guide to IDL Programming: http://www.idlcoyote.com
 ;
 ; CATEGORY:
 ;
@@ -77,8 +77,8 @@
 ;
 ;     Requires the following programs from the Coyote Library:
 ;
-;        http://www.dfanning.com/programs/convert_to_type.pro
-;        http://www.dfanning.com/programs/fpufix.pro
+;        http://www.idlcoyote.com/programs/convert_to_type.pro
+;        http://www.idlcoyote.com/programs/fpufix.pro
 ;
 ; MODIFICATION HISTORY:
 ;
@@ -161,12 +161,12 @@ FUNCTION Scale_Vector, vector, minRange, maxRange, $
 
    ; Check keyword parameters.
    IF Keyword_Set(double) THEN BEGIN
-      IF N_Elements(vectorMin) EQ 0 THEN vectorMin = Double( Min(FPUFIX(vector), NAN=Keyword_Set(nan)) ) $
+      IF N_Elements(vectorMin) EQ 0 THEN vectorMin = Double( Min(FPUFIX(vector), NAN=1) ) $
          ELSE vectorMin = Double(vectorMin)
-      IF N_Elements(vectorMax) EQ 0 THEN vectorMax = DOUBLE( Max(FPUFIX(vector), NAN=Keyword_Set(nan)) ) $
+      IF N_Elements(vectorMax) EQ 0 THEN vectorMax = DOUBLE( Max(FPUFIX(vector), NAN=1) ) $
          ELSE vectorMax = DOUBLE( vectorMax )
    ENDIF ELSE BEGIN
-      IF N_Elements(vectorMin) EQ 0 THEN vectorMin = FLOAT( Min(FPUFIX(vector), NAN=Keyword_Set(nan)) ) $
+      IF N_Elements(vectorMin) EQ 0 THEN vectorMin = FLOAT( Min(FPUFIX(vector), NAN=1) ) $
          ELSE vectorMin = FLOAT( vectorMin )
       IF N_Elements(vectorMax) EQ 0 THEN vectorMax = FLOAT( Max(FPUFIX(vector), NAN=Keyword_Set(nan)) ) $
          ELSE vectorMax = FLOAT( vectorMax )

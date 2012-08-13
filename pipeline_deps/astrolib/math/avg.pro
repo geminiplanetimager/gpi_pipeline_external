@@ -5,11 +5,13 @@ FUNCTION AVG,ARRAY,DIMENSION, NAN = NAN, DOUBLE = DOUBLE
 ; PURPOSE:
 ;       Return the average value of an array, or 1 dimension of an array
 ; EXPLANATION:
-;       Calculate the average value of an array (in which case AVG is identical
-;       to the RSI procedure mean.pro), or calculate the average
+;       Calculate the average value of an array, or calculate the average
 ;       value over one dimension of an array as a function of all the other
 ;       dimensions.
 ;
+;       In 2009, a DIMENSION keyword was added to the IDL MEAN() function,
+;       giving it the same capability as AVG().  Thus, the use of AVG() is now
+;       **deprecated** in favor of the MEAN() function.    
 ; CALLING SEQUENCE:
 ;       RESULT = AVG( ARRAY, [ DIMENSION, /NAN, /DOUBLE ] )
 ;

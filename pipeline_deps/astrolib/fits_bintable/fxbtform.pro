@@ -60,14 +60,16 @@
 ;		the maximum array size is not in the header.
 ;	Version 5  Wayne Landsman, GSFC, August 1997
 ;		Recognize double complex array type if since IDL version 4.0
-;       Version 6
-;       Optimized FXPAR call, CM 1999 Nov 18
-; Version     :
+;       Version 6  Optimized FXPAR call, CM 1999 Nov 18
 ;       Version 7: Wayne Landsman, GSFC Feb 2006
 ;               Added support for 64bit integer K format
+; Version:
+;       Version 8: Wayne Landsman GSFC Apr 2010
+;               Remove use of obsolete !ERR variable
 ;-
 ;
 	ON_ERROR,2
+        COMPILE_OPT IDL2
 ;
 ;  Check the number of parameters.
 ;
@@ -82,8 +84,8 @@
 ;
 ;  Get the number of fields.
 ;
-	TFIELDS = FXPAR(HEADER,'TFIELDS', START=0L)
-	IF !ERR LT 0 THEN BEGIN
+	TFIELDS = FXPAR(HEADER,'TFIELDS', START=0L, COUNT=N_TFIELDS)
+	IF N_TFIELDS LE 0 THEN BEGIN
 		MESSAGE = 'Invalid FITS header -- keyword TFIELDS is missing'
 		IF N_ELEMENTS(ERRMSG) NE 0 THEN BEGIN
 			ERRMSG = MESSAGE
@@ -108,8 +110,8 @@
 ;
 ;  Get the column formats.
 ;
-	TFORM = FXPAR(HEADER,'TFORM*')
-	IF !ERR LT 0 THEN BEGIN
+	TFORM = FXPAR(HEADER,'TFORM*', COUNT=N_TFORM)
+	IF N_TFORM LE 0 THEN BEGIN
 		MESSAGE = 'Invalid FITS table header -- keyword TFORM ' + $
 			'not present'
 		IF N_ELEMENTS(ERRMSG) NE 0 THEN BEGIN

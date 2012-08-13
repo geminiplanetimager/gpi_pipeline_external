@@ -20,7 +20,8 @@ pro fits_info, filename, SILENT=silent,TEXTOUT=textout, N_ext=n_ext, extname=ext
 ;     Filename - Scalar string giving the name of the FITS file(s)
 ;               Can include wildcards such as '*.fits', or regular expressions 
 ;               allowed by the FILE_SEARCH() function.     One can also search 
-;               gzip compressed  FITS files.
+;               gzip compressed  FITS files, but their extension must
+;               end in .gz or .ftz.
 ; OPTIONAL INPUT KEYWORDS:
 ;     /SILENT - If set, then the display of the file description on the 
 ;                terminal will be suppressed
@@ -98,7 +99,10 @@ pro fits_info, filename, SILENT=silent,TEXTOUT=textout, N_ext=n_ext, extname=ext
 ;       Assume since V5.4, fstat.compress available WBL April 2006
 ;       Added EXTNAME as an IDL keyword to return values. M. Perrin Dec 2007
 ;       make Ndata a long64 to deal with large files. E. Hivon Mar 2008
+;       For GDL compatibility, first check if file is compressed  before using
+;          OPENR,/COMPRESS  B. Roukema/WL    Apr 2010
 ;-
+ On_error,2
  compile_opt idl2
  COMMON descriptor,fdescript
 
@@ -112,20 +116,23 @@ pro fits_info, filename, SILENT=silent,TEXTOUT=textout, N_ext=n_ext, extname=ext
 
     fil = file_search( filename, COUNT = nfiles) 
     if nfiles EQ 0 then message,'No files found'
+; File is gzip compressed if it ends in .gz or .ftz 
+    len = strlen(fil)
+    ext = strlowcase(strmid(fil,transpose(len-3),3))
+    compress = (ext EQ '.gz') or (ext EQ 'ftz')
 
- silent = keyword_set( SILENT )
- if not silent then begin 
-    if not keyword_set( TEXTOUT ) then textout = !TEXTOUT    
+   silent = keyword_set( SILENT )
+   if ~silent then begin 
+    if ~keyword_set( TEXTOUT ) then textout = !TEXTOUT    
     textopen, 'FITS_INFO', TEXTOUT=textout
- endif
+   endif
 
  for nf = 0, nfiles-1 do begin
 
     file = fil[nf]
 
-   openr, lun1, file, /GET_LUN, /compress 
-
-   compress = (fstat(lun1)).compress  
+    openr, lun1, file, /GET_LUN, COMPRESS = compress[nf]
+     
    N_ext = -1
     fdescript = ''
     nmax = 400 ; MDP was 100
@@ -204,12 +211,12 @@ pro fits_info, filename, SILENT=silent,TEXTOUT=textout, N_ext=n_ext, extname=ext
 
   exname = sxpar(hd, 'extname', Count = N_extname)
   if N_extname GT 0 then extname[N_ext+1] = exname
-  get_extname =  (N_ext GE 0) and (N_extname EQ 0) and not keyword_set(SILENT)  
+  get_extname =  (N_ext GE 0) && (N_extname EQ 0) && ~keyword_set(SILENT)  
 
 ;  Read header records, till end of header is reached
 
   hdr = bytarr(80, 36, /NOZERO)
-  while (end_rec[0] EQ -1) and (not eof(lun1) ) do begin
+  while (end_rec[0] EQ -1) && (~eof(lun1) ) do begin
        readu,lun1,hdr
        ptr = ptr + 2880L
        hd1 = string( hdr > 32b)
@@ -241,7 +248,7 @@ pro fits_info, filename, SILENT=silent,TEXTOUT=textout, N_ext=n_ext, extname=ext
  
 ; Check if all headers have been read 
 
- if ( simple EQ 0 ) AND ( strlen(strn(exten)) EQ 1) then goto, END_OF_FILE  
+ if ( simple EQ 0 ) && ( strlen(strn(exten)) EQ 1) then goto, END_OF_FILE  
 
     N_ext = N_ext + 1
     if N_ext GT nmax then begin
@@ -258,15 +265,15 @@ pro fits_info, filename, SILENT=silent,TEXTOUT=textout, N_ext=n_ext, extname=ext
 ; Skip the headers and data records
 
     ptr = ptr + nrec*2880L
-    if compress then mrd_skip,lun1,nrec*2880L else point_lun,lun1,ptr
-    if not eof(lun1) then goto, START
+    if compress[nf] then mrd_skip,lun1,nrec*2880L else point_lun,lun1,ptr
+    if ~eof(lun1) then goto, START
 ;
  END_OF_FILE:  
 
  extname = extname[0:N_ext]           ;strip off bogus first value
                                   ;otherwise will end up with '' at end
 
- if not (SILENT) then begin
+ if ~SILENT then begin
  printf,!textunit,file,' has ',strn(N_ext),' extensions'
  printf,!textunit,'Primary header: ',gettok(fdescript,' '),' records'
 
@@ -326,7 +333,7 @@ pro fits_info, filename, SILENT=silent,TEXTOUT=textout, N_ext=n_ext, extname=ext
   endif 
   SKIP: free_lun, lun1
   endfor
-  if not silent then textclose, TEXTOUT=textout
+  if ~silent then textclose, TEXTOUT=textout
   return
 
  BAD_FILE:

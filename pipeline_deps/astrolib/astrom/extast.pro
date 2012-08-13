@@ -48,13 +48,14 @@ pro extast,hdr,astr,noparams, alt=alt
 ;             3 = Success - Header contains PCn_m + CDELT astrometry. 
 ;             4 = Success - Header contains ST  Guide Star Survey astrometry
 ;                           (see gsssextast.pro )
-; OPTIONAL INPUT KEYWORDS:
+; OPTIONAL INPUT/OUTPUT KEYWORDS:
 ;       ALT -  single character 'A' through 'Z' or ' ' specifying an alternate 
 ;              astrometry system present in the FITS header.    The default is
 ;              to use the primary astrometry or ALT = ' '.   If /ALT is set, 
 ;              then this is equivalent to ALT = 'A'.   See Section 3.3 of 
 ;              Greisen & Calabretta (2002, A&A, 395, 1061) for information about
-;              alternate astrometry keywords.
+;              alternate astrometry keywords.    If not set on input, then
+;              ALT is set to ' ' on output.
 ; PROCEDURE:
 ;       EXTAST checks for astrometry parameters in the following order:
 ;
@@ -68,11 +69,16 @@ pro extast,hdr,astr,noparams, alt=alt
 ;       preferred.
 ;
 ; NOTES:
-;       An anonymous structure is created to avoid structure definition
+;       1.  An anonymous structure is created to avoid structure definition
 ;       conflicts.    This is needed because some projection systems
 ;       require additional dimensions (i.e. spherical cube
 ;       projections require a specification of the cube face).
 ;
+;       2,   Some FITS headers (e.g.from HST/ACS) include SIP forward distortion
+;       coefficients but do not include the reverse coefficients.   Currently,
+;       EXTAST only gives a warning that the reverse coefficients (RA,Dec to
+;       X,Y) are not present.   EXTAST should actually compute 
+;       the inverse coefficients, but this is not yet implemented..
 ; PROCEDURES CALLED:
 ;      GSSSEXTAST, ZPARCHECK
 ; REVISION HISTORY
@@ -103,6 +109,8 @@ pro extast,hdr,astr,noparams, alt=alt
 ;      .CRPIX tag now Double instead of Float   W. Landsman  Apr 2007
 ;      If duplicate keywords use the *last* value W. Landsman Aug 2008
 ;      Fix typo for AZP projection, nonzero longpole N. Cunningham Feb 2009
+;      Give warning if reverse SIP coefficient not present  W. Landsman Nov 2011
+;      Allow obsolete CD matrix representations W. Landsman May 2012
 ;-
  On_error,2
  compile_opt idl2
@@ -172,18 +180,19 @@ pro extast,hdr,astr,noparams, alt=alt
  if N_crval1 GT 0 then crval[0] = lvalue[l[N_crval1-1]]
  l = where(keyword EQ 'CRVAL2'+alt,  N_crval2)
  if N_crval2 GT 0 then crval[1] = lvalue[l[N_crval2-1]]
- if (N_crval1 EQ 0) or (N_crval2 EQ 0) then return  
+ if (N_crval1 EQ 0) || (N_crval2 EQ 0) then return  
 
  crpix = dblarr(2)
  l = where(keyword EQ 'CRPIX1'+alt,  N_crpix1)
  if N_crpix1 GT 0 then crpix[0] = lvalue[l[N_crpix1-1]]
  l = where(keyword EQ 'CRPIX2'+alt,  N_crpix2)
  if N_crpix2 GT 0 then crpix[1] = lvalue[l[N_crpix2-1]]
- if (N_crpix1 EQ 0) or (N_crpix2 EQ 0) then return  
+ if (N_crpix1 EQ 0) || (N_crpix2 EQ 0) then return  
 
 
  cd = dblarr(2,2)
 cdelt = [1.0d,1.0d]
+GET_CD_MATRIX:
 
  l = where(keyword EQ 'PC1_1' + alt,  N_pc11) 
  if N_PC11 GT 0 then begin 
@@ -221,13 +230,21 @@ cdelt = [1.0d,1.0d]
         if N_cdelt1 GT 0 then cdelt[0]  = lvalue[l[N_cdelt1-1]]
         l = where(keyword EQ 'CDELT2' + alt,  N_cdelt2) 
         if N_cdelt2 GT 0 then cdelt[1]  = lvalue[l[N_cdelt2-1]]
-        if (N_cdelt1 EQ 0) or (N_Cdelt2 EQ 0) then return   ;Must have CDELT1 and CDELT2
+        if (N_cdelt1 EQ 0) || (N_Cdelt2 EQ 0) then return   ;Must have CDELT1 and CDELT2
 
         l = where(keyword EQ 'CROTA2' + alt,  N_crota) 
         if N_Crota EQ 0 then $
             l = where(keyword EQ 'CROTA1' + alt,  N_crota) 
-        if N_crota EQ 0 then crota = 0.0d else $
-                             crota = double(lvalue[l[N_crota-1]])/RADEG
+        if N_crota EQ 0 then begin
+	      l = where(keyword EQ 'PC001001', N_PC00)
+	      l = where(keyword EQ 'CD001001', N_CD00)
+	      if (N_PC00 GT 0) || (N_CD00 GT 0) then begin
+	          message,'Updating obsolete CD matrix representation',/INF
+		  FITS_CD_FIX, hdr
+		  keyword = strtrim(strmid(hdr,0,8),2)
+		  goto, GET_CD_MATRIX
+	      endif else crota = 0.0d 
+	 endif else crota = double(lvalue[l[N_crota-1]])/RADEG
         cd = [ [cos(crota), -sin(crota)],[sin(crota), cos(crota)] ] 
  
        noparams = 1           ;Signal AIPS-type astrometry found
@@ -235,6 +252,7 @@ cdelt = [1.0d,1.0d]
   endelse
   endelse
 
+  
   proj = strmid( ctype[0], 5, 3)
   case proj of 
  'ZPN': npv = 21
@@ -260,7 +278,7 @@ cdelt = [1.0d,1.0d]
 ; its default value.    This depends on the value of theta0 (the native
 ; longitude of the fiducial point) of the particular projection)
 
-  conic = (proj EQ 'COP') or (proj EQ 'COE') or (proj EQ 'COD') or $
+  conic = (proj EQ 'COP') || (proj EQ 'COE') || (proj EQ 'COD') || $
           (proj EQ 'COO')
 
 
@@ -269,14 +287,14 @@ cdelt = [1.0d,1.0d]
       if N_pv2 EQ 0 then message, $
      'ERROR -- Conic projections require a PV2_1 keyword in FITS header' else $
       theta0 = PV2[0]
-    endif else if (proj EQ 'AZP') or (proj EQ 'SZP') or (proj EQ 'TAN') or $
-          (proj EQ 'STG') or (proj EQ 'SIN') or (proj EQ 'ARC') or $
-          (proj EQ 'ZPN') or (proj EQ 'ZEA') or (proj EQ 'AIR') then begin
+    endif else if (proj EQ 'AZP') || (proj EQ 'SZP') || (proj EQ 'TAN') || $
+          (proj EQ 'STG') || (proj EQ 'SIN') || (proj EQ 'ARC') || $
+          (proj EQ 'ZPN') || (proj EQ 'ZEA') || (proj EQ 'AIR') then begin
        theta0 = 90.0
     endif else theta0 = 0. 
     celcoord = strmid(ctype[1],0,4)
 ;Check to see if RA and DEC are reversed in CRVAL
-    if (celcoord EQ 'RA--') or (celcoord EQ 'GLON') or (celcoord EQ 'ELON') $
+    if (celcoord EQ 'RA--') || (celcoord EQ 'GLON') || (celcoord EQ 'ELON') $
            then cellat = crval[0] else cellat = crval[1]
     if cellat GE theta0 then longpole = 0.0 else longpole = 180.0
  endif
@@ -337,6 +355,8 @@ cdelt = [1.0d,1.0d]
      if N GT 0 then bp[i,j] = lvalue[l[N-1]]
   endfor & endfor
 
+    if ap_order EQ 0 then message,/CON, $
+        'WARNING - Inverse SIP coefficients not present in FITS header'
     for i=0, ap_order do begin
     for j=0, ap_order do begin
      l = where(keyword EQ 'AP_' + strtrim(i,2) + '_' + strtrim(j,2), N)

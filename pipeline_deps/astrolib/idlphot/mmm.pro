@@ -1,6 +1,6 @@
 pro mmm, sky_vector, skymod, sigma , skew, HIGHBAD = highbad, DEBUG = debug, $
            ReadNoise = readnoise, Nsky = nsky, INTEGER = discrete, $
-	   SILENT = silent
+	   MAXITER = mxiter, SILENT = silent, MINSKY = minsky
 ;+
 ; NAME:
 ;       MMM
@@ -34,6 +34,10 @@ pro mmm, sky_vector, skymod, sigma , skew, HIGHBAD = highbad, DEBUG = debug, $
 ;       HIGHBAD - scalar value of the (lowest) "bad" pixel level (e.g. cosmic 
 ;                rays or saturated pixels) If not supplied, then there is 
 ;                assumed to be no high bad pixels.
+;       MINSKY - Integer giving mininum number of sky values to be used.   MMM
+;                will return an error if fewer sky elements are supplied.
+;                Default = 20.
+;       MAXITER - integer giving maximum number of iterations allowed,default=50
 ;       READNOISE - Scalar giving the read noise (or minimum noise for any 
 ;                pixel).     Normally, MMM determines the (robust) median by 
 ;                averaging the central 20% of the sky values.     In some cases
@@ -88,21 +92,24 @@ pro mmm, sky_vector, skymod, sigma , skew, HIGHBAD = highbad, DEBUG = debug, $
 ;       Fix bug introduced June 2004 removing outliers when READNOISE not set
 ;         N. Cunningham/W. Landsman  January 2006
 ;       Make sure that MESSAGE never aborts  W. Landsman   January 2008
+;       Add mxiter keyword and change default to 50  W. Landsman August 2011
+;       Added MINSKY keyword W.L. December 2011
 ;-
  compile_opt idl2
  On_error,2               ;Return to caller
  if N_params() EQ 0 then begin          
         print,'Syntax:  MMM, sky, skymod, sigma, skew, [/INTEGER, /SILENT' 
-        print,'                [HIGHBAD = , READNOISE =, /DEBUG, NSKY=] '
+        print,'              [HIGHBAD = , READNOISE =, /DEBUG, MXITER=, NSKY=] '
         return
  endif
 
  silent = keyword_set(SILENT)
- mxiter = 30              ;Maximum number of iterations allowed
- minsky = 20              ;Minimum number of legal sky elements
+              ;Maximum number of iterations allowed
+ if N_elements(mxiter) EQ 0 then mxiter = 50
+ if N_elements(minsky) Eq 0 then minsky = 20   ;Minimum number of legal sky elements
  nsky = N_elements( sky_vector )            ;Get number of sky elements 
  
-  if nsky LE minsky then begin
+  if nsky LT minsky then begin
       sigma=-1.0 &  skew = 0.0
       message,/CON, NoPrint= Silent, $
     'ERROR -Input vector must contain at least '+strtrim(minsky,2)+' elements'
@@ -114,7 +121,7 @@ pro mmm, sky_vector, skymod, sigma , skew, HIGHBAD = highbad, DEBUG = debug, $
      message,'Processing '+strtrim(nsky,2) + ' element array',/INF
  sz_sky = size(sky_vector,/structure)
  integer = keyword_set(discrete)
- if not integer then integer = (sz_sky.type LT 4) or (sz_sky.type GT 11) 
+ if ~integer then integer = (sz_sky.type LT 4) or (sz_sky.type GT 11) 
  sky = sky_vector[ sort( sky_vector ) ]    ;Sort SKY in ascending values
 
  skymid = 0.5*sky[(nsky-1)/2] + 0.5*sky[nsky/2] ;Median value of all sky values  
@@ -196,14 +203,14 @@ START_LOOP:
     newmin = minimm             
     tst_min = sky[newmin+1] GE cut1      ;Is minimm+1 above current CUT?
     done = (newmin EQ -1) and tst_min    ;Are we at first pixel of SKY?
-    if not done then  $
+    if ~done then  $
         done =  (sky[newmin>0] LT cut1) and tst_min
-    if not done then begin
+    if ~done then begin
         istep = 1 - 2*fix(tst_min)
         repeat begin
                 newmin = newmin + istep
-                done = (newmin EQ -1) or (newmin EQ nlast)
-                if not done then $
+                done = (newmin EQ -1) || (newmin EQ nlast)
+                if ~done then $
                     done = (sky[newmin] LE cut1) and (sky[newmin+1] GE cut1)
         endrep until done
         if tst_min then delta = sky[newmin+1:minimm] - skymid $
@@ -217,14 +224,14 @@ START_LOOP:
    newmax = maximm
    tst_max = sky[maximm] LE cut2           ;Is current maximum below upper cut?
    done = (maximm EQ nlast) and tst_max    ;Are we at last pixel of SKY array?
-   if not done then $   
-       done = ( tst_max ) and (sky[(maximm+1)<nlast] GT cut2) 
-    if not done then begin                 ;Keep incrementing NEWMAX
+   if ~done then $   
+       done = ( tst_max ) && (sky[(maximm+1)<nlast] GT cut2) 
+    if ~done then begin                 ;Keep incrementing NEWMAX
        istep = -1 + 2*fix(tst_max)         ;Increment up or down?
        Repeat begin
           newmax = newmax + istep
           done = (newmax EQ nlast) or (newmax EQ -1)
-          if not done then $
+          if ~done then $
                 done = ( sky[newmax] LE cut2 ) and ( sky[newmax+1] GE cut2 )
        endrep until done
        if tst_max then delta = sky[maximm+1:newmax] - skymid $
@@ -269,10 +276,10 @@ START_LOOP:
           L = round(CENTER-0.25)
           M = round(CENTER+0.25)
           R = 0.25*readnoise
-          while ((J GT 0) and (K LT Nsky-1) and $
-            ( ((sky[L] - sky[J]) LT R) or ((sky[K] - sky[M]) LT R))) do begin
-             J = J - 1
-             K = K + 1
+          while ((J GT 0) && (K LT Nsky-1) && $
+            ( ((sky[L] - sky[J]) LT R) || ((sky[K] - sky[M]) LT R))) do begin
+             J--
+             K++
         endwhile
         endif 
    skymed = total(sky[j:k])/(k-j+1)
@@ -281,12 +288,13 @@ START_LOOP:
 ;  is slight, and the mean is what we really want.
 
    dmod = skymed LT skymn ?  3.*skymed-2.*skymn-skymod : skymn - skymod
- 
+
 ; prevent oscillations by clamping down if sky adjustments are changing sign
    if dmod*old LT 0 then clamp = 0.5*clamp
    skymod = skymod + clamp*dmod 
    old = dmod     
    if redo then goto, START_LOOP
+
 ;       
  skew = float( (skymn-skymod)/max([1.,sigma]) )
  nsky = maximm - minimm 

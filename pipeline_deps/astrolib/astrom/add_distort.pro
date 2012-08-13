@@ -1,14 +1,14 @@
  pro add_distort, hdr, astr
-;+
 ; NAME:
 ;    ADD_DISTORT
 ; PURPOSE:
 ;    Add the distortion parameters in an astrometry structure to a FITS header.
 ; EXPLANATION:
-;    PUTAST currently does not add the SIP (Spitzer Imaging Polynomial) 
-;    distortion parameters when writing an astrometry structure to a FITS 
-;    header.    Therefore, to include the distortion polynomial, one should
-;    call add_distort after putast. 
+;    Called by PUTAST to add SIP (http://fits.gsfc.nasa.gov/registry/sip.html ) 
+;    in an astrometry structure to a FITS header
+;     
+;    Prior to April 2012, PUTAST did not add distortion parameters so one
+;    had to call ADD_DISTORT after PUTAST. 
 ;
 ;    IDL> putast,h ,astr0
 ;    IDL> add_distort,h,astr0
@@ -20,13 +20,14 @@
 ;     HDR -  FITS header, string array.   HDR will be updated to contain
 ;             the supplied astrometry.
 ;     ASTR - IDL structure containing values of the astrometry parameters
-;            CDELT, CRPIX, CRVAL, CTYPE, LONGPOLE, PV2 and DISTORT
+;            CDELT, CRPIX, CRVAL, CTYPE, LONGPOLE, PV2, and DISTORT
 ;            See EXTAST.PRO for more info about the structure definition
 ;
 ; PROCEDURES USED:
 ;       SXADDPAR, TAG_EXIST()
 ; REVISION HISTORY:
 ;       Written by W. Landsman  May 2005
+;       Enforce i+j = n for ij coefficients of order n  W. Landsman April 2012
 ;-
  npar = N_params()
 
@@ -51,9 +52,9 @@
         sxaddpar, hdr, 'A_ORDER', a_order, /savec, $
                   'polynomial order, axis 1, detector to sky '
         for i=0, a_order do begin
-            for j = 0, a_order do begin
+            for j = 0, a_order-i do begin
              aij = distort.a[i,j]
-             if aij NE 0.0 then $
+	     if aij NE 0.0 then $
                 sxaddpar, hdr, 'A_' + strtrim(i,2)+ '_' + strtrim(j,2), aij, $
                 ' distortion coefficient', /savec
              endfor
@@ -65,9 +66,9 @@
         sxaddpar, hdr, 'B_ORDER', a_order, /savec , $
                   'polynomial order, axis 2, detector to sky'
         for i=0, b_order do begin
-            for j = 0, b_order do begin
+            for j = 0, b_order-i do begin
              bij = distort.b[i,j]
-             if bij NE 0.0 then $
+	     if bij NE 0.0 then $
                 sxaddpar, hdr, 'B_' + strtrim(i,2)+ '_' + strtrim(j,2), bij, $
                 ' distortion coefficient', /savec
              endfor
@@ -79,9 +80,9 @@
         sxaddpar, hdr, 'AP_ORDER', a_order, /savec, $
                   ' polynomial order, axis 1, sky to detector '
         for i=0, ap_order do begin
-            for j = 0, ap_order do begin
+            for j = 0, ap_order-i do begin
              apij = distort.ap[i,j]
-             if apij NE 0.0 then $
+	     if apij NE 0.0 then $
                 sxaddpar, hdr, 'AP_' + strtrim(i,2)+ '_' + strtrim(j,2), apij, $
                 ' distortion coefficient', /savec
              endfor
@@ -94,9 +95,9 @@
         sxaddpar, hdr, 'BP_ORDER', a_order, /savec, $
                   ' polynomial order, axis 2, sky to detector '
         for i=0, bp_order do begin
-            for j = 0, bp_order do begin
+            for j = 0, bp_order-i do begin
              bpij = distort.bp[i,j]
-             if bpij NE 0.0 then $
+	     if bpij NE 0.0 then $
                 sxaddpar, hdr, 'BP_' + strtrim(i,2)+ '_' + strtrim(j,2), bpij, $
                 ' distortion coefficient', /savec
              endfor

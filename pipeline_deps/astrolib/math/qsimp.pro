@@ -80,8 +80,8 @@ pro qsimp, func, A, B, S, EPS=eps, MAX_ITER = max_iter, _EXTRA = _EXTRA
  zparcheck, 'QSIMP', A, 2, [1,2,3,4,5], 0, 'Lower limit of Integral'
  zparcheck, 'QSIMP', B, 3, [1,2,3,4,5], 0, 'Upper limit of Integral'
 
- if not keyword_set(EPS) then eps = 1.e-6              ;Set defaults
- if not keyword_set(MAX_ITER) then max_iter = 20
+ if ~keyword_set(EPS) then eps = 1.e-6              ;Set defaults
+ if ~keyword_set(MAX_ITER) then max_iter = 20
 
  ost = (oS = -1.e30)
  for i = 0,max_iter - 1 do begin

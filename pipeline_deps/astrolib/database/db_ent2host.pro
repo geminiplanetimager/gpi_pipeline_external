@@ -33,6 +33,7 @@
 ;       Version 4, 2 May 2003, W. Thompson
 ;               Use BSWAP keyword to DBXVAL instead of calling IEEE_TO_HOST.
 ;       Version 4.1 W. Landsman August 2010 Fix for multidimensional strings
+;       Version 4.2 W. Landsman Sep 2011 Work with new DB format
 ;-
 ;
 	ON_ERROR,2
@@ -109,9 +110,12 @@
 ;
 ;  Extract information about the individual items.
 ;
+	newdb = qdb[118, 0]
 	IDLTYPE = FIX(QITEMS[20:21,*],0,N)  &  IDLTYPE = IDLTYPE[W]
-	NVALUES = FIX(QITEMS[22:23,*],0,N)  &  NVALUES = NVALUES[W]
-	SBYTE	= FIX(QITEMS[24:25,*],0,N)  &  SBYTE	 = SBYTE[W]
+	NVALUES = NEWDB ? LONG(QITEMS[179:182,*],0,N) : $
+	                  FIX(QITEMS[22:23,*],0,N)  &  NVALUES = NVALUES[W]
+	SBYTE	= NEWDB ?  LONG(QITEMS[183:186,*],0,N) : $
+	                   FIX(QITEMS[24:25,*],0,N)  &  SBYTE	 = SBYTE[W]
 	NBYTES	= FIX(QITEMS[26:27,*],0,N)  &  NBYTES	 = NBYTES[W]
 	BSWAP =  (IDLTYPE NE 7) AND (IDLTYPE NE 1)
 ;
@@ -121,8 +125,10 @@
 		NB = NBYTES[I]*NVALUES[I]
 		ITEM = DBXVAL(ENTRY,IDLTYPE[I],NVALUES[I],SBYTE[I],NB,$
 			BSWAP = BSWAP[I])
+
 		DBXPUT, ITEM, ENTRY, IDLTYPE[I], SBYTE[I], NB
 	ENDFOR
+
 ;
 	RETURN
 	END

@@ -40,13 +40,15 @@
 ;	Version 2, William Thompson, GSFC, 12 May 1993.
 ;		Modified to not write to a logical unit number assigned to the
 ;		terminal.  This makes it compatible with IDL for Windows.
+;       Version 3, Wayne Landsman GSFC April 2010
+;                Remove use of obsolete !ERR system variable
 ; Version     : 
-;	Version 2, 12 May 1993.
-;	Converted to IDL V5.0   W. Landsman   September 1997
+;	Version 3, April 2010.
 ;-
 ;
 @fxbintable
 	ON_ERROR,2
+	COMPILE_OPT IDL2
 ;
 ;  Check the number of parameters.
 ;
@@ -59,8 +61,8 @@
 ;
 ;  Get the extension name.
 ;
-	EXTNAME = FXPAR(HEADER,'EXTNAME')
-	IF !ERR LT 0 THEN EXTNAME = ''
+	EXTNAME = FXPAR(HEADER,'EXTNAME', COUNT=N_EXTNAME)
+	IF N_EXTNAME LE 0 THEN EXTNAME = ''
 ;
 ;  Print the labels.
 ;

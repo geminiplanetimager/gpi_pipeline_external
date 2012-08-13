@@ -115,10 +115,13 @@ pro fitsdir ,directory, TEXTOUT = textout, Keywords = keywords, $
 ;       Trim spaces off of input KEYWORD values W. Landsman March 2004
 ;       Treat .FTZ extension as gzip compressed  W. Landsman September 2004
 ;       Assume since V5.5, file_search() available W. Landsman Aug 2006
+;       Don't assume all images compressed or uncompressed W. L. Apr 2010
+;       Use V6.0 notation W.L. Feb 2011
 ;-
  On_error,2
 
  compile_opt idl2     
+ 
  if N_elements(directory) EQ 0 then directory = '*.fits'
  if N_elements(exten) EQ 0 then exten = 0 
 
@@ -195,7 +198,7 @@ pro fitsdir ,directory, TEXTOUT = textout, Keywords = keywords, $
   if ex eq 0 then defsysv,'!TEXTOUT',1          ; If not define it.
   defsysv,'!TEXTUNIT',exists=ex                  ; Check if !TEXTOUT exists.
   if ex eq 0 then defsysv,'!TEXTUNIT',1          ; If not define it.
-  if not keyword_set( TEXTOUT ) then textout= !TEXTOUT
+  if ~keyword_set( TEXTOUT ) then textout= !TEXTOUT
 
  dir = 'dummy'
  num = 0
@@ -209,7 +212,7 @@ pro fitsdir ,directory, TEXTOUT = textout, Keywords = keywords, $
  namelen = max(strlen(fname))
 
  for i = 0,n-1 do begin                           ;Loop over each FITS file
-     compress = (ext EQ 'gz') or (strupcase(ext) EQ 'FTZ') 
+     compress = (qual[i] EQ 'gz') || (strupcase(qual[i]) EQ 'FTZ') 
      openr, unit, files[i], error = error, compress = compress 
     if error LT 0 then goto, BADHD
     mrd_hread, unit, h, status, /silent
@@ -227,7 +230,7 @@ pro fitsdir ,directory, TEXTOUT = textout, Keywords = keywords, $
    lvalue = strtrim(strmid(h,10,20),2 ) 
    value = strtrim( strmid(h,10,68),2 )        ;Chars 10-30 is FITS value
  
- if not keyword_set(nosize) then begin
+ if ~keyword_set(nosize) then begin
  l= where(keyword EQ 'NAXIS',Nfound)            ;Must have NAXIS keyword
     if Nfound GT 0 then naxis  = long( lvalue[ l[0] ] ) else goto, BADHD
 
@@ -287,7 +290,7 @@ pro fitsdir ,directory, TEXTOUT = textout, Keywords = keywords, $
 
  pheader = ' NAME '
  if namelen GT 5 then pheader = pheader + string(replicate(32b,namelen-5))
- if not keyword_set(nosize) then begin 
+ if ~keyword_set(nosize) then begin 
     pheader = pheader + 'SIZE '
     naxislen = max(strlen(bignaxis))+1
     if naxislen GT 5 then pheader = pheader + string(replicate(32b,naxislen-5))
@@ -301,7 +304,7 @@ pro fitsdir ,directory, TEXTOUT = textout, Keywords = keywords, $
   printf,!TEXTUNIT, ' '
   xx = namelen + 2
  fmt = '(A' 
- if not keyword_set(nosize) then begin 
+ if ~keyword_set(nosize) then begin 
    fmt = fmt + ',T' + strtrim(xx,2)
    xx = xx + (naxislen>4) + 1
  endif 

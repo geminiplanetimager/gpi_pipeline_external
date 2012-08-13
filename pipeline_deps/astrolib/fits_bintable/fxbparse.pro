@@ -61,19 +61,20 @@
 ;	Version 5, W. Landsman, GSFC, 12 Aug 1997
 ;		Use double complex datatype, if needed
 ;	Version 6, W. Landsman GSFC 30 Aug 1997
-; Version     : 
-;	Version 6, 31 Aug 1997
-;	Converted to IDL V5.0   W. Landsman   September 1997
 ;       Optimized FXPAR; call FXBFIND for speed, CM 1999 Nov 18
 ;       Modify DHEAP(ILUN) when opening table now, CM 2000 Feb 22
 ;       Default the TZERO/TSCAL tables to double instead of single
 ;         precision floating point, CM 2003 Nov 23
 ;       Make NAXIS1 and NAXIS2 64-bit integers to deal with large files,
 ;         E. Hivon Mar 2008
+;       Remove use of Obsolete !ERR system variable
+;  Version 
+;       Version 8   April 2010
 ;-
 ;
 @fxbintable
 	ON_ERROR,2
+        COMPILE_OPT IDL2
 ;
 ;  Check the number of parameters.
 ;
@@ -110,8 +111,8 @@
 ;
 ;  If THEAP is not present, then set it equal to the size of the table.
 ;
-	THEAP = FXPAR(HEADER,'THEAP', START=START)
-	IF !ERR LT 0 THEN THEAP = NAXIS1[ILUN]*NAXIS2[ILUN]
+	THEAP = FXPAR(HEADER,'THEAP', START=START, COUNT=N_THEAP)
+	IF N_THEAP LE 0 THEN THEAP = NAXIS1[ILUN]*NAXIS2[ILUN]
 	HEAP[ILUN] = THEAP
 ;
 ;  Modify DHEAP

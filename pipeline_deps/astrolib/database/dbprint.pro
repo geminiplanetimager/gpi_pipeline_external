@@ -108,6 +108,7 @@ pro dbprint,list,items, FORMS=forms, TEXTOUT=textout, NoHeader = noheader, $
 ;       Remove VMS statements                  W. Landsman Sep 2006
 ;       Remove EXECUTE statement               W. Landsman Jan 2007
 ;       Fix display of multi element items     W. Landsman  Aug 2010
+;       Fix problem with linked databases      W. Landsman Dec 2011
 ;-
 ;
  On_error,2                                ;Return to caller
@@ -142,8 +143,9 @@ pro dbprint,list,items, FORMS=forms, TEXTOUT=textout, NoHeader = noheader, $
   nv = N_elements(list)                 ;number of entries requested
 
 ; No need for byteswapping if data is not external or it is a big endian machine
-   noconvert = ~db_info('EXTERNAL') || is_ieee_big()
 
+   noconvert = ~db_info('EXTERNAL',0) || is_ieee_big()      ;Updated Dec 11
+    
 ; Determine items to print
 
  if N_params() EQ 1 then begin

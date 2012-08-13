@@ -74,7 +74,7 @@ pro rdfits_struct, filename, struct,SILENT = silent, HEADER_ONLY = header_only,$
  endif
 
  fits_open, filename, fcb                ; Get the description of the file
- if not keyword_set(silent) then $
+ if ~keyword_set(silent) then $
       message,/inf,'Now reading file ' + filename + ' with ' + $
       strtrim(fcb.nextend,2) + ' extensions'
 

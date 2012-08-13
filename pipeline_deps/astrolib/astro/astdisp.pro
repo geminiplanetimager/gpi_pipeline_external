@@ -30,7 +30,7 @@ pro AstDisp, x, y, ra, dec, DN, Coords=Coords, silent=silent
 ; OPTIONAL INPUT KEYWORDS:
 ;	SILENT    Prevents printing.  Only useful when used with Coords=
 ; OUTPUT:
-;	Printed positions in both degrees and sexigesimal format
+;	Printed positions in both degrees and sexagesimal format
 ;	All passed variables remain unchanged
 ; OPTIONAL KEYWORD OUTPUT:
 ;	COORDS    Returns the formatted coordinates in a string

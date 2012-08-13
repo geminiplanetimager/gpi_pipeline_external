@@ -1,6 +1,6 @@
 ;+
 ; Name:
-;   multiplot
+;   MULTIPLOT
 ;
 ; Purpose:
 ;	Create multiple plots with simple control over the gaps between plots.
@@ -80,9 +80,9 @@
 ;   ; and overall titles along the x and y axes as given.  Force the
 ;   ; plots to be square.
 ;
-;       erase & multiplot, [4,3], /square, gap=0.1, mXtitle='R', mYtitle='F(R)'
+;       cgerase & multiplot, [4,3], /square, gap=0.1, mXtitle='R', mYtitle='F(R)'
 ;       for i=0,4*3-1 do begin
-;           plot, struct[i].x, struct[i].y, psym=4
+;           cgplot, struct[i].x, struct[i].y, psym=4
 ;           multiplot
 ;       endfor
 ;       multiplot,/reset
@@ -111,7 +111,6 @@
 ;	  7 Apr 94, FKK
 ;	modify two more sys vars !x(y).tickformat to suppress user-formatted
 ;	  ticknames, per suggestion of Mark Hadfield (qv), 8 Apr 94, FKK
-;	Converted to IDL V5.0   W. Landsman   September 1997
 ;       
 ;   2001-03-20    Added /square keyword
 ;       Work in device coordinates so we can force aspect ratio to be square 
@@ -136,7 +135,9 @@
 ;   2009-11-23
 ;       Initialize common block if M[X/Y]TITLE set W. Landsman 
 ;   2011-02-07
-;        Use Coyote Graphcis  W. Landsman     
+;        Use Coyote Graphics  W. Landsman    
+;   2012-03-21
+;        Use cgplot on initial call to get right background  W.L. 
 ;
 ;-
 
@@ -145,7 +146,6 @@ PRO multiplot, pmulti, help=help, $
         rowmajor=rowmajor,verbose=verbose, square=square, $
         gap=gap_in, xgap=xgap_in, ygap=ygap_in, $
         doxaxis=doxaxis, doyaxis=doyaxis, $
-        $
         xtickformat=xtickformat_in, ytickformat=ytickformat_in, $
         mtitle=mtitle, mTitSize=mTitSize, mTitOffset=mTitOffset, $
         mxTitle=mxTitle, mxTitSize=mxTitSize, mxTitOffset=mxTitOffset, $
@@ -341,7 +341,7 @@ PRO multiplot, pmulti, help=help, $
 
         ; set window & region
 
-        plot,/nodata,xstyle=4,ystyle=4,!x.range,!y.range,/noerase	
+        cgplot,/nodata,xstyle=4,ystyle=4,!x.range,!y.range,/noerase	
 
         px = !x.window*!d.x_vsize
         py = !y.window*!d.y_vsize

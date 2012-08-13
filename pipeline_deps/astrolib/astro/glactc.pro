@@ -60,6 +60,9 @@ pro glactc,ra,dec,year,gl,gb,j, degree=degree, fk4 = fk4, $
 ;       Add /Supergalactic keyword W. Landsman  September 2002
 ;       Fix major bug when year not 2000 and /FK4 not set W. Landsman July 2003
 ;-
+ On_error,2
+ compile_opt idl2
+
 if N_params() lt 6 then begin
      print,'Syntax -  glactc, ra, dec, year, gl, gb, j, [/DEGREE, /FK4]'
      print,'j = 1: ra,dec --> gl,gb   j = 2:  gl,gb -->ra,dec'
@@ -87,9 +90,9 @@ radeg = 180.0d/!DPI
 ; necessary
 case j of                   
     1:  begin
-        if not keyword_set(degree) then  ras = ra*15.0d else ras =ra
+        if ~keyword_set(degree) then  ras = ra*15.0d else ras =ra
         decs = dec
-        if not keyword_set(fk4) then begin
+        if ~keyword_set(fk4) then begin
                  if year NE 2000 then precess,ras,decs,year,2000
                  bprecess,ras,decs,ra2,dec2
                  ras = ra2
@@ -128,7 +131,7 @@ case j of
                    
         gt36 = where(ra gt 360.0, Ngt36)
         if Ngt36 ge 1 then ra[gt36] = ra[gt36] - 360.0d0
-        if not keyword_set(degree) then      ra = ra / 15.0D0
+        if ~keyword_set(degree) then      ra = ra / 15.0D0
 
    
         return

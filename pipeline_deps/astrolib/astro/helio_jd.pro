@@ -10,6 +10,10 @@ function helio_jd,date,ra,dec, B1950 = B1950, TIME_DIFF = time_diff
 ;
 ;       An online calculator for this quantity is available at 
 ;       http://www.physics.sfasu.edu/astro/javascript/hjd.html
+;
+;       Users requiring more precise calculations and documentation should 
+;       look at the IDL code available at 
+;       http://astroutils.astronomy.ohio-state.edu/time/
 ; CALLING SEQUENCE:
 ;       jdhelio = HELIO_JD( date, ra, dec, /B1950, /TIME_DIFF)
 ;

@@ -1,8 +1,14 @@
-				    CHANGES         (last update 10-Feb-2009)
+				    CHANGES         (last update 07-Apr-2010)
 
 This file contains a list of changes made to the software in this directory.
 Changes are listed in reverse chronological order, with the latest changes
 first.
+
+Apr 2010   FXBTORM, FXBHELP, FXBFIND, FXBPARSE - Stop using obsolete !ERR
+                system variable (and maintain GDL compatibility) 
+
+Apr-2010: FXBCREATE - Fixed rare truncation of FITS header when updating 
+                        THEAP keyword
 
 Feb 2009: FXBWRITM, FXBADDCOL - Now work with unsigned integers
 

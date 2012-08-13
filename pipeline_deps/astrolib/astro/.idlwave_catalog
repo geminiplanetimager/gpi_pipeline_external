@@ -1,12 +1,12 @@
 ;;
 ;; IDLWAVE catalog for library Astrolib
 ;; Automatically Generated -- do not edit.
-;; Created by idlwave_catalog on Thu Jan 21 11:01:16 2010
+;; Created by idlwave_catalog on Sun Aug 12 19:32:03 2012
 ;;
 (setq idlwave-library-catalog-libname "Astrolib")
 (setq idlwave-library-catalog-routines
  '(("adstring" fun nil (lib "adstring.pro" nil "Astrolib") "Result = %s(ra_dec, dec, precision)" (nil ("PRECISION") ("TRUNCATE")))
-   ("airtovac" pro nil (lib "airtovac.pro" nil "Astrolib") "%s, wave" (nil))
+   ("airtovac" pro nil (lib "airtovac.pro" nil "Astrolib") "%s, wave_air, wave_vac" (nil))
    ("aitoff" pro nil (lib "aitoff.pro" nil "Astrolib") "%s, l, b, x, y" (nil))
    ("AITOFF_GRID" pro nil (lib "aitoff_grid.pro" nil "Astrolib") "%s, DLONG, DLAT" (nil ("_EXTRA") ("CHARSIZE") ("CHARTHICK") ("FONT") ("LABEL") ("NEW")))
    ("altaz2hadec" pro nil (lib "altaz2hadec.pro" nil "Astrolib") "%s, alt, az, lat, ha, dec" (nil))
@@ -48,12 +48,13 @@
    ("get_date" pro nil (lib "get_date.pro" nil "Astrolib") "%s, dte, in_date" (nil ("OLD") ("TIMETAG")))
    ("get_juldate" pro nil (lib "get_juldate.pro" nil "Astrolib") "%s, jd" (nil))
    ("glactc" pro nil (lib "glactc.pro" nil "Astrolib") "%s, ra, dec, year, gl, gb, j" (nil ("degree") ("fk4") ("SuperGalactic")))
+   ("glactc_pm" pro nil (lib "glactc_pm.pro" nil "Astrolib") "%s, ra, dec, mu_ra, mu_dec, year, gl, gb, mu_gl, mu_gb, j" (nil ("degree") ("fk4") ("mustar") ("SuperGalactic")))
    ("hadec2altaz" pro nil (lib "hadec2altaz.pro" nil "Astrolib") "%s, ha, dec, lat, alt, az" (nil ("WS")))
    ("HELIO" pro nil (lib "helio.pro" nil "Astrolib") "%s, JD, LIST, HRAD, HLONG, HLAT" (nil ("RADIAN")))
    ("helio_jd" fun nil (lib "helio_jd.pro" nil "Astrolib") "Result = %s(date, ra, dec)" (nil ("B1950") ("TIME_DIFF")))
-   ("helio_rv" fun nil (lib "helio_rv.pro" nil "Astrolib") "Result = %s(HJD, T, P, V0, K, e, omega)" (nil ("single")))
+   ("helio_rv" fun nil (lib "helio_rv.pro" nil "Astrolib") "Result = %s(HJD, T, P, V0, K, e, omega)" (nil))
    ("hor2eq" pro nil (lib "hor2eq.pro" nil "Astrolib") "%s, alt, az, jd, ra, dec, ha" (nil ("_extra") ("aberration_") ("altitude") ("B1950") ("lat") ("lon") ("nutate_") ("obsname") ("precess_") ("refract_") ("verbose") ("WS")))
-   ("imcontour" pro nil (lib "imcontour.pro" nil "Astrolib") "%s, im, hdr" (nil ("_EXTRA") ("NOerase") ("OVERLAY") ("PUTINFO") ("SUBTITLE") ("TYPE") ("XDELTA") ("XMID") ("XTITLE") ("YDELTA") ("YMID") ("YTITLE")))
+   ("imcontour" pro nil (lib "imcontour.pro" nil "Astrolib") "%s, im, hdr" (nil ("_EXTRA") ("NOerase") ("OVERLAY") ("PUTINFO") ("SUBTITLE") ("TYPE") ("window") ("XDELTA") ("XMID") ("XTITLE") ("YDELTA") ("YMID") ("YTITLE")))
    ("imf" fun nil (lib "imf.pro" nil "Astrolib") "Result = %s(mass, expon, mass_range)" (nil))
    ("ismeuv" fun nil (lib "ismeuv.pro" nil "Astrolib") "Result = %s(wave, Hcol, HeIcol, HeIIcol)" (nil ("Fano")))
    ("JDCNV" pro nil (lib "jdcnv.pro" nil "Astrolib") "%s, YR, MN, DAY, HR, JULIAN" (nil))
@@ -96,9 +97,8 @@
    ("ticpos" pro nil (lib "ticpos.pro" nil "Astrolib") "%s, deglen, pixlen, ticsize, incr, units" (nil))
    ("tics" pro nil (lib "tics.pro" nil "Astrolib") "%s, radec_min, radec_max, numx, ticsize, incr" (nil ("RA")))
    ("uvbybeta" pro nil (lib "uvbybeta.pro" nil "Astrolib") "%s, xby, xm1, xc1, xHbeta, xn, Te, MV, eby, delm0, radius" (nil ("eby_in") ("name") ("print") ("prompt") ("TEXTOUT")))
-   ("vactoair" pro nil (lib "vactoair.pro" nil "Astrolib") "%s, wave" (nil))
+   ("vactoair" pro nil (lib "vactoair.pro" nil "Astrolib") "%s, wave_vac, wave_air" (nil))
    ("xyz" pro nil (lib "xyz.pro" nil "Astrolib") "%s, date, x, y, z, xvel, yvel, zvel" (nil ("equinox")))
    ("YDN2MD" pro nil (lib "ydn2md.pro" nil "Astrolib") "%s, YR, DY, M, D" (nil ("help")))
    ("zang" fun nil (lib "zang.pro" nil "Astrolib") "Result = %s(dl, z)" (nil ("h0") ("k") ("Lambda0") ("Omega_m") ("q0") ("SILENT")))
-   ("ZENPOS" pro nil (lib "zenpos.pro" nil "Astrolib") "%s, date, ra, dec" (nil))
-   ("glactc_pm" pro nil (lib "glactc_pm.pro" nil "Astrolib") "%s, ra, dec, mu_ra, mu_dec, year, gl, gb, mu_gl, mu_gb, j" (nil ("degree") ("fk4") ("mustar") ("SuperGalactic")))))
+   ("ZENPOS" pro nil (lib "zenpos.pro" nil "Astrolib") "%s, date, ra, dec" (nil))))

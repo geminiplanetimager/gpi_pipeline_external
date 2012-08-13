@@ -6,7 +6,8 @@ PRO plothist, arr, xhist,yhist, BIN=bin,  NOPLOT=NoPlot, $
                  _EXTRA = _extra, Halfbin = halfbin, AUTOBin = autobin, $
                  Boxplot = boxplot, xlog = xlog, ylog = ylog, $
                  yrange = yrange, Color = color,axiscolor=axiscolor, $
-                 rotate = rotate, WINDOW=window
+                 rotate = rotate, WINDOW=window,XSTYLE=xstyle, YSTYLE = ystyle,$
+		 THICK= thick, LINESTYLE = linestyle
 ;+
 ; NAME:
 ;      PLOTHIST
@@ -90,7 +91,7 @@ PRO plothist, arr, xhist,yhist, BIN=bin,  NOPLOT=NoPlot, $
 ;
 ; NOTES:
 ;       David Fanning has written a similar program HISTOPLOT with more graphics
-;       options:   See http://www.dfanning.com/programs/histoplot.pro
+;       options:   See http://www.idlcoyote.com/programs/histoplot.pro
 ; MODIFICATION HISTORY:
 ;        Written     W. Landsman            January, 1991
 ;        Add inherited keywords W. Landsman        March, 1994
@@ -109,9 +110,11 @@ PRO plothist, arr, xhist,yhist, BIN=bin,  NOPLOT=NoPlot, $
 ;        Added /ROTATE keyword to turn plot on its side. J. Mullaney, 2009.
 ;        Added FTHICK keyword for thickness of fill lines. L. Anderson Oct. 2010
 ;        Use Coyote Graphics  W. Landsman Feb 2011
+;        Explicit XSTYLE, YSTYLE keywords to avoid _EXTRA confusion WL. Aug 2011
+;        Fix PLOT keyword problem with /ROTATE  WL  Dec 2011
 ;-
 ;			Check parameters.
-; On_error,2
+ On_error,2
  compile_opt idl2
 
  if N_params() LT 1 then begin   
@@ -167,7 +170,7 @@ PRO plothist, arr, xhist,yhist, BIN=bin,  NOPLOT=NoPlot, $
  ;Positions of each bin:
  xhist = lindgen( N_hist ) * bin + min(y*bin) 
  
- if not halfbin then xhist = xhist + 0.5*bin
+ if ~halfbin then xhist = xhist + 0.5*bin
 
 ;;;
 ;   If renormalizing the peak, do so.
@@ -291,22 +294,25 @@ if keyword_set(Peak) then yhist = yhist * (Peak / float(max(yhist)))
     ;Need to determine the positions and use plotS.
     ycrange = keyword_set(ylog)? 10^!Y.CRANGE : !Y.CRANGE
     xcrange = keyword_set(ylog)? 10^!X.CRANGE : !X.CRANGE
-    
     cgplots, xdata[0]<xcrange[1], ycrange[1]<(ydata[0]-bin/2)>ycrange[0], $
-           color=color, _EXTRA=_extra,ADDCMD=wintdo
+           color=color,Thick = thick, LINESTYLE = linestyle, ADDCMD=window
     cgplots, xdata[0]<xcrange[1], ycrange[1]<(ydata[1]-bin/2)>ycrange[0], $
-           color=color, _EXTRA=_extra,ADDCMD=window
+           color=color,THICK = thick, LINESTYLE= linestyle, ADDCMD=window
     FOR i=1, n_elements(xdata)-2 DO BEGIN
        cgplots, xdata[i]<xcrange[1], ycrange[1]<(ydata[i]-bin/2)>ycrange[0], $
-              color=color, _EXTRA=_extra, /CONTINUE,ADDCMD=window
+              color=color, THICK=thick, LINESTYLE= linestyle, $
+	      /CONTINUE,ADDCMD=window
        cgplots, xdata[i]<xcrange[1], ycrange[1]<(ydata[i+1]-bin/2)>ycrange[0], $
-              color=color, _EXTRA=_extra, /CONTINUE,ADDCMD=window
+              color=color, /CONTINUE,THICK=thick, LINESTYLE=linestyle, $
+	       ADDCMD=window
     ENDFOR
     cgplots, xdata[i]<xcrange[1], ycrange[1]<(ydata[i]-bin/2)>ycrange[0], $
-           color=color, _EXTRA=_extra, /CONTINUE, ADDCMD=window
+           color=color, /CONTINUE, THICK=thick, LINESTYLE = linestyle, $
+	   ADDCMD=window
  ENDIF ELSE BEGIN
-    cgplot, /over, xdata, ydata,  $ 
-           PSYM = psym, _EXTRA = _extra,color=color,ADDCMD=window
+    cgplot, /over, xdata, ydata, XSTYLE= xstyle, YSTYLE = ystyle, $ 
+           PSYM = psym, THICK=thick, LINESTYLE = linestyle, $
+	    _EXTRA = _extra,color=color,ADDCMD=window
     ENDELSE
  ;JRM;;;;;;;;;;;
  
@@ -317,15 +323,16 @@ if keyword_set(boxplot) then begin
       ycrange = keyword_set(ylog)? 10^!Y.CRANGE : !Y.CRANGE
       FOR j =0 ,N_Elements(xhist)-1 DO BEGIN
          cgPlotS, [xhist[j], xhist[j]]-bin/2, [YCRange[0], yhist[j], Ycrange[1]], $
-                Color=Color,noclip=0, _Extra=extra,ADDCMD=window
+                Color=Color,noclip=0, THICK=thick, LINESTYLE = linestyle, $
+		_Extra=extra,ADDCMD=window
       ENDFOR 
       
    ENDIF ELSE BEGIN
       xcrange = keyword_set(ylog)? 10^!X.CRANGE : !X.CRANGE
       FOR j =0 ,N_Elements(xhist)-1 DO BEGIN
          cgPlotS, [xcrange[0], xhist[j]<xcrange[1]], [yhist[j], $
-	            yhist[j]]-bin/2, ADDCMD=window, $
-                Color=Color, noclip=0, _Extra=_extra
+	            yhist[j]]-bin/2, ADDCMD=window, THICK=thick, $
+                    LINESTYLE = linestyle, Color=Color, noclip=0
       ENDFOR 
    ENDELSE
    ;JRM;;;;;;;;;;;

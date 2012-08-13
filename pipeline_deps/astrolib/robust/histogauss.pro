@@ -69,6 +69,7 @@ PRO HISTOGAUSS,SAMPLE,A,XX,YY,GX,GY,NOPLOT=noplot,NOFIT=SIMPL, $
 ;                P. Broos/W. Landsman   July 2003
 ;       Allow FONT keyword to be passed.  T. Robishaw Apr. 2006
 ;       Use Coyote Graphics for plotting W.L. Mar 2011
+;       Better formatting of text output W.L. May 2012
 ;-
 
  On_error,2
@@ -178,8 +179,8 @@ IF KEYWORD_SET(NOPLOT) THEN RETURN
  cgplot,/over,GX,GY,window=window
 
 ; Annotate. 
-MEANST = STRING(A[1],'(F9.4)')
-SIGST = STRING(A[2],'(F9.4)')
+MEANST = STRING(A[1],'(G12.5)')
+SIGST = STRING(A[2],'(G12.5)')
 NUM = N_ELEMENTS(DATA)
 NUMST =STRING(N,'(I6)')
 

@@ -100,6 +100,7 @@ pro dbcreate,name,newindex,newdb,maxitems,EXTERNAL=EXTERNAL, Maxentry=maxentry
 ;       Warn if database length exceeds 32767 bytes  W.L. Dec 2009
 ;       Remove spurious warning that database name is too long W.L. April 2010
 ;       Support entry lengths larger than 32767 bytes W.L. Oct. 2010
+;       Better testing for valid print formats W.L. Nov 2010
 ;-
 ;----------------------------------------------------------
  On_error,2                         ;Return to caller
@@ -333,6 +334,7 @@ while not eof(unit) do begin            ;loop on records in the file
         endcase
 next:
 endwhile; loop on records
+
 ;
 ; create data base descriptor record --------------------------------------
 ;
@@ -377,6 +379,7 @@ drec[119] = byte(extern)
 irec=bytarr(200,nitems)
 rec=bytarr(200)
 headers = strmid(headers,0,15)       ;Added 15-Sep-92
+
 for i=0,nitems-1 do begin
         rec[0:19]=32b  &  rec[101:170]=32b    ;Default string values are blanks
         rec[29:87] = 32b
@@ -391,19 +394,22 @@ for i=0,nitems-1 do begin
         rec[101]= byte(strupcase(pointers[i]))
         rec[120]= byte(format[i])
         ff=strtrim(format[i])
-        flen=fix(gettok(strmid(ff,1,strlen(ff)-1),'.'))
+	test = strnumber(gettok(strmid(ff,1,strlen(ff)-1),'.'),val)
+        if test then flen =fix(val) else $    ;Modified Nov-10
+	   message,'Invalid print format supplied: ' + format[i],/IOERROR
         rec[98] = byte(flen,0,2)
         rec[126]= byte(headers[0,i]) > 32b    ;Modified Nov-91
         rec[141]= byte(headers[1,i]) > 32b
         rec[156]= byte(headers[2,i]) > 32b
         irec[0,i]=rec
+
 end
 ;
 ; Make sure user is on ZDBASE and write description file
 ;
+
  close,unit
  openw,unit,zdir + filename+'.dbh'
-   
 On_ioerror, NULL 
 if extern then begin
         tmp = fix(drec,80,1) & byteorder,tmp,/htons & drec[80] = byte(tmp,0,2)

@@ -61,8 +61,12 @@ pro starast,ra,dec,x,y,cd, righthanded=right,hdr=hdr, projection=projection
 ;       Added /RightHanded and HDR keywords   W. Landsman   September 2000
 ;       Write CTYPE values into header   W. Landsman/A. Surkov  December 2002
 ;       CD matrix was mistakenly transpose in 3 star solution
-;       Added projection keyword    W. Landsman   September 2003 
+;       Added projection keyword    W. Landsman   September 2003
+;       Test for singular matrix W. Landsman  August 2011 
 ;-
+ On_ERROR,2
+ compile_opt idl2
+
  if N_params() LT 4 then begin
         print,'Syntax - STARAST, ra, dec, x, y, cd, [/Right, HDR =h,Projection=]'
         return                         
@@ -73,7 +77,7 @@ pro starast,ra,dec,x,y,cd, righthanded=right,hdr=hdr, projection=projection
             'CAR','MER','CEA','COP','COD','COE','COO','BON','PCO','SFL',$
             'PAR','AIT','MOL','CSC','QSC','TSC']
 
- iterate = (N_elements(crpix) EQ 2) and (N_elements(crval) EQ 0)
+ iterate = (N_elements(crpix) EQ 2) && (N_elements(crval) EQ 0)
  if N_elements(projection) EQ 0 then projection = 2    ;Default is tangent proj.
  if size(projection,/TNAME) EQ 'STRING' then begin
       map_type  =where(map_types EQ strupcase(strtrim(projection,2)), Ng)
@@ -83,10 +87,10 @@ pro starast,ra,dec,x,y,cd, righthanded=right,hdr=hdr, projection=projection
  endif else map_type = projection
 
  nstar = min( [N_elements(ra), N_elements(dec), N_elements(x), N_elements(y)])
- if (nstar NE 2) and (nstar NE 3) then $
-        message,'Either 2 or 3 star positions required'
-        crval1  = [ ra[0], dec[0] ]
-        crpix1  = [ x[0], y[0] ]
+ if (nstar NE 2) && (nstar NE 3) then $
+        message,'ERROR -  Either 2 or 3 star positions required'
+ crval1  = [ ra[0], dec[0] ]
+ crpix1  = [ x[0], y[0] ]
 
 ; Convert RA, Dec to Eta, Xi
 
@@ -112,8 +116,9 @@ endif else begin
 
 endelse
 
- cd = invert(a)#b        ;Solve linear equations
-
+ cd = invert(a,status)#b        ;Solve linear equations
+ if status EQ 1 then $
+    message,'ERROR - Singular matrix (collinear points)' 
  if nstar EQ 2 then begin
            if keyword_set(right) then $ 
                cd = [ [cd[0],cd[1]],[-cd[1],cd[0]] ] else $

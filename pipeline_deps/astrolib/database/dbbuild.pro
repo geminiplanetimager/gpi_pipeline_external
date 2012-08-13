@@ -74,6 +74,7 @@ pro dbbuild,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16,v17,v18, $
 ;      Fix warning if parameters have different # of elements W.L.  May 2010
 ;      Fix warning if scalar parameter supplied W.L.  June 2010
 ;      Fix for when first parameter is multi-dimensioned W.L. July 2010
+;      Check data type of first parameter W.L. Jan 2012
 ;-
   COMPILE_OPT IDL2
   On_error,2                            ;Return to caller
@@ -109,7 +110,7 @@ pro dbbuild,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16,v17,v18, $
 
    ndata = N_elements(v1)/ numvals[1]   ;# of elements in last dimension
 
-   for i = 2,npar do begin    ;Get the dimensions and type of each input vector
+   for i = 1,npar do begin    ;Get the dimensions and type of each input vector
 
       sz = size( *tmp[i-1], /STRUCT)
        ndatai = sz.N_elements/numvals[i]
@@ -138,11 +139,10 @@ pro dbbuild,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16,v17,v18, $
        i2 = i1 + nvalues -1
 
         dbxput,0l,entry,idltype[0],sbyte[0],nbyte[0]
-	for j = 1,nitems  do $	
+	for j = 1,nitems  do $
 	dbxput, (*tmp[j-1])[ i1[j]:i2[j] ], $
 	       entry,idltype[j], sbyte[j], nbyte[j] 
 	       
-  
       dbwrt,entry,noconvert=noconvert        ;Write the entry into the database
 
   endfor

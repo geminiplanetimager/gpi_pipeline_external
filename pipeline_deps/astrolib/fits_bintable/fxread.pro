@@ -151,6 +151,7 @@
 ;               Assume since V5.5, remove VMS support
 ;       Version 11.1,  W. Landsamn   November 2007
 ;               Allow for possibility number of bytes requires 64 bit integer
+;       Version 12, William Thompson, 18-Jun-2010, update BLANK value.
 ;-
 ;
 	ON_ERROR, 2
@@ -530,26 +531,36 @@
 	END ELSE COUNT = 0
 ;
 ;  If the parameters BZERO and BSCALE are non-trivial, then adjust the array by
-;  these values.
+;  these values.  Also update the BLANK keyword, if present.
 ;
 	IF NOT KEYWORD_SET(NOSCALE) THEN BEGIN
 		BZERO  = FXPAR(HEADER,'BZERO')
 		BSCALE = FXPAR(HEADER,'BSCALE')
+                BLANK  = FXPAR(HEADER,'BLANK',COUNT=NBLANK)
 		GET_DATE,DTE
 		IF (BSCALE NE 0) AND (BSCALE NE 1) THEN BEGIN
 			DATA = BSCALE*DATA
 			IF NOT KEYWORD_SET(NOUPDATE) THEN BEGIN
-				FXADDPAR,HEADER,'BSCALE',1.
-				FXADDPAR,HEADER,'HISTORY',DTE +		$
-					' applied BSCALE = '+ STRTRIM(BSCALE,2)
+                            FXADDPAR,HEADER,'BSCALE',1.
+                            FXADDPAR,HEADER,'HISTORY',DTE +		$
+                              ' applied BSCALE = '+ STRTRIM(BSCALE,2)
+                            IF NBLANK EQ 1 THEN BEGIN
+                                print, bscale, blank
+                                BLANK = BSCALE*BLANK
+                                FXADDPAR,HEADER,'BLANK',BLANK
+                            ENDIF
 			ENDIF
 		ENDIF
 		IF BZERO NE 0 THEN BEGIN
 			DATA = DATA + BZERO
 			IF NOT KEYWORD_SET(NOUPDATE) THEN BEGIN
-				FXADDPAR,HEADER,'BZERO',0.
-				FXADDPAR,HEADER,'HISTORY',DTE +		$
-					' applied BZERO = '+ STRTRIM(BZERO,2)
+                            FXADDPAR,HEADER,'BZERO',0.
+                            FXADDPAR,HEADER,'HISTORY',DTE +		$
+                              ' applied BZERO = '+ STRTRIM(BZERO,2)
+                            IF NBLANK EQ 1 THEN BEGIN
+                                BLANK = BLANK + BZERO
+                                FXADDPAR,HEADER,'BLANK',BLANK
+                            ENDIF
 			ENDIF
 		ENDIF
 	ENDIF

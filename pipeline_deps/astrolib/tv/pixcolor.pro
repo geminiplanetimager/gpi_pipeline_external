@@ -5,22 +5,24 @@ pro pixcolor, pix_value, color
 ; PURPOSE:
 ;	Assign colors to specified pixel values in a color lookup table
 ; EXPLANATION:
-;       This program is obsolete now that the Astron library uses Coyote
-;       graphcis which allows direct specification of color by name.   See
-;       http://idlastro.gsfc.nasa.gov/ftp/pro/coyote/cgcolor.pro
+;       Colors can be specified either from the list in cgcolor 
+;       (http://www.idlcoyote.com/programs/cgcolor.pro ) or as 1 letter 
+;       abbreviations for 8 common colors.
 ;
 ; CALLING SEQUENCE:
 ;      	PIXCOLOR, pixvalue, color         ;Set color at specified pixel values
 ;
-; OPTIONAL INPUT PARMETERS:
-;	pixvalue - value or range of pixel value whose color will be modified.
+; INPUT PARMETERS:
+;	pixvalue - value or range of pixel values whose color will be modified.
 ;		A single pixel value may be specified by an integer
 ;		If a range of values is specified, then it must be written
 ;		as a string, with a colon denoting the range (e.g.'102:123')
 ;		If omitted, program will prompt for this parameter.
 ;
-;	color -    single character string giving specified color values.
-;		Available options are 'R' (red), 'B' (blue), 'G' (green)
+;  OPTIONAL INPUT PARAMETER
+;	color - scalar string specifying either a full color name available in
+;               CGCOLOR, or a  single character string giving one of the 
+;               specified colors: 'R' (red), 'B' (blue), 'G' (green)
 ;		'Y' (yellow), 'T' (turquoise), 'V' (violet), 'W' (white)
 ;		or 'D' (dark).  If omitted, program will prompt for this 
 ;		parameter.
@@ -35,16 +37,22 @@ pro pixcolor, pix_value, color
 ;
 ;	IDL> pixcolor,245,'R'
 ;
-;      
+;       Set pixel values 120 to 150 to Magenta
+;
+;       IDL> pixcolor,'120:150','Magenta'      
 ; REVISION HISTORY:
 ;	Written, W. Landsman ST Systems Corp.		February, 1987
 ;	Converted to IDL V5.0   W. Landsman   September 1997
+;       Allow specification of cgcolor names   April 2011
 ;-
  On_error,2
  compile_opt idl2
 
- npar = N_params()
-
+ if N_params() EQ 0 then begin 
+     print,'Syntax - pixcolor, value, color_name'
+     return
+ endif 
+     
  if ( N_elements(pix_value) EQ 0) then begin
 	pix_value = ''
 	print,'Enter pixel value(s) to be assigned a color value'
@@ -63,38 +71,30 @@ pro pixcolor, pix_value, color
  endelse 
  npts = pixmax - pixmin + 1
 
-GETCOL: if ( npar LT 2 ) then begin
+GETCOL: if ( N_params() LT 2 ) then begin
 	color = ''
-	print,'Enter first letter of color which pixel(s) will be asssigned'
-	print,'Available options are '
+	print,'Enter color name to which pixel(s) will be asssigned'
+	print,'Available 1 character options are '
 	print,'Red (R), Blue (B), Green (G), Yellow (Y), Turquoise (T),
 	print,'Violet (V), White (W), or Dark (D)
         read,color
  endif
 
- red = 0B & green = 0B & blue = 0B
-
  case strupcase(color) of
-	'R': red = 1
-	'G': green = 1
-	'B': blue = 1
-	'Y': begin & red=1 & green =1 & end
-	'T': begin & blue=1 & green=1 & end
-	'V': begin & red =1 & blue =1 & end
-	'W': begin & red=1 & blue=1 & green=1 & end
-	'D':
-	else: begin
-	message, 'Color of '+ $
-           string(color)+ ' is not an available options',/continue
-	npar =1
-	goto,GETCOL 
-	end
+	'R': col = 'red'
+	'G': col = 'green'
+	'B': col = 'blue'
+	'Y': col = 'yellow'
+	'T': col = 'turquoise'
+	'V': col = 'violet
+	'W': col = 'white'
+	'D': col = 'black'
+	else: col = color
  endcase
- r = replicate(255*red,npts)      ;Multiply three color vectors by 
- g = replicate(255*green,npts)    ;color gun masks
- b = replicate(255*blue,npts)
 
- tvlct,r,g,b,pixmin
+ cc = cgcolor(col,/triple)
+ if npts GT 1 then cc = rebin(cc,npts,3)
+ tvlct,cc,pixmin
 
  return
  end

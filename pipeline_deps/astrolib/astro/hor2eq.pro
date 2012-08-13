@@ -9,7 +9,7 @@
 ;     This is a nice code to calculate equatorial (ra,dec) coordinates from
 ;     horizon (alt,az) coords.    It is typically accurate to about 1 arcsecond
 ;     or better (I have checked the output against the publicly available XEPHEM
-;     software). It preforms precession, nutation, aberration, and refraction
+;     software). It performs precession, nutation, aberration, and refraction
 ;     corrections.  The perhaps best thing about it is that it can take arrays
 ;     as inputs, in all variables and keywords EXCEPT Lat, lon, and Altitude
 ;    (the code assumes these aren't changing), and uses vector arithmetic in
@@ -80,7 +80,7 @@
 ;
 ;CORRECTIONS I DO NOT MAKE:
 ;   *  Deflection of Light by the sun due to GR. (typically milliarcseconds,
-;        can be arseconds within one degree of the sun)
+;        can be arcseconds within one degree of the sun)
 ;   *  The Effect of Annual Parallax (typically < 1 arcsecond)
 ;   *  and more (see below)
 ;

@@ -36,23 +36,19 @@
 ;******************************************************************************************;
 ;
 ;+
-; :Description:
 ;   Provides information about any cgWindow applications currently on the display. Returns
 ;   the window index numbers of any cgWindow applications current on the display.
 ;
 ; :Categories:
 ;    Graphics
 ;    
-; :Params:
-;    none
-;       
 ; :Keywords:
+;     count: out, optional, type=long
+;         The number of cgWindow applications currently on the display.
 ;     current: in, optional, type=boolean
 ;         If set, the current cgWindow application information is returned in the result
 ;         of the function and in the information keywords.
-;     count: out, optional, type=long
-;         The number of cgWindow applications currently on the display.
-;     dimensions: out, optional, type=intarr(2,count)
+;     dimensions: out, optional, type=integer
 ;         The dimensions of the ctWindow application, [xdim, ydim, n].
 ;     objectref: out, optional, type=object
 ;         A vector of FSC_CMDWINDOW object references for each cgWindow application currently 
@@ -63,7 +59,7 @@
 ;         A vector of widget identifiers of the top-level base widget for each cgWindow
 ;         application currently on the display.
 ;          
-; :Return Value:
+; :Returns:
 ;      windowIndexID: out, type=long
 ;          An array of window index numbers for each cgWindow application currently on the display.
 ;          
@@ -80,14 +76,15 @@
 ;           1645 Sheely Drive
 ;           Fort Collins, CO 80526 USA
 ;           Phone: 970-221-0438
-;           E-mail: davidf@dfanning.com
-;           Coyote's Guide to IDL Programming: http://www.dfanning.com
+;           E-mail: david@idlcoyote.com
+;           Coyote's Guide to IDL Programming: http://www.idlcoyote.com
 ;
 ; :History:
 ;     Change History::
 ;        Written, 23 January 2011. DWF.
 ;        Added DIMENSIONS keyword to return current dimensions of cgWindows. 24 Feb 2011. DWF.
-;
+;        Made sure this program only returns information on devices that support windows. 20 July 2011. DWF.
+;        
 ; :Copyright:
 ;     Copyright (c) 2011, Fanning Software Consulting, Inc.
 ;-
@@ -98,6 +95,12 @@ FUNCTION cgQuery, $
     OBJECTREF=objectRef, $
     TITLE=title, $
     WIDGETID=widgetID
+    
+    ; This can only be done in devices that support windows.
+    IF ~((!D.Flags AND 256) NE 0) THEN BEGIN
+        count = 0
+        RETURN, -1
+    ENDIF
 
     ; Are there cgWindow applications around?
     DefSysV, '!FSC_WINDOW_LIST', EXISTS=exists
@@ -132,7 +135,6 @@ FUNCTION cgQuery, $
         objectRef[j] = thisItem.windowobj
         title[j] = thisItem.title
         windowIndex[j] = thisItem.wid
-        WSet, windowIndex[j]
         dimensions[*,j] = [!D.X_Size, !D.Y_Size]
     ENDFOR
     IF (thisWindow GE 0) && WindowAvailable(thisWindow) THEN WSet, thisWindow ELSE WSet, -1

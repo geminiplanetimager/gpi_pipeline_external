@@ -54,6 +54,7 @@ pro getpro,proc_name            ;Obtain a copy of a procedure
 ;      Use FILE_WHICH() to locate procedure W. Landsman May 2006 
 ;      Assume since V5.5, remove VMS support  W. Landsman Sep 2006
 ;      Assume since V6.0, use file_basename() W.Landsman Feb 2009
+;      Test for .sav file, more robust test for write privilege W.L. Jul 2010
 ;-
   On_error,2                                     ;Return to caller on error
   compile_opt idl2
@@ -74,23 +75,28 @@ pro getpro,proc_name            ;Obtain a copy of a procedure
         return
   endif 
 
-; Now make sure user has write privileges
-
-  openw, lun, 'temp.tmp', /DELETE, /GET_LUN, ERROR=ERR
-  if err NE 0 then begin               ;Problem writing a temporary file?
-     cd,current=curdir   
-     message,curdir + ' has insufficient privilege or file protection violation'
-  endif
-  free_lun,lun
-
 ;Locate file in the user's !PATH  
 
   fname = file_which(name + '.pro')
   if fname NE '' then begin           ;File found? 
+
+; Now make sure user has write privileges
+        cd, current=curdir
+        if file_test(curdir,/write) NE 1 then $
+        message,curdir +  $
+	   ' has insufficient privilege or file protection violation'
+
          file_copy,fname, name + '.pro' 
          message,'Procedure '+ NAME + '.pro copied from '+ fname,/INF
          return
    endif else begin
+
+; Is it a .sav file in the !PATH? 
+  fname = file_which(name + '.sav')
+  if fname NE '' then begin           ;.Sav File found? 
+      message,'File ' + fname + ' is an IDL save set',/INF
+      return
+  endif 
 
 ; Now check if it is an intrinsic IDL procedure or function.  
 

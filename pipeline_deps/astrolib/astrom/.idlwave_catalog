@@ -1,7 +1,7 @@
 ;;
 ;; IDLWAVE catalog for library Astrolib
 ;; Automatically Generated -- do not edit.
-;; Created by idlwave_catalog on Wed Jul 20 12:43:25 2011
+;; Created by idlwave_catalog on Sun Aug 12 19:32:03 2012
 ;;
 (setq idlwave-library-catalog-libname "Astrolib")
 (setq idlwave-library-catalog-routines
@@ -12,7 +12,7 @@
    ("CONS_RA" fun nil (lib "cons_ra.pro" nil "Astrolib") "Result = %s(RA, Y, ASTR, DELTA)" (nil))
    ("extast" pro nil (lib "extast.pro" nil "Astrolib") "%s, hdr, astr, noparams" (nil ("alt")))
    ("fits_cd_fix" pro nil (lib "fits_cd_fix.pro" nil "Astrolib") "%s, hdr" (nil ("REVERSE")))
-   ("GET_EQUINOX" fun nil (lib "get_equinox.pro" nil "Astrolib") "Result = %s(HDR, CODE)" (nil))
+   ("GET_EQUINOX" fun nil (lib "get_equinox.pro" nil "Astrolib") "Result = %s(HDR, CODE)" (nil ("ALT")))
    ("getrot" pro nil (lib "getrot.pro" nil "Astrolib") "%s, hdr, rot, cdelt" (nil ("ALT") ("DEBUG") ("SILENT")))
    ("GSSS_StdAst" pro nil (lib "gsss_stdast.pro" nil "Astrolib") "%s, h, xpts, ypts" (nil))
    ("GSSSadxy" pro nil (lib "gsssadxy.pro" nil "Astrolib") "%s, gsa, ra, dec, x, y" (nil ("PRINT")))

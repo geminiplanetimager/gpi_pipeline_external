@@ -56,7 +56,8 @@ pro adxy, hdr, a, d, x, y, PRINT = print, ALT = alt        ;Ra, Dec to X,Y
 ;       Check if latitude/longitude reversed in CTYPE keyword W. L. Feb. 2004
 ;       Added ALT keyword   W. Landsman   September 2004
 ;       Work for non-spherical coordinate transformation W. Landsman May 2005 
-;       More informative error message if astrometry missing W.L. Feb 2008       
+;       More informative error message if astrometry missing W.L. Feb 2008
+;       Cosmetic updates W.L. July 2011       
 ;-
  Compile_opt idl2
  On_error,2
@@ -71,7 +72,7 @@ pro adxy, hdr, a, d, x, y, PRINT = print, ALT = alt        ;Ra, Dec to X,Y
  
  extast, hdr, astr, noparams, ALT = alt   ;Extract astrometry from FITS header
   if ( noparams LT 0 ) then begin
-        if N_elements(alt) EQ 0 then $
+        if alt EQ '' then $
         message,'ERROR - No astrometry info in supplied FITS header' $
 	else  message, $
 	'ERROR  - No alt=' + alt + ' astrometry info in supplied FITS header'
@@ -80,7 +81,7 @@ pro adxy, hdr, a, d, x, y, PRINT = print, ALT = alt        ;Ra, Dec to X,Y
  
  if npar lt 3 then begin
    RD: print,'Coordinates must be entered in either decimal (2 parameter) ' 
-   print,'  or sexigesimal (6 parameter) format'
+   print,'  or sexagesimal (6 parameter) format'
    inp = ''
    read,'ADXY: Enter coordinates: ',inp
    radec = getopt(inp,'F')
@@ -103,7 +104,7 @@ pro adxy, hdr, a, d, x, y, PRINT = print, ALT = alt        ;Ra, Dec to X,Y
  else:  ad2xy, a, d, astr, x, y          ;All other cases
  endcase
 
- if (npar lt 5) or keyword_set( PRINT ) then begin
+ if (npar lt 5) || keyword_set( PRINT ) then begin
         npts = N_elements(a)
         tit = strmid(astr.ctype,0,4)
          spherical = strmid(astr.ctype[0],4,1) EQ '-'
@@ -112,7 +113,7 @@ pro adxy, hdr, a, d, x, y, PRINT = print, ALT = alt        ;Ra, Dec to X,Y
         str = adstring(a,d,1)
         tit = strmid(astr.ctype,0,4)
         tit = repchr(tit,'-',' ')
-        if (tit[0] EQ 'DEC ') or (tit[0] EQ 'ELAT') or $
+        if (tit[0] EQ 'DEC ') || (tit[0] EQ 'ELAT') || $
            (tit[0] EQ 'GLAT') then tit = rotate(tit,2)
         print,'    ' + tit[0] + '    ' + tit[1] + '       ' + tit[0]  + $
               '         ' + tit[1]  + '        X       Y'
@@ -124,7 +125,7 @@ pro adxy, hdr, a, d, x, y, PRINT = print, ALT = alt        ;Ra, Dec to X,Y
 	 unit2 = strtrim( sxpar( hdr, 'CUNIT2'+alt,count = N_unit2),2)
 	 if N_unit2 EQ 0 then unit2 = ''
 	 print,'   ' + tit[0] + '     ' + tit[1] + '         X       Y'
-	 if (N_unit1 GT 0) or (N_unit2 GT 0) then $
+	 if (N_unit1 GT 0) || (N_unit2 GT 0) then $
 	     print,unit1 ,unit2,f='(t5,a,t14,a)'
 	     for i=0l, npts-1 do $
 	 print, a[i], d[i], x[i], y[i], f='(2F9.4,2X,2F8.2)'

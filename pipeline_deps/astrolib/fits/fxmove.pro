@@ -50,6 +50,9 @@ FUNCTION FXMOVE, UNIT, EXTEN, SILENT = Silent, EXT_NO = ext_no, ERRMSG=errmsg
 ;      Capture error message from MRD_HREAD (must be used with post-June 2009
 ;        version of MRD-HREAD)   W. Landsman  July 2009
 ;-
+     On_error, 2
+     compile_opt idl2
+
          DO_NAME = SIZE( EXTEN,/TNAME) EQ 'STRING'
 	 PRINT_ERROR = NOT ARG_PRESENT(ERRMSG)
          ERRMSG = ''
@@ -85,7 +88,7 @@ FUNCTION FXMOVE, UNIT, EXTEN, SILENT = Silent, EXT_NO = ext_no, ERRMSG=errmsg
                 MRD_HREAD, UNIT, HEADER, STATUS, SILENT = Silent, $
 		    FIRSTBLOCK=FIRSTBLOCK, ERRMSG = ERRMSG
                 IF STATUS LT 0 THEN BEGIN 
-		    IF PRINTERROR THEN MESSAGE,ERRMSG
+		    IF PRINT_ERROR THEN MESSAGE,ERRMSG   ;Typo fix 04/10
 		    RETURN, -1
 		ENDIF    
                         
@@ -125,6 +128,7 @@ FUNCTION FXMOVE, UNIT, EXTEN, SILENT = Silent, EXT_NO = ext_no, ERRMSG=errmsg
 	        
         RETURN, 0
 ALLOW_PLUN:
+        
         ERRMSG =  $
 	'Extension name cannot be specified unless POINT_LUN access is available'
 	if PRINT_ERROR then message,errmsg	

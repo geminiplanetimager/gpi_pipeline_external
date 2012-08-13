@@ -9,6 +9,8 @@ function Bsort, Array, Asort, INFO=info, REVERSE = rev
 ;       (This differs from the IDL SORT routine alone, which may rearrange 
 ;       order for equal values)
 ;
+;       A faster algorithm (radix sort) for numeric data is available  at 
+;       http://idldatapoint.com/2012/04/19/an-lsd-radix-sort-algorithm-in-idl/
 ; CALLING SEQUENCE:  
 ;       result = bsort( array, [ asort, /INFO, /REVERSE ] )
 ;

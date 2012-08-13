@@ -1,4 +1,4 @@
-pro vactoair,wave
+pro vactoair,wave_vac, wave_air
 ;+
 ; NAME:
 ;	VACTOAIR
@@ -7,16 +7,19 @@ pro vactoair,wave
 ; EXPLANATION:
 ;	Corrects for the index of refraction of air under standard conditions.  
 ;	Wavelength values below 2000 A will not be altered.  Accurate to 
-;	about 0.005 A 
+;	about 10 m/s.
 ;
 ; CALLING SEQUENCE:
-;	VACTOAIR, WAVE
+;	VACTOAIR, WAVE_VAC, [WAVE_AIR]
 ;
 ; INPUT/OUTPUT:
-;	WAVE - Wavelength in Angstroms, scalar or vector
-;		WAVE should be input as vacuum wavelength(s), it will be
-;		returned as air wavelength(s).  WAVE is always converted to
-;		double precision
+;	WAVE_VAC - Vacuum Wavelength in Angstroms, scalar or vector
+;		If the second parameter is not supplied, then this will be
+;               updated on output to contain double precision air wavelengths.
+;
+; OPTIONAL OUTPUT:
+;        WAVE_AIR - Air wavelength in Angstroms, same number of elements as
+;                 WAVE_VAC, double precision
 ;
 ; EXAMPLE:
 ;	If the vacuum wavelength is  W = 2000, then 
@@ -26,27 +29,40 @@ pro vactoair,wave
 ;	yields an air wavelength of W = 1999.353 Angstroms
 ;
 ; METHOD:
-;	An approximation to the 4th power of inverse wavenumber is used
-;	See IUE Image Processing Manual   Page 6-15.
+;	Formula from Ciddor 1996  Applied Optics , 35, 1566
 ;
 ; REVISION HISTORY
 ;	Written, D. Lindler 1982 
 ;	Documentation W. Landsman  Feb. 1989
-;	Converted to IDL V5.0   W. Landsman   September 1997
+;       Use Ciddor (1996) formula for better accuracy in the infrared 
+;           Added optional output vector, W Landsman Mar 2011
 ;-
   On_error,2
+  compile_opt idl2
+  
   if N_params() EQ 0 then begin
-     print,'Syntax - VACTOAIR, Wave'
+     print,'Syntax - VACTOAIR, Wave_Vac, [Wave_Air]'
      return
   endif
+  
+    wave_air = double(wave_vac)
+    g = where(wave_vac GE 2000, Ng)     ;Only modify above 2000 A
+    
+    if Ng GT 0 then begin 
+ 
+    sigma2 = (1d4/double(wave_vac[g]) )^2.   ;Convert to wavenumber squared
 
-  wave2 = double(wave)*wave 
-  fact = 1.0 + 2.735182e-4 + 131.4182/wave2 + 2.76249e8/(wave2*wave2)
-  fact = fact * ( wave GE 2000. ) + 1.0*( wave LT 2000.0 )
+; Compute conversion factor
+
+  fact = 1.D +  5.792105D-2/(238.0185D0 - sigma2) + $
+                            1.67917D-3/( 57.362D0 - sigma2)
+    
 
 ; Convert wavelengths
 
-  wave = wave/fact
+  wave_air[g] = wave_vac[g]/fact
+  if N_Params() eq 1 then wave_vac = wave_air
+  endif 
 
   return
   end                        

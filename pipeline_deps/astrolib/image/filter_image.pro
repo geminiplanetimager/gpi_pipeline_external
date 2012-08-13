@@ -15,7 +15,7 @@ function filter_image, image, SMOOTH=width_smooth, ITERATE_SMOOTH=iterate, $
 ;       also process the pixels at edges and corners of image, and,
 ;       to apply iterative smoothing simulating convolution with Gaussian,
 ;       and/or to convolve image with a Gaussian kernel.    Users might also
-;       look at the function ESTIMATOR_FILTER() in the ITTVIS library.
+;       look at the function ESTIMATOR_FILTER() introduced in IDL 7.1.
 ;
 ; CALLING SEQUENCE:
 ;       Result = filter_image( image, SMOOTH=width, MEDIAN = width, /ALL_PIXELS
@@ -36,7 +36,7 @@ function filter_image, image, SMOOTH=width_smooth, ITERATE_SMOOTH=iterate, $
 ;       /ALL_PIXELS causes the edges of image to be filtered as well.   This
 ;               is accomplished by reflecting pixels adjacent to edges outward
 ;               (similar to the /EDGE_WRAP keyword in CONVOL).
-;               Note that this is a different algorithm from the /EDGE_TRUCATE 
+;               Note that this is a different algorithm from the /EDGE_TRUNCATE 
 ;               keyword to SMOOTH or CONVOL, which duplicates the nearest pixel.   
 ;
 ;       /ITERATE means apply smooth(image,3) iteratively for a count of

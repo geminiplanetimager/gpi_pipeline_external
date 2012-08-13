@@ -26,12 +26,13 @@ FUNCTION qget_string, dummy
 ;
 ; NOTES:
 ;     For a widget password procedure see 
-;     http://www.dfanning.com/tip_examples/password.pro
+;     http://idlcoyote.com/tip_examples/password.pro
 ; MODIFICATION HISTORY:
 ;     Written by Michael R. Greason, STX, 8 January 1991.
 ;     Work for Mac and Windows IDL  W. Landsman    September 1995
-;     Converted to IDL V5.0   W. Landsman   September 1997
 ;-
+ compile_opt idl2
+
 ;                       Variable definitions.
 ;
  st = bytarr(1)                                 ; String variable.
@@ -59,13 +60,13 @@ REPEAT BEGIN
 ;                                       If it isn't a delete or backspace,
 ;                                       append it to the string.
 ;
-                IF ((ch NE del) AND (ch NE bs)) THEN BEGIN
+                IF ((ch NE del) && (ch NE bs)) THEN BEGIN
                         IF (n LE 0) THEN BEGIN
                                 st[0] = ch
                                 n = 1
                         ENDIF ELSE BEGIN
                                 st = [st, ch]
-                                n = n + 1
+                                n++
                         ENDELSE
                 ENDIF ELSE BEGIN
 ;
@@ -73,7 +74,7 @@ REPEAT BEGIN
 ;                                       previous character.
 ;
                         IF (n GT 0) THEN BEGIN
-                                n = n - 1
+                                n--
                                 IF (n GT 0) THEN st = st[0:(n-1)]
                         ENDIF
                 ENDELSE

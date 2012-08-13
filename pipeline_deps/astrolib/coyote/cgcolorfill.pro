@@ -36,9 +36,11 @@
 ;******************************************************************************************;
 ;
 ;+
-; :Description:
-;   Provides a device-independent and color-model-independent way to fill a polygon
-;   with a particular color. This is a wrapper to the PolyFill command in IDL.
+; Provides a device-independent and color-model-independent way to fill a polygon
+; with a particular color. This is a wrapper to the PolyFill command in IDL.
+; 
+; The program requires the `Coyote Library <http://www.idlcoyote.com/documents/programs.php>`
+; to be installed on your machine.
 ;
 ; :Categories:
 ;    Graphics
@@ -64,11 +66,11 @@
 ;         table.
 ;     device: in, optional, type=boolean, default=0
 ;         Set to indicate the polygon vertices are in device coordinates.
-;     normalized: in, optional, type=boolean, default=0
+;     normal: in, optional, type=boolean, default=0
 ;         Set to indicate the polygon vertices are in normalized coordinates.
 ;     window: in, optional, type=boolean, default=0
 ;         Set this keyword to add the command to the current cgWindow application.
-;     _extra: in, optional, type=appropriate
+;     _ref_extra: in, optional, type=appropriate
 ;         Any other keywords to the IDL POLYFILL command may be used.
 ;     
 ;          
@@ -83,8 +85,8 @@
 ;           1645 Sheely Drive
 ;           Fort Collins, CO 80526 USA
 ;           Phone: 970-221-0438
-;           E-mail: davidf@dfanning.com
-;           Coyote's Guide to IDL Programming: http://www.dfanning.com
+;           E-mail: david@idlcoyote.com
+;           Coyote's Guide to IDL Programming: http://www.idlcoyote.com
 ;
 ; :History:
 ;     Change History::
@@ -95,6 +97,7 @@
 ;             background problems when passed 24-bit color integers. 12 Jan 2011. DWF.   
 ;        Added WINDOW keyword. 24 Jan 2011. DWF.
 ;        Modified error handler to restore the entry decomposition state if there is an error. 17 March 2011. DWF
+;        Modified to use cgDefaultColor for default color selection. 24 Dec 2011. DWF.
 ;
 ; :Copyright:
 ;     Copyright (c) 2010, Fanning Software Consulting, Inc.
@@ -142,9 +145,7 @@ PRO cgColorFill, x, y, z, $
     SetDecomposedState, 1, CURRENTSTATE=currentState
     
     ; Need a color?
-    IF N_Elements(color) EQ 0 THEN thisColor = 'rose' ELSE thisColor = color
-    IF Size(thisColor, /TYPE) EQ 3 THEN IF GetDecomposedState() EQ 0 THEN thisColor = Byte(thisColor)
-    IF Size(thisColor, /TYPE) LE 2 THEN thisColor = StrTrim(Fix(thisColor),2)
+    thisColor = cgDefaultColor(color, DEFAULT='rose', MODE=currentState)
 
     ; Get the current color vectors.
     TVLCT, rr, gg, bb, /Get

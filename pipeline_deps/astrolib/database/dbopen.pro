@@ -65,7 +65,8 @@ pro dbopen,name,update,UNAVAIL=unavail
 ;       Fix typos in BYTEORDER introduced Jan 2009 G. Scandariato/W.L.Feb. 2009
 ;       Support new DB format which allows entry lengths > 32767 bytes 
 ;              W.L. October 2010
-;       William Thompson, fixed bug opening multiple databases
+;       William Thompson, fixed bug opening multiple databases Dec 2010
+;       Fix problem with external databases WL Sep 2011
 ;
 ;-
 ;
@@ -239,7 +240,11 @@ while dbno lt n_elements(fnames) do begin
      nitems=fix(db,80,1) & nitems=nitems[0] ;number of items or fields in file
 
     if external then begin
+        if newdb then begin
+        byteorder, totbytes, /NTOHL  &  db[105] = byte(totbytes,0,4) 
+	endif else begin
         byteorder, totbytes, /NTOHS  &  db[82] = byte(totbytes,0,2)
+	endelse
         byteorder, nitems,/NTOHS   &  db[80] = byte(nitems,0,2)
     endif
     items=bytarr(200,nitems)
@@ -256,12 +261,13 @@ while dbno lt n_elements(fnames) do begin
 ;
         tmp = fix(items[171:178,*],0,4,nitems)
         byteorder,tmp,/NTOHS
-        items[171,0] = byte(tmp,0,8,nitems)
+        items[171,0] = byte(tmp,0,8,nitems)     
 	
 	if newdb then begin
-        tmp = long(items[183:186,*],0,2,nitems)
+        tmp = long(items[179:186,*],0,2,nitems)
         byteorder,tmp,/NTOHL
-        items[183,0] = byte(tmp,0,8,nitems)
+
+        items[179,0] = byte(tmp,0,8,nitems)
 	endif
     endif
 
@@ -327,6 +333,7 @@ while dbno lt n_elements(fnames) do begin
 ;
 ; add to common block ---------------------
 ;
+
     if dbno eq 0 then begin
         qdb=db
         qitems=items
@@ -384,6 +391,7 @@ endif
 ;
 ; create an assoc variable for the first db
 ;
+
 unit=db_info('unit_dbf',0)
 len=db_info('length',0)
 qdbrec=assoc(unit,bytarr(len))

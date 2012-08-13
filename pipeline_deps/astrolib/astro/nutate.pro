@@ -136,7 +136,7 @@ pro nutate, jd, nut_long, nut_obliq
         nut_long[i] =  0.0001d*total( (sdelt*t[i] + sin_lng)*sarg[*,i] )
         nut_obliq[i] = 0.0001d*total( (cdelt*t[i] + cos_lng)*carg[*,i] )
  end
- if not isarray(jd) then begin
+ if ~isarray(jd) then begin
         nut_long = nut_long[0]
         nut_obliq = nut_obliq[0]
  endif

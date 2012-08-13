@@ -1,5 +1,6 @@
 PRO QuerySimbad, name, ra, de, id, Found = found, NED = ned, ERRMSG = errmsg, $
-    Verbose = verbose, CADC = cadc, CFA=cfa, Server=server, SILENT=silent
+    Verbose = verbose, CADC = cadc, CFA=cfa, Server=server, SILENT=silent, $
+    Print = print
 ;+
 ; NAME: 
 ;   QUERYSIMBAD
@@ -25,16 +26,23 @@ PRO QuerySimbad, name, ra, de, id, Found = found, NED = ned, ERRMSG = errmsg, $
 ;           http://vizier.u-strasbg.fr/cgi-bin/Dic-Simbad .
 ;
 ; OUTPUTS: 
-;     ra - the right ascension of the target in J2000.0 in *degrees* 
-;     dec - declination of the target in degrees
+;     ra -  Right ascension of the target in J2000.0 in *degrees*, scalar 
+;     dec - declination of the target in degrees, scalar
 ;
 ; OPTIONAL INPUT KEYWORD:
 ;     /CFA - if set, then use the Simbad server at the Center for Astrophysics
 ;             rather than the default server in Strasbourg, France.
+;     ERRMSG   = If defined and passed, then any error messages will be
+;                  returned to the user in this parameter rather than
+;                  depending on the MESSAGE routine in IDL.  If no errors are
+;                  encountered, then a null string is returned. 
 ;     /NED - if set, then only the nameserver of the NASA Extragalactic database
 ;            is used to resolve the name and return coordinates.   Note that
 ;           /NED cannot be used with Galactic objects
-;     /VERBOSE - If set, then the HTTP-GET command is displayed 
+;     /VERBOSE - If set, then the HTTP-GET command is displayed
+;     /PRINT - if set, then output coordinates are displayed at the terminal 
+;            By default, the coordinates are displayed if no output parameters
+;           are supplied to QUERYSIMBAD
 ;     /SILENT - If set, then don't print warnings if multiple SIMBAD objects
 ;             correspond to the supplied name.
 ; OPTIONAL OUTPUT: 
@@ -52,11 +60,10 @@ PRO QuerySimbad, name, ra, de, id, Found = found, NED = ned, ERRMSG = errmsg, $
 ;           the object, 'S'imbad, 'N'ed or 'V'izier
 ;            
 ; EXAMPLES:
-;     (1) Find the J2000 coordinates for the ultracompact HII region
+;     (1) Display the J2000 coordinates for the ultracompact HII region
 ;         G45.45+0.06 
 ;
-;      IDL> QuerySimbad,'GAL045.45+00.06', ra, dec
-;      IDL> print, adstring(ra,dec,1)
+;      IDL> QuerySimbad,'GAL045.45+00.06'
 ;           ===>19 14 20.77  +11 09  3.6
 ; PROCEDURES USED:
 ;       REPSTR(), WEBGET()
@@ -85,10 +92,11 @@ PRO QuerySimbad, name, ra, de, id, Found = found, NED = ned, ERRMSG = errmsg, $
 ;          keyword  W.L.  June 2009
 ;     Don't get primary name if user didn't ask for it  W.L. Aug 2009
 ;     Added /SILENT keyword W.L. Oct 2009
+;     Added /PRINT keyword W.L.   Oct 2011
 ;-
   On_error,2
   compile_opt idl2
-  if N_params() LT 3 then begin
+  if N_params() LT 1 then begin
        print,'Syntax - QuerySimbad, name, ra, dec, [ id, ]
        print,'                 Found=, /CFA, /NED, ERRMSG=, /VERBOSE]'
        print,'   Input - object name, scalar string'
@@ -96,7 +104,8 @@ PRO QuerySimbad, name, ra, de, id, Found = found, NED = ned, ERRMSG = errmsg, $
        return
   endif
   ;;
-  printerr = not arg_present(errmsg)
+  printerr = ~arg_present(errmsg)
+  if ~printerr  then errmsg = ''
   object = repstr(name,'+','%2B')
  object = repstr(strcompress(object),' ','%20')
  if keyword_set(Cadc) then message,'CADC keyword is no longer supported'
@@ -123,7 +132,7 @@ PRO QuerySimbad, name, ra, de, id, Found = found, NED = ned, ERRMSG = errmsg, $
 
   if cnt GE 1 then begin
     if cnt GT 1 then begin 
-        if not keyword_set(SILENT) then $
+        if ~keyword_set(SILENT) then $
 	 message,/INF,'Warning - More than one match found for name '  + name
         idx = idx[0]
     endif 	
@@ -134,7 +143,7 @@ PRO QuerySimbad, name, ra, de, id, Found = found, NED = ned, ERRMSG = errmsg, $
 
      idx2= where(strpos(Result, '%I.0 ') ne -1,cnt)
      if cnt GT 0 then id = strtrim(strmid(Result[idx2],4),2) else $
-	    if not keyword_set(SILENT) then $
+	    if ~keyword_set(SILENT) then $
 	       message,'Warning - could not determine primary ID',/inf 
      endif	    
   ENDIF ELSE BEGIN 
@@ -145,6 +154,8 @@ PRO QuerySimbad, name, ra, de, id, Found = found, NED = ned, ERRMSG = errmsg, $
 	 message,strjoin(result),/info
       endif	 
   ENDELSE
+  if (N_params() LT 2) || keyword_set(print) then print,adstring(ra,de,1)
+        
   
   return 
 END 

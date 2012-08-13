@@ -5,30 +5,30 @@
 ;   PURPOSE:
 ;      Bayesian approach to linear regression with errors in both X and Y
 ;   EXPLANATION:
-;     PERFORM LINEAR REGRESSION OF Y ON X WHEN THERE ARE MEASUREMENT
-;     ERRORS IN BOTH VARIABLES. THE REGRESSION ASSUMES :
+;     Perform linear regression of y on x when there are measurement
+;     errors in both variables. the regression assumes :
 ;
 ;                 ETA = ALPHA + BETA * XI + EPSILON
 ;                 X = XI + XERR
 ;                 Y = ETA + YERR
 ;
 ;
-; HERE, (ALPHA, BETA) ARE THE REGRESSION COEFFICIENTS, EPSILON IS THE
-; INTRINSIC RANDOM SCATTER ABOUT THE REGRESSION, XERR IS THE
-; MEASUREMENT ERROR IN X, AND YERR IS THE MEASUREMENT ERROR IN
-; Y. EPSILON IS ASSUMED TO BE NORMALLY-DISTRIBUTED WITH MEAN ZERO AND
-; VARIANCE SIGSQR. XERR AND YERR ARE ASSUMED TO BE
-; NORMALLY-DISTRIBUTED WITH MEANS EQUAL TO ZERO, VARIANCES XSIG^2 AND
-; YSIG^2, RESPECTIVELY, AND COVARIANCE XYCOV. THE DISTRIBUTION OF XI
-; IS MODELLED AS A MIXTURE OF NORMALS, WITH GROUP PROPORTIONS PI,
-; MEAN MU, AND VARIANCE TAUSQR. BAYESIAN INFERENCE IS EMPLOYED, AND
-; A STRUCTURE CONTAINING RANDOM DRAWS FROM THE POSTERIOR IS
-; RETURNED. CONVERGENCE OF THE MCMC TO THE POSTERIOR IS MONITORED
-; USING THE POTENTIAL SCALE REDUCTION FACTOR (RHAT, GELMAN ET
-; AL.2004). IN GENERAL, WHEN RHAT < 1.1 THEN APPROXIMATE CONVERGENCE
-; IS REACHED.
+; Here, (ALPHA, BETA) are the regression coefficients, EPSILON is the
+; intrinsic random scatter about the regression, XERR is the
+; measurement error in X, and YERR is the measurement error in
+; Y. EPSILON is assumed to be normally-distributed with mean zero and
+; variance SIGSQR. XERR and YERR are assumed to be
+; normally-distributed with means equal to zero, variances XSIG^2 and
+; YSIG^2, respectively, and covariance XYCOV. The distribution of XI
+; is modelled as a mixture of normals, with group proportions PI,
+; mean MU, and variance TAUSQR. Bayesian inference is employed, and
+; a structure containing random draws from the posterior is
+; returned. Convergence of the MCMC to the posterior is monitored
+; using the potential scale reduction factor (RHAT, Gelman et
+; al.2004). In general, when RHAT < 1.1 then approximate convergence
+; is reached.
 ;
-; SIMPLE NON-DETECTIONS ON Y MAY ALSO BE INCLUDED
+; Simple non-detections on y may also be included.
 ;
 ; CALLING SEQUENCE:
 ;
@@ -114,8 +114,8 @@
 ;     Parametric Measurement Error Models, Biometrics, 55, 44
 ;
 ;   Kelly, B.C., 2007, Some Aspects of Measurement Error in
-;     Linear Regression of Astronomical Data, ApJ, In press
-;     (astro-ph/0705.2774)
+;     Linear Regression of Astronomical Data, The Astrophysical
+;     Journal, 665, 1489 (arXiv:0705.2774)
 ;
 ;   Gelman, A., Carlin, J.B., Stern, H.S., & Rubin, D.B., 2004,
 ;     Bayesian Data Analysis, Chapman & Hall/CRC
@@ -129,6 +129,10 @@
 ;     2007)
 ;   - FIXED BUG SO THE ITERATION COUNT RESET AFTER THE BURNIN STAGE
 ;     WHEN SILENT = 1 (B. KELLY, JUNE 2009)
+;   - FIXED BUG WHEN UPDATING MU VIA THE METROPOLIS-HASTING
+;     UPDATE. PREVIOUS VERSIONS DID NO INDEX MUHAT, SO ONLY MUHAT[0]
+;     WAS USED IN THE PROPOSAL DISTRIBUTION. THANKS TO AMY BENDER FOR
+;     POINTING THIS OUT. (B. KELLY, DEC 2011)
 ;-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -928,7 +932,7 @@ repeat begin
                     chisqr = randomchi(seed, 4)
                                 ;draw proposal for mu from Student's t
                                 ;with 4 degrees of freedom
-                    muprop[k] = muhat + sqrt(muvar * 4 / chisqr) * randomn(seed)
+                    muprop[k] = muhat[k] + sqrt(muvar * 4 / chisqr) * randomn(seed)
 
                 endif else begin
                     

@@ -1,7 +1,7 @@
 ;;
 ;; IDLWAVE catalog for library Astrolib
 ;; Automatically Generated -- do not edit.
-;; Created by idlwave_catalog on Wed Jul 20 12:43:25 2011
+;; Created by idlwave_catalog on Sun Aug 12 19:32:03 2012
 ;;
 (setq idlwave-library-catalog-libname "Astrolib")
 (setq idlwave-library-catalog-routines
@@ -11,10 +11,10 @@
    ("legendtest" pro nil (lib "legendtest.pro" nil "Astrolib") "%s" (nil))
    ("lineid_plot" pro nil (lib "lineid_plot.pro" nil "Astrolib") "%s, wave, flux, wline, text1, text2" (nil ("_EXTRA") ("extend") ("lcharsize") ("lcharthick") ("window")))
    ("multiplot" pro nil (lib "multiplot.pro" nil "Astrolib") "%s, pmulti" (nil ("default") ("doxaxis") ("doyaxis") ("gap") ("help") ("initialize") ("mtitle") ("mTitOffset") ("mTitSize") ("mxTitle") ("mxTitOffset") ("mxTitSize") ("myTitle") ("myTitOffset") ("myTitSize") ("reset") ("rowmajor") ("square") ("verbose") ("xgap") ("xtickformat") ("ygap") ("ytickformat")))
-   ("oploterror" pro nil (lib "oploterror.pro" nil "Astrolib") "%s, x, y, xerr, yerr" (nil ("_EXTRA") ("ERRCOLOR") ("ERRSTYLE") ("ERRTHICK") ("HATLENGTH") ("HIBAR") ("LOBAR") ("NOCLIP") ("NOHAT") ("NSKIP") ("Nsum") ("THICK")))
+   ("oploterror" pro nil (lib "oploterror.pro" nil "Astrolib") "%s, x, y, xerr, yerr" (nil ("_EXTRA") ("ADDCMD") ("ERRCOLOR") ("ERRSTYLE") ("ERRTHICK") ("HATLENGTH") ("HIBAR") ("LOBAR") ("NOCLIP") ("NOHAT") ("NSKIP") ("Nsum") ("THICK")))
    ("partvelvec" pro nil (lib "partvelvec.pro" nil "Astrolib") "%s, velx, vely, posx, posy, x, y" (nil ("_EXTRA") ("COLOR") ("FRACTION") ("LENGTH") ("OVER") ("VECCOLORS") ("WINDOW")))
    ("ploterror" pro nil (lib "ploterror.pro" nil "Astrolib") "%s, x, y, xerr, yerr" (nil ("_EXTRA") ("ERRCOLOR") ("ERRSTYLE") ("ERRTHICK") ("HATLENGTH") ("NOCLIP") ("NOHAT") ("NSKIP") ("NSUM") ("TYPE") ("WINDOW") ("XLOG") ("XRANGE") ("YLOG") ("YRANGE")))
-   ("plothist" pro nil (lib "plothist.pro" nil "Astrolib") "%s, arr, xhist, yhist" (nil ("_EXTRA") ("AUTOBin") ("axiscolor") ("BIN") ("Boxplot") ("Color") ("FCOLOR") ("Fill") ("FLINE") ("FORIENTATION") ("FPATTERN") ("FSPACING") ("FTHICK") ("Halfbin") ("NAN") ("NOPLOT") ("OVERPLOT") ("Peak") ("PSYM") ("rotate") ("WINDOW") ("xlog") ("ylog") ("yrange")))
+   ("plothist" pro nil (lib "plothist.pro" nil "Astrolib") "%s, arr, xhist, yhist" (nil ("_EXTRA") ("AUTOBin") ("axiscolor") ("BIN") ("Boxplot") ("Color") ("FCOLOR") ("Fill") ("FLINE") ("FORIENTATION") ("FPATTERN") ("FSPACING") ("FTHICK") ("Halfbin") ("LINESTYLE") ("NAN") ("NOPLOT") ("OVERPLOT") ("Peak") ("PSYM") ("rotate") ("THICK") ("WINDOW") ("xlog") ("XSTYLE") ("ylog") ("yrange") ("YSTYLE")))
    ("plotsym" pro nil (lib "plotsym.pro" nil "Astrolib") "%s, psym, psize" (nil ("Color") ("FILL") ("thick")))
    ("RESET_RDPLOT" pro nil (lib "rdplot.pro" nil "Astrolib") "%s" (nil))
    ("RDPLOT" pro nil (lib "rdplot.pro" nil "Astrolib") "%s, x, y, WaitFlag" (nil ("ACCUMULATE") ("BACKGROUND") ("CHANGE") ("COLOR") ("CROSS") ("DATA") ("DEVICE") ("DOWN") ("Err") ("FULLCURSOR") ("LINESTYLE") ("NOCLIP") ("NORMAL") ("NOWAIT") ("PRINT") ("THICK") ("WAIT") ("XTITLE") ("XVALUES") ("YTITLE") ("YVALUES")))

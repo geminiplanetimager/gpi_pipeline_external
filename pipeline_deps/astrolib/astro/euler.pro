@@ -154,11 +154,11 @@ PRO EULER,AI,BI,AO,BO,SELECT, FK4 = FK4, SELECT = select1, RADIAN=radian
  cbsa = cb * sin(ao)
  bo  = -stheta[i] * cbsa + ctheta[i] * sb
  bo    = asin(bo<1.0d)
- if not keyword_set(radian) then bo = bo*rad_to_deg
+ if ~keyword_set(radian) then bo = bo*rad_to_deg
 ;
  ao =  atan( ctheta[i] * cbsa + stheta[i] * sb, cb * cos(ao) )
  ao = ( (ao+psi[i]+fourpi) mod twopi) 
- if not keyword_set(radian) then ao = ao*rad_to_deg
+ if ~keyword_set(radian) then ao = ao*rad_to_deg
 
 
  if ( npar EQ 2 ) then begin

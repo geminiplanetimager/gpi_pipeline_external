@@ -7,6 +7,8 @@ function minmax,array,subs,NAN=nan, DIMEN=dimen
 ; EXPLANATION:
 ;      Using MINMAX() is faster than doing a separate MAX and MIN.
 ;
+;      The procedure MAXMIN in http://www.idlcoyote.com/programs/maxmin.pro
+;      has a similar purpose but uses a procedure call rather than a function.
 ; CALLING SEQUENCE:
 ;      value = minmax( array, [subs, /NAN, DIMEN= ] )
 ; INPUTS:
@@ -41,7 +43,7 @@ function minmax,array,subs,NAN=nan, DIMEN=dimen
 ;            IDL> print, minmax( im )
 ;
 ;     (2) Given a 2-dimension array of (echelle) wavelengths w, print the
-;         minimum and maximum of each order (requires V5.5 or later)
+;         minimum and maximum of each order
 ;
 ;         print,minmax(w,dimen=1)
 ;

@@ -38,8 +38,8 @@ function poidev, xm, SEED = seed
 ;
 ;     (2) Verify the expected mean  and sigma for an input value of 81
 ;              IDL> p = POIDEV( intarr(10000) + 81)   ;Test for 10,000 points
-;              IDL> print,avg(p),sigma(p)
-;     Average and sigma of the 10000 points should be close to 81 and 9
+;              IDL> print,mean(p),sigma(p)
+;     Mean and sigma of the 10000 points should be close to 81 and 9
 ;
 ; METHOD: 
 ;     For small values (< 20) independent exponential deviates are generated 

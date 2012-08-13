@@ -25,8 +25,8 @@ pro arrows,h,xcen,ycen,thick=thick,charsize=charsize,arrowlen=arrowlen, $
 ;       arrowlen  - length of arrows in terms of normal Y size of vector-drawn
 ;                     character,  default  = 3.5, floating point scalar
 ;       charsize  - character size, default = 2.0, floating point scalar
-;       color     - color that the arrows and NE letters should be.  Default
-;                    value is !P.COLOR
+;       color     -  color name or number for the arrows and NE letters.  See
+;                 cgCOLOR() for a list of color names.                    
 ;       Data - if this keyword is set and nonzero, the input center (xcen,
 ;                 ycen) is understood to be in data coordinates
 ;       font - IDL vector font number (1-20) to use to display NE letters.
@@ -69,7 +69,6 @@ pro arrows,h,xcen,ycen,thick=thick,charsize=charsize,arrowlen=arrowlen, $
 ;       Added /FONT keyword W. Landsman           April 1995
 ;       Modified to work correctly for COLOR=0  J.Wm.Parker, HITC   1995 May 25
 ;       Work correctly for negative CDELT values   W. Landsman   Feb. 1996
-;       Converted to IDL V5.0   W. Landsman   September 1997
 ;       Use GETROT to compute rotation   W. Landsman    June 2003
 ;       Restored /NotVertex keyword which was not working after June 2003 change
 ;                  W. Landsman  January 2004
@@ -88,11 +87,10 @@ pro arrows,h,xcen,ycen,thick=thick,charsize=charsize,arrowlen=arrowlen, $
   if ( N_params() LT 3 ) then $
     read,'Enter x, y values for center of arrows: ',xcen,ycen
 
-  if not keyword_set( THICK ) then    thick    = 2.0
-  if not keyword_set( CHARSIZE ) then charsize = 2.0
-  if not keyword_set( ARROWLEN ) then arrowlen = 3.5
-  if (n_elements(COLOR) eq 0) then color = !P.COLOR
-  if not keyword_set( NotVertex ) then NotVertex=0
+  setdefaultvalue, thick, 2.0
+  setdefaultvalue, charsize, 2.0
+  setdefaultvalue, arrowlen, 3.5
+  setdefaultvalue, NotVertex, 0
 
 ;  Derive Position Angles for North and East separately
 

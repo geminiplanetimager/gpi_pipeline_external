@@ -1,5 +1,5 @@
 pro tvbox,width,x,y,color,DATA = data,Color=TheColor, ANGLE = angle, $
-                 FILL = fill, _EXTRA = _EXTRA
+                 DEVICE=device, SQUARE=SQUARE,  _EXTRA = _EXTRA
 ;+
 ; NAME:
 ;      TVBOX
@@ -7,8 +7,8 @@ pro tvbox,width,x,y,color,DATA = data,Color=TheColor, ANGLE = angle, $
 ;      Draw a box(es) or rectangle(s) of specified width
 ; EXPLANATION: 
 ;      Positions can be specified either by the cursor position or by 
-;      supplying a vector of X,Y positions.   Default is to use DEVICE
-;      coordinates.
+;      supplying a vector of X,Y positions.  By default, TVBOX now
+;     (since Jan 2012) assumes data coordinates if !X.crange is set. 
 ;
 ; CALLING SEQUENCE:
 ;      TVBOX, width, [ x, y, color, /DATA, ANGLE= ,COLOR =, _EXTRA =  ]
@@ -37,11 +37,20 @@ pro tvbox,width,x,y,color,DATA = data,Color=TheColor, ANGLE = angle, $
 ;      ANGLE - numeric scalar specifying the clockwise rotation of
 ;              the boxes or rectangles.
 ;      COLOR - Scalar or vector, overrides the COLOR input parameter
+;              Color can be specified as a string (e.g. 'red') or intensity 
+;              value. See cgCOLOR() for a list of color names.       
+;               Default = 'opposite' (i.e. color opposite the background).   
 ;      /DATA - if this keyword is set and non-zero, then the box width and
-;             X,Y position center are interpreted as being in DATA 
-;             coordinates.   Note that data coordinates must be previously
-;             defined (e.g. with a PLOT or CONTOUR call).
-;      /FILL  - If set, fill the box using cgCOLORFILL;
+;              X,Y position center are interpreted as being in DATA 
+;              coordinates.   Note that data coordinates must be previously
+;              defined (with a PLOT or CONTOUR call).   The default
+;              is to assume data coordinates if !X.CRANGE is set.    Force
+;              device coordinates by setting DATA = 0 or /DEVICE
+;      /DEVICE Set this keyword to force use of device coordinates
+;      /FILL  - If set, fill the box using cgCOLORFILL
+;      /SQUARE - If set, then a square is drawn, even if in data coordinates
+;               with unequal X and Y axes.   The X width is used for the
+;               square width, and the Y width is ignored.
 ;
 ;      Any keyword recognized by cgPLOTS (or cgCOLORFILL if /FILL is set) 
 ;      is also recognized by TVBOX.   
@@ -74,7 +83,7 @@ pro tvbox,width,x,y,color,DATA = data,Color=TheColor, ANGLE = angle, $
 ;         Allows use of only device (default) or data (if /DATA is set) 
 ;           coordinates.   Normalized coordinates are not allowed
 ; PROCEDURES USED:
-;       ZPARCHECK, cgplots
+;       cgpolygon, zparcheck
 ; REVISON HISTORY:
 ;       Written, W. Landsman   STX Co.           10-6-87
 ;       Modified to take vector arguments. Greg Hennessy Mar 1991
@@ -88,6 +97,9 @@ pro tvbox,width,x,y,color,DATA = data,Color=TheColor, ANGLE = angle, $
 ;       Check that width has only 1 or 2 elements W. Landsman August 2010
 ;       Use Coyote Graphcis  W. Landsman February 2011
 ;       Added /FILL keyword  W. Landsman  July 2011
+;       Default to data coordinates if !X.crange present  WL Jan 2012
+;       Added Square keyword  WL.  April 2012
+;       
 ;-
  compile_opt idl2
  On_error,2
@@ -104,6 +116,15 @@ pro tvbox,width,x,y,color,DATA = data,Color=TheColor, ANGLE = angle, $
  if N_elements(width) GT 2 then message, $
      'ERROR - First parameter (box width) must have 1 or 2 values' 
  if ( N_elements(width) EQ 2 ) then w = width/2. else w = [width,width]/2.
+
+; Use data coordinates if !X.crange is set (previous plot) and /DEVICE not set 
+
+; Default to data coordinates if !X.crange is set (previous plot) 
+   if keyword_set(device) then datacoord = 0 else begin
+      if N_elements(data) eq 0 then datacoord = !x.crange[0] NE !x.crange[1]  $
+                          else datacoord = logical_true(data)
+   endelse   			  
+ 
 
 ; Can't figure out in IDL how to figure out if the device has a cursor so
 ; we'll just check for a postscript device
@@ -139,6 +160,14 @@ pro tvbox,width,x,y,color,DATA = data,Color=TheColor, ANGLE = angle, $
        xbox = xprime
        ybox = yprime
  endif
+ 
+ if keyword_set(square) && datacoord then begin
+ ; Get ratio of unit vectors in X and Y direction
+   t = convert_coord([0,w[0],0],[0,0,w[0]],/data,/to_device)
+   ratio = (t[0,1]-t[0,0])/(t[1,2]-t[1,0])
+    ybox = ybox*ratio
+ endif
+      
  for i = 0l, nbox-1 do begin
 
   j = i < (Ncol-1)
@@ -148,18 +177,13 @@ pro tvbox,width,x,y,color,DATA = data,Color=TheColor, ANGLE = angle, $
 ; Plot the box in data or device coordinates.   Default for Coyote graphcis
 ; is data coordinates. 
 
-  if keyword_set( DATA ) then begin
-     if keyword_set( FILL ) then $
-     cgcolorfill, xt, yt, color= color[j], _STRICT_EXTRA = _EXTRA else $
-     cgplots, xt, yt,  COLOR=color[j], _STRICT_EXTRA = _EXTRA
-  endif else begin    
+  if datacoord then $
+     cgpolygon, xt, yt, color= color[j], _STRICT_EXTRA = _EXTRA $
+   else begin    
  ; only round coordinates to integers if using device coords;
  ; data coords can potentially be fractional.
-     xt = round(xt) & yt = round(yt) 
-     if keyword_set( FILL ) then $
-        cgcolorfill, xt, yt, /DEVICE, COLOR = color[j],_STRICT_EXTRA = _EXTRA  $
-	     else $
-        cgplots, xt, yt, /DEVICE, COLOR=color[j],  _STRICT_EXTRA = _EXTRA
+     xt = round(xt) & yt = round(yt)
+     cgpolygon,xt,yt,/DEVICE,color=color[j],_STRICT_EXTRA=_EXTRA  
    endelse
  endfor
 

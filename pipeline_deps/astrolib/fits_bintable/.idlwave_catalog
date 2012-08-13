@@ -1,7 +1,7 @@
 ;;
 ;; IDLWAVE catalog for library Astrolib
 ;; Automatically Generated -- do not edit.
-;; Created by idlwave_catalog on Thu Jan 21 11:01:16 2010
+;; Created by idlwave_catalog on Sun Aug 12 19:32:03 2012
 ;;
 (setq idlwave-library-catalog-libname "Astrolib")
 (setq idlwave-library-catalog-routines
@@ -24,7 +24,7 @@
    ("FXBOPEN" pro nil (lib "fxbopen.pro" nil "Astrolib") "%s, UNIT, FILENAME0, EXTENSION, HEADER" (nil ("ACCESS") ("ERRMSG") ("NO_TDIM") ("REOPEN")))
    ("FXBPARSE" pro nil (lib "fxbparse.pro" nil "Astrolib") "%s, ILUN, HEADER" (nil ("ERRMSG") ("NO_TDIM")))
    ("FXBREAD" pro nil (lib "fxbread.pro" nil "Astrolib") "%s, UNIT, DATA, COL, ROW" (nil ("DIMENSIONS") ("ERRMSG") ("NANVALUE") ("NOIEEE") ("NOSCALE") ("VIRTUAL")))
-   ("FXBREADM_CONV" pro nil (lib "fxbreadm.pro" nil "Astrolib") "%s, BB, DD, CTYPE, PERROW, NROWS" (nil ("DEFAULT_FLOAT") ("NANVALUE") ("NOIEEE") ("NOSCALE") ("TSCAL") ("TZERO") ("VARICOL")))
+   ("FXBREADM_CONV" pro nil (lib "fxbreadm.pro" nil "Astrolib") "%s, BB, DD, CTYPE, PERROW, NROWS" (nil ("DEFAULT_FLOAT") ("NANVALUE") ("NOIEEE") ("NOSCALE") ("TNULL_FLAG") ("TNULL_VALUE") ("TSCAL") ("TZERO") ("VARICOL")))
    ("FXBREADM" pro nil (lib "fxbreadm.pro" nil "Astrolib") "%s, UNIT, COL, D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15, D16, D17, D18, D19, D20, D21, D22, D23, D24, D25, D26, D27, D28, D29, D30, D31, D32, D33, D34, D35, D36, D37, D38, D39, D40, D41, D42, D43, D44, D45, D46, D47" (nil ("BUFFERSIZE") ("DEFAULT_FLOAT") ("DIMENSIONS") ("ERRMSG") ("NANVALUE") ("NOIEEE") ("NOSCALE") ("PASS_METHOD") ("POINTERS") ("ROW") ("STATUS") ("VIRTUAL") ("WARNMSG")))
    ("FXBSTATE" fun nil (lib "fxbstate.pro" nil "Astrolib") "Result = %s(UNIT)" (nil))
    ("FXBTDIM" fun nil (lib "fxbtdim.pro" nil "Astrolib") "Result = %s(TDIM_KEYWORD)" (nil))

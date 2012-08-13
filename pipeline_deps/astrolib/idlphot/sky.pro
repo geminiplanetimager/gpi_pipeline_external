@@ -9,23 +9,24 @@ pro sky,image,skymode,skysig, SILENT=silent, CIRCLERAD = circlerad, $
 ;       Approximately 10000 uniformly spaced pixels are selected for the
 ;       computation.  Adapted from the DAOPHOT routine of the same name.
 ;
-;       The sky is computed either by using the procedure mmm.pro (defualt) 
+;       The sky is computed either by using the procedure mmm.pro (default) 
 ;       or by sigma clipping (if /MEANBACK is set) 
 ;
 ; CALLING SEQUENCE:
 ;       SKY, image, [ skymode, skysig ,/SILENT, /MEANBACK, /NAN, CIRCLERAD= ]
 ;     
 ;         Keywords available  when MEANBACK is not set (passed to mmm.pro): 
-;                   HIGHBAD=, /INTEGER,  READNOISE=
+;                   /DEBUG, HIGHBAD=, /INTEGER, MAXITER=. READNOISE=
 ;         Keywords available when /MEANBACK is set: 
-;                   CLIPSIG=, /DOUBLE, CONVERGE_NUM=, MAXITER= 
+;                   CLIPSIG=, /DOUBLE, CONVERGE_NUM=, MAXITER=, /VERBOSE 
 ; INPUTS:
 ;       IMAGE - One or two dimensional array
 ;
 ; OPTIONAL OUTPUT ARRAYS:
 ;       SKYMODE - Scalar, giving the mode of the sky pixel values of the 
-;               array IMAGE, as determined by the procedure MMM.
-;       SKYSIG -  Scalar, giving standard deviation of sky brightness
+;               array IMAGE, as determined by the procedures MMM or MEANCLIP
+;       SKYSIG -  Scalar, giving standard deviation of sky brightness.   If it
+;               was not possible to derive a mode then SKYSIG is set to -1
 ;
 ; INPUT KEYWORD PARAMETERS:
 ;	CIRCLERAD - Use this keyword to have SKY only select pixels within
@@ -74,7 +75,7 @@ pro sky,image,skymode,skysig, SILENT=silent, CIRCLERAD = circlerad, $
 ;
 ; PROCEDURE:
 ;       A grid of points, not exceeding 10000 in number, is extracted
-;       from the image array.  The mode of these pixel values is determined
+;       from the srray.  The mode of these pixel values is determined
 ;       by the procedure mmm.pro or meanclip.pro.   In a 2-d array the grid is 
 ;       staggered in each row to avoid emphasizing possible bad columns
 ;
@@ -173,7 +174,7 @@ pro sky,image,skymode,skysig, SILENT=silent, CIRCLERAD = circlerad, $
  MMM, skyvec, skymode, skysig, _EXTRA = _extra, nsky = nsky
 
  skymode = float(skymode)  &  skysig = float(skysig)
- if not keyword_set(SILENT) then begin
+ if ~keyword_set(SILENT) then begin
         print,'Number of points used to find sky = ',nsky
         print,'Approximate sky value for this frame = ',skymode
         print,'Standard deviation of sky brightness = ',skysig

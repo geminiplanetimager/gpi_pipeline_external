@@ -3,7 +3,7 @@
 ; NAME:
 ;	TENV()
 ; PURPOSE:
-;	Converts sexigesimal number or string vector to decimal.  
+;	Converts sexagesimal number or string vector to decimal.  
 ; EXPLANATION:
 ;	Like TEN() but allows vector input.
 ;
@@ -13,17 +13,17 @@
 ;                       or
 ;       Result = TENV(ddmmss_string)
 ; INPUTS:
-;	dd - Sexigesimal element(s) corresponding to hours or degrees
-;	mm - Sexigesimal element(s) corresponding to minutes
-;	ss - Sexigesimal element(s) corresponding to seconds (optional)
+;	dd - sexagesimal element(s) corresponding to hours or degrees
+;	mm - sexagesimal element(s) corresponding to minutes
+;	ss - sexagesimal element(s) corresponding to seconds (optional)
 ;		The input parameters can be scalars or vectors.   However, the
 ;		number of elements in each parameter must be the same.
 ;
-;       HRMNSC_STRING - String scalar or vector giving sexigesmal quantity 
+;       HRMNSC_STRING - String scalar or vector giving sexagesmal quantity 
 ;               separated by spaces or colons e.g. "10 23 34" or "-3:23:45.2"
 ;               Any negative values should begin with a minus sign.
 ; OUTPUTS:
-;	Result -  double, decimal equivalent of input sexigesimal 
+;	Result -  double, decimal equivalent of input sexagesimal 
 ;		quantities.  Same number of elements as the input parameters.
 ;		If the nth element in any of the input parameters is negative 
 ;		then the nth element in Result will also be negative.

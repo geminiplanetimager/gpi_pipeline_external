@@ -72,6 +72,7 @@ function date_conv,date,type
 ;      DJL, Nov. 2000, Added input/output format YYYY-MM-DDTHH:MM:SS.SS
 ;      Replace spaces with '0' in output FITS format  W.Landsman April 2006
 ;      Added Julian date capabilities on input and output.  M.Perrin, July 2007
+;      Removed spurious /WARN keyword to MESSAGE W.L. Feb 2012
 ;-
 ;-------------------------------------------------------------
 ;
@@ -91,7 +92,7 @@ if N_params() lt 2 then type = 'REAL'
 s = size(date) & ndim = s[0] & datatype = s[ndim+1]
 if ndim gt 0 then begin                 ;vector?
         if ndim gt 1 then goto,notvalid
-        if (s[1] ne 5) and (s[1] ne 3) then goto,notvalid
+        if (s[1] ne 5) && (s[1] ne 3) then goto,notvalid
         if (s[1] eq 5) then form = 2 else form = 4
    end else begin                       ;scalar input
         if datatype eq 0 then goto,notvalid
@@ -119,7 +120,7 @@ case form of
 					
 					; if year is only 2 digits, assume 1900
 	                if year lt 100 then begin
-	                   message,/WARN, $
+	                   message,/INF, $
 	                     'Warning: Year specified is only 2 digits, assuming 19xx'
 	                   year=1900+year
 	                   idate=1900000+idate
@@ -156,7 +157,7 @@ case form of
 ; if year is only 2 digits, assume 1900
 ;
                 if year lt 100 then begin
-                   message,/WARN, $
+                   message,/CON, $
                     'Warning: Year specified is only 2 digits, assuming 19xx'
                    year=1900+year
                 end
@@ -295,21 +296,21 @@ case form of
 ;
 ;            START DAY AT ONE AND NOT ZERO
 ;
-                DAY=DAY+1
+                DAY++
            END
 ENDCASE
 ;
 ;            correction for leap years
 ;
         if form ne 3 then begin         ;Was it already done?
-           lpyr = ((year mod 4) eq 0) and ((year mod 100) ne 0) $
-                or ((year mod 400) eq 0)
+           lpyr = ((year mod 4) eq 0) && ((year mod 100) ne 0) $
+                || ((year mod 400) eq 0)
            if lpyr eq 1 then days[2] = 29 ; if leap year, add day to Feb.
         end
 ;
 ;            check for valid day
 ;
-        if (day lt 1) or (day gt total(days)) then $
+        if (day lt 1) || (day gt total(days)) then $
             message,'ERROR -- There are only ' + strtrim(fix(total(days)),2) + $
 	         ' days  in year '+strtrim(year,2)
 
@@ -403,7 +404,7 @@ return,out
 ;
 ; invalid input date error section
 ;
-notvalid:
+NOTVALID:
 message,'Invalid input date specified',/CON
 return, -1
 end

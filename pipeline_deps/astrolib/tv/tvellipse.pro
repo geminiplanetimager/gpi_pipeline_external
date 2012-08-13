@@ -1,6 +1,6 @@
 pro tvellipse, rmax, rmin, xc, yc, pos_ang, color, DATA = data, $
 	NPOINTS = npoints, COLOR=thecolor, MAJOR=major, MINOR=minor, $
-        _Extra = _extra
+        DEVICE= device, FILL = fill, _Extra = _extra
 ;+
 ; NAME:
 ;      TVELLIPSE
@@ -27,10 +27,15 @@ pro tvellipse, rmax, rmin, xc, yc, pos_ang, color, DATA = data, $
 ; OPTIONAL KEYWORD INPUT:
 ;        COLOR - Intensity value or color name used to draw the circle, 
 ;                overrides parameter value.  Default = 'opposite'
-;        /DATA - if this keyword is set and non-zero, then the ellipse radii and
+;                See cgCOLOR() for a list of color names.;        
+;       /DATA - if this keyword is set and non-zero, then the ellipse radii and
 ;               X,Y position center are interpreted as being in DATA
 ;               coordinates.   Note that the data coordinates must have been
-;               previously defined (with a PLOT or CONTOUR call).
+;               previously defined (with a PLOT or CONTOUR call).  The default
+;              is to assume data coordinates if !X.CRANGE has been set by a 
+;              previous plot.    Force device coordinates by setting DATA = 0.
+;        /DEVICE - Set to force use of device coordinates.
+;        /FILL - If set, then fill the ellipse using cgCOLORFILL
 ;        NPOINTS - Number of points to connect to draw ellipse, default = 120
 ;                  Increase this value to improve smoothness
 ;        /MAJOR - Plot a line along the ellipse's major axis
@@ -40,7 +45,8 @@ pro tvellipse, rmax, rmin, xc, yc, pos_ang, color, DATA = data, $
 ;               In particular, the color, linestyle, thickness and clipping of
 ;               the ellipses are controlled by the  COLOR, LINESTYLE, THICK and
 ;               NOCLIP keywords.  (Clipping is turned off by default, set
-;               NOCLIP=0 to activate it.)
+;               NOCLIP=0 to activate it.)  If /FILL is set then available 
+;               keywords include LINE_FILL and FILL_PATTERN. 
 ;
 ; RESTRICTIONS:
 ;        TVELLIPSE does not check whether the ellipse is within the boundaries
@@ -58,9 +64,9 @@ pro tvellipse, rmax, rmin, xc, yc, pos_ang, color, DATA = data, $
 ;        Draw an ellipse of semi-major axis 50 pixels, minor axis 30
 ;        pixels, centered on (250,100), with the major axis inclined 25
 ;        degrees counter-clockwise from the X axis.  Use a double thickness
-;        line and device coordinates (default)
+;        line and device coordinates
 ;
-;	IDL> tvellipse,50,30,250,100,25,thick=2
+;	IDL> tvellipse,50,30,250,100,25,thick=2,/device
 ;
 ; NOTES:
 ;        Note that the position angle for TVELLIPSE (counter-clockwise from
@@ -80,15 +86,26 @@ pro tvellipse, rmax, rmin, xc, yc, pos_ang, color, DATA = data, $
 ;        Add plotting of major and minor axes and /MAJOR, /MINOR keywords;
 ;        fixed description of RMAX,RMIN (semi-axes).  J. Guerber Feb. 2007
 ;        Update to use Coyote graphics W. Landsman Feb 2011
+;        Default to data coordinates if a previous plot has been made 
+;        (X.crange is non-zero)  W. Landsman Jan 2012
+;        Added /DEVICE keyword W. Landsman   Mar 2012
+;        Added /FILL keyword  W. Landsman Mar 2012
 ;-
  On_error,2                              ;Return to caller
 
  if N_params() lt 2 then begin
    print,'Syntax - TVELLIPSE, rmax, rmin, xc, yc, [pos_ang, color, COLOR=,'
-   print,'              NPOINTS=, LINESTYLE=, THICK=, /DATA, /MAJOR, /MINOR ]'
-   print,'              any other keywords accepted by cgPLOTS'
+   print,'          /FILL, NPOINTS=, LINESTYLE=, THICK=, /DATA, /MAJOR, /MINOR]'
+   print,'          /DEVICE...any other keyword accepted by cgPLOTS'
    return
  endif
+ 
+ ; Default to data coordinates if !X.crange is set (previous plot) 
+
+  if keyword_set(device) then datacoord = 0 else begin
+  if N_elements(data) Eq 0  then datacoord = !x.crange[0] NE !x.crange[1]  $
+                         else datacoord = logical_true(data)
+  endelse			 
 
  if N_params() lt 4 then $
        cursor, xc, yc, /DEVICE, /NOWAIT      ;Get unroamed,unzoomed coordinates
@@ -119,27 +136,48 @@ pro tvellipse, rmax, rmin, xc, yc, pos_ang, color, DATA = data, $
  xprime = xc + x*cosang - y*sinang   	;Rotate to desired position angle
  yprime = yc + x*sinang + y*cosang
 
- if keyword_set(data) then $
+ if keyword_set(fill) then begin 
+ if datacoord then $
+   cgcolorfill, xprime, yprime, /DATA, COLOR=color, _STRICT_Extra = _extra else $
+   cgcolorfill, round(xprime), round(yprime),  COLOR=color, /DEVICE,  $
+                _STRICT_Extra = _extra
+ endif else begin		
+ if datacoord then $
    cgplots, xprime, yprime, /DATA, COLOR=color, _STRICT_Extra = _extra else $
    cgplots, round(xprime), round(yprime),  COLOR=color, /DEVICE,  $
                 _STRICT_Extra = _extra
+ endelse
 
  if keyword_set(major) then begin
      xmaj = xc + [rmax,-rmax]*cosang  ; rot & transl points (rmax,0),(-rmax,0)
      ymaj = yc + [rmax,-rmax]*sinang
-     if keyword_set(data) then $
+     if keyword_set(fill) then begin
+     if datacoord then $
+       cgcolorfill, xmaj, ymaj, /DATA, COLOR=color, _STRICT_Extra=_extra  $
+     else   cgcolorfill, round(xmaj), round(ymaj), $
+       /DEVICE, COLOR=color, _STRICT_Extra=_extra
+      endif else begin
+     if datacoord then $
        cgplots, xmaj, ymaj, /DATA, COLOR=color, _STRICT_Extra=_extra  $
      else   cgplots, round(xmaj), round(ymaj), $
        /DEVICE, COLOR=color, _STRICT_Extra=_extra
+       endelse
  endif
 
  if keyword_set(minor) then begin
      xmin = xc - [rmin,-rmin]*sinang  ; rot & transl points (0,rmin),(0,-rmin)
      ymin = yc + [rmin,-rmin]*cosang
-     if keyword_set(data) then $
+     if keyword_set(fill) then begin
+     if datacoord then $
+       cgcolorfill, xmin, ymin, /DATA, COLOR=color, _STRICT_Extra=_extra  $
+     else   cgplots, round(xmin), round(ymin), $
+         /DEVICE, COLOR=color, _STRICT_Extra=_extra
+     endif else begin
+     if datacoord then $
        cgplots, xmin, ymin, /DATA, COLOR=color, _STRICT_Extra=_extra  $
      else   cgplots, round(xmin), round(ymin), $
-       /DEVICE, COLOR=color, _STRICT_Extra=_extra
+         /DEVICE, COLOR=color, _STRICT_Extra=_extra
+     endelse
  endif
 
  return

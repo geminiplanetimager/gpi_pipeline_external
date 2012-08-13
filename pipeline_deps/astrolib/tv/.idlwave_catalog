@@ -1,7 +1,7 @@
 ;;
 ;; IDLWAVE catalog for library Astrolib
 ;; Automatically Generated -- do not edit.
-;; Created by idlwave_catalog on Wed Jul 20 12:43:25 2011
+;; Created by idlwave_catalog on Sun Aug 12 19:32:03 2012
 ;;
 (setq idlwave-library-catalog-libname "Astrolib")
 (setq idlwave-library-catalog-routines
@@ -10,9 +10,9 @@
    ("curval" pro nil (lib "curval.pro" nil "Astrolib") "%s, hd, im" (nil ("ALT") ("Filename") ("OFFSET") ("ZOOM")))
    ("pixcolor" pro nil (lib "pixcolor.pro" nil "Astrolib") "%s, pix_value, color" (nil))
    ("SIGRANGE" fun nil (lib "sigrange.pro" nil "Astrolib") "Result = %s(ARRAY)" (nil ("FRACTION") ("MISSING") ("RANGE")))
-   ("tvbox" pro nil (lib "tvbox.pro" nil "Astrolib") "%s, width, x, y, color" (nil ("_EXTRA") ("ANGLE") ("Color") ("DATA") ("FILL")))
-   ("Tvcircle" pro nil (lib "tvcircle.pro" nil "Astrolib") "%s, radius, xc, yc, color" (nil ("_Extra") ("COLOR") ("DATA") ("FILL")))
-   ("tvellipse" pro nil (lib "tvellipse.pro" nil "Astrolib") "%s, rmax, rmin, xc, yc, pos_ang, color" (nil ("_Extra") ("COLOR") ("DATA") ("MAJOR") ("MINOR") ("NPOINTS")))
+   ("tvbox" pro nil (lib "tvbox.pro" nil "Astrolib") "%s, width, x, y, color" (nil ("_EXTRA") ("ANGLE") ("Color") ("DATA") ("DEVICE") ("SQUARE")))
+   ("Tvcircle" pro nil (lib "tvcircle.pro" nil "Astrolib") "%s, radius, xc, yc, color" (nil ("_Extra") ("COLOR") ("DATA") ("Device") ("FILL")))
+   ("tvellipse" pro nil (lib "tvellipse.pro" nil "Astrolib") "%s, rmax, rmin, xc, yc, pos_ang, color" (nil ("_Extra") ("COLOR") ("DATA") ("DEVICE") ("FILL") ("MAJOR") ("MINOR") ("NPOINTS")))
    ("TVLASER" pro nil (lib "tvlaser.pro" nil "Astrolib") "%s, hdr, Image" (nil ("BARPOS") ("BOTTOMDW") ("CARROWS") ("CLABELS") ("COLORPS") ("COMMENTS") ("CSIZE") ("CTITLE") ("DX") ("DY") ("ENCAP") ("FILENAME") ("HEADER") ("HELP") ("IMAGEOut") ("INTERP") ("MAGNIFY") ("NCOLORSDW") ("NO_PERS_INFO") ("NoClose") ("NODELETE") ("NOEIGHT") ("NOPRINT") ("NORETAIN") ("PORTRAIT") ("PRINTER") ("REVERSE") ("SCALE") ("TITLE") ("TrueColor") ("XDIM") ("XSTART") ("YDIM") ("YSTART")))
    ("tvlist" pro nil (lib "tvlist.pro" nil "Astrolib") "%s, image, dx, dy" (nil ("OFFSET") ("TEXTOUT") ("ZOOM")))
    ("unzoom_xy" pro nil (lib "unzoom_xy.pro" nil "Astrolib") "%s, xtv, ytv, xim, yim" (nil ("OFFSET") ("ZOOM")))

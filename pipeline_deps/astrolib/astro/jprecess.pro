@@ -87,6 +87,7 @@ pro jprecess, ra, dec, ra_2000, dec_2000, MU_RADEC = mu_radec,  $
 ;       Converted to IDL V5.0   W. Landsman   September 1997
 ;       Fixed typo in updating proper motion   W. Landsman   April 1999
 ;       Make sure proper motion is floating point  W. Landsman December 2000
+;       Use V6.0 notation  W. Landsman Mar 2011
 ;-   
   On_error,2
   compile_opt idl2
@@ -105,7 +106,7 @@ pro jprecess, ra, dec, ra_2000, dec_2000, MU_RADEC = mu_radec,  $
   N = N_elements( ra )
   if N EQ 0 then message,'ERROR - first parameter (RA vector) is undefined'
 
-  if not keyword_set( RAD_VEL) then rad_vel = dblarr(N) else begin
+  if ~keyword_set( RAD_VEL) then rad_vel = dblarr(N) else begin
         rad_vel = rad_vel*1.
         if N_elements( RAD_VEL ) NE N then message, $
         'ERROR - RAD_VEL keyword vector must contain ' + strtrim(N,2) + ' values'
@@ -118,9 +119,9 @@ pro jprecess, ra, dec, ra_2000, dec_2000, MU_RADEC = mu_radec,  $
         mu_radec = mu_radec*1.      ;Make sure at least float
   endif
 
-  if not keyword_set(epoch) then epoch = 1950.0d0
+  if ~keyword_set(epoch) then epoch = 1950.0d0
 
-  if not keyword_set( Parallax) then parallax = dblarr(N) else $
+  if ~keyword_set( Parallax) then parallax = dblarr(N) else $
         parallax = parallax*1.
 
   radeg = 180.D/!DPI
@@ -156,7 +157,7 @@ pro jprecess, ra, dec, ra_2000, dec_2000, MU_RADEC = mu_radec,  $
 
  r0 = [ cosra[i]*cosdec[i], sinra[i]*cosdec[i], sindec[i] ]
 
-  if not keyword_set( MU_RADEC) then begin
+  if ~keyword_set( MU_RADEC) then begin
         mu_a = 0.0d0
         mu_d = 0.0d0
   endif else begin
@@ -180,7 +181,7 @@ pro jprecess, ra, dec, ra_2000, dec_2000, MU_RADEC = mu_radec,  $
  
  R = M # R_1
 
- if not keyword_set(mu_RADEC) then begin
+ if ~keyword_set(mu_RADEC) then begin
          rr = [ R[0], R[1], R[2]]
          v =  [ R[3],R[4],R[5] ]
          t = ((epoch - 1950.0d0) - 50.00021d)/100.0d0

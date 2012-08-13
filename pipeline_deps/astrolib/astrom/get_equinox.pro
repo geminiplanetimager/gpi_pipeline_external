@@ -1,4 +1,4 @@
-FUNCTION GET_EQUINOX,HDR,CODE                                      
+FUNCTION GET_EQUINOX,HDR,CODE, ALT = alt                                       
 ;+
 ; NAME:
 ;       GET_EQUINOX
@@ -13,9 +13,10 @@ FUNCTION GET_EQUINOX,HDR,CODE
 ;               either 2000. or 1950. is returned.
 ;       (3)  If the EQUINOX keyword is not found, then GET_EQUINOX will return
 ;               the EPOCH keyword value.   This usage of EPOCH is disparaged.
-;       (4)  If neither EQUINOX no EPOCH is found, then the RADECSYS keyword
-;               is checked.   If the value is 'ICRS' or 'FK5' then 2000 is
-;               is returned, if it is 'FK4' then 1950 is returned.
+;       (4)  If neither EQUINOX no EPOCH is found, then the RADESYS keyword 
+;               (or the deprecated RADECSYS keyword) is checked.   If the value 
+;               is 'ICRS' or 'FK5' then 2000 is is returned, if it is 'FK4' then
+;               1950 is returned.
 ;
 ;       According Calabretta & Greisen (2002, A&A, 395, 1077) the EQUINOX should
 ;       be written as a numeric value, as in format (1).   However, in older 
@@ -37,28 +38,43 @@ FUNCTION GET_EQUINOX,HDR,CODE
 ;               1 - EPOCH keyword used for equinox (not recommended)
 ;               2 - EQUINOX found as  'B1950'
 ;               3 - EQUINOX found as  'J2000'
-;               4 - EQUINOX derived from value of RADECSYS keyword
+;               4 - EQUINOX derived from value of RADESYS or RADECSYS keyword
 ;                   'ICRS', 'FK5' ==> 2000,  'FK4' ==> 1950
-;
+; OPTIONAL KEYWORD INPUT: 
+;       ALT -  single character 'A' through 'Z' or ' ' specifying which  
+;             astrometry system to use in the FITS header.    The default is
+;             to use the primary astrometry or ALT = ''.   If /ALT is set, 
+;             then this is equivalent to ALT = 'A'.   See Section 3.3 of 
+;             Greisen & Calabretta (2002, A&A, 395, 1061) for information about
+;             alternate astrometry keywords.
 ; PROCEDURES USED:
-;       ZPARCHECK, SXPAR()
+;       ZPARCHECK, SXPAR()  
+; NOTES:
+;       Technically, RADESYS = 'ICRS' does not specify any equinox, but can be 
+;       assumed to be equivalent to J2000 for all but highest-precision work.      
 ; REVISION HISTORY:                                               
 ;       Written  W. Landsman        STX              March, 1991
-;       Converted to IDL V5.0   W. Landsman   September 1997
 ;       Don't use !ERR          W. Landsman   February 2000
 ;       N = 1 for check of EPOCH keyword, not 0 S. Ott July 2000
+;       Added ALT keyword, recognize RADESYS along with deprecated RADECSYS
+;              W. Landsman   Sep 2011
 ;-     
+ compile_opt idl2
  On_error,2
+ 
+ if N_elements(alt) EQ 0 then alt = '' else if (alt EQ '1') then alt = 'A' $
+    else alt = strupcase(alt)
  zparcheck, 'GET_EQUINOX', hdr, 1, 7, 1, 'FITS Header array'
  code = -1                      ;Not found yet
 
- year = SXPAR( Hdr, 'EQUINOX', Count = n )    ;YEAR of Initial equinox
+ year = SXPAR( Hdr, 'EQUINOX' + alt, Count = n )    ;YEAR of Initial equinox
  if n EQ 0 then begin
 
      year = sxpar( Hdr, 'EPOCH', Count = n )  ;Check EPOCH if EQUINOX not found
      if n EQ 1 then code = 1 else begin       ;EPOCH keyword found
             
-         sys = sxpar( Hdr, 'RADECSYS', Count = n) 
+     sys = sxpar( Hdr, 'RADESYS'+alt, Count = n)
+     if n EQ 0 then sys = sxpar( Hdr, 'RADECSYS', Count = n) 
               if n EQ 1 then begin
                   code = 4 
                   case strmid(sys,0,3) of
@@ -72,7 +88,7 @@ FUNCTION GET_EQUINOX,HDR,CODE
  endif else begin  
 
     tst = strmid(year,0,1)     ;Check for 'J2000' or 'B1950' values
-    if (tst EQ 'J') or (TST EQ 'B') then begin 
+    if (tst EQ 'J') || (TST EQ 'B') then begin 
            year = float(strmid(year,1,strlen(year)-1) )
            if tst EQ 'J' then code = 3
            if tst EQ 'B' then code = 2 

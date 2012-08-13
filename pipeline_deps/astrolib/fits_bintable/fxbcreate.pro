@@ -72,6 +72,7 @@
 ;	Converted to IDL V5.0   W. Landsman   September 1997
 ;       Added EXTENSION parameter, C. Markwardt 1999 Jul 15
 ;       More efficient zeroing of file, C. Markwardt, 26 Feb 2001
+;       Recompute header size if updating THEAP keyword B. Roukema April 2010
 ;-
 ;
 @fxbintable
@@ -108,6 +109,7 @@
 ;
 ;  Determine if an END line occurs, and add one if necessary
 ;
+CHECK_END:
 	ENDLINE = WHERE(STRMID(HEADER,0,8) EQ 'END     ', NEND)
 	ENDLINE = ENDLINE[0]
 	IF NEND EQ 0 THEN BEGIN
@@ -143,7 +145,9 @@ WRITE_HEADER:
 		HEAP[ILUN] = NAXIS1[ILUN]*NAXIS2[ILUN]
 		FXADDPAR,HEADER,'THEAP',HEAP[ILUN]
 		POINT_LUN, UNIT, MHEADER[ILUN]
-		GOTO, WRITE_HEADER
+	
+; Have we changed position of the END keyword?
+		GOTO, CHECK_END
 	ENDIF
 ;
 ;  Fill out the file to size it properly.

@@ -1,7 +1,7 @@
 ;;
 ;; IDLWAVE catalog for library Astrolib
 ;; Automatically Generated -- do not edit.
-;; Created by idlwave_catalog on Thu Jan 21 11:01:16 2010
+;; Created by idlwave_catalog on Sun Aug 12 19:32:03 2012
 ;;
 (setq idlwave-library-catalog-libname "Astrolib")
 (setq idlwave-library-catalog-routines
@@ -11,7 +11,7 @@
    ("fits_close" pro nil (lib "fits_close.pro" nil "Astrolib") "%s, fcb" (nil ("message") ("no_abort")))
    ("fits_help" pro nil (lib "fits_help.pro" nil "Astrolib") "%s, file_or_fcb" (nil))
    ("fits_info" pro nil (lib "fits_info.pro" nil "Astrolib") "%s, filename" (nil ("extname") ("N_ext") ("SILENT") ("TEXTOUT")))
-   ("fits_open" pro nil (lib "fits_open.pro" nil "Astrolib") "%s, filename, fcb" (nil ("append") ("hprint") ("message") ("no_abort") ("update") ("write")))
+   ("fits_open" pro nil (lib "fits_open.pro" nil "Astrolib") "%s, filename, fcb" (nil ("append") ("fpack") ("hprint") ("message") ("no_abort") ("update") ("write")))
    ("fits_read" pro nil (lib "fits_read.pro" nil "Astrolib") "%s, file_or_fcb, data, header, group_par" (nil ("data_only") ("enum") ("exten_no") ("extlevel") ("extname") ("extver") ("first") ("group") ("header_only") ("last") ("message") ("no_abort") ("no_pdu") ("no_unsigned") ("noscale") ("pdu") ("xtension")))
    ("fits_test_checksum" fun nil (lib "fits_test_checksum.pro" nil "Astrolib") "Result = %s(hdr, data)" (nil ("ERRMSG") ("FROM_IEEE")))
    ("fits_write" pro nil (lib "fits_write.pro" nil "Astrolib") "%s, file_or_fcb, data, header_in" (nil ("extlevel") ("extname") ("extver") ("header") ("message") ("no_abort") ("no_data") ("xtension")))
@@ -22,7 +22,7 @@
    ("HEADFITS" fun nil (lib "headfits.pro" nil "Astrolib") "Result = %s(filename)" (nil ("Compress") ("ERRMSG") ("EXTEN") ("SILENT")))
    ("mkhdr" pro nil (lib "mkhdr.pro" nil "Astrolib") "%s, header, im, naxisx" (nil ("EXTEND") ("IMAGE")))
    ("MODFITS" pro nil (lib "modfits.pro" nil "Astrolib") "%s, filename, data, header" (nil ("ERRMSG") ("EXTEN_NO") ("EXTNAME")))
-   ("mrd_hread" pro nil (lib "mrd_hread.pro" nil "Astrolib") "%s, unit, header, status" (nil ("ERRMSG") ("FIRSTBLOCK") ("SILENT") ("SKIPDATA")))
+   ("mrd_hread" pro nil (lib "mrd_hread.pro" nil "Astrolib") "%s, unit, header, status" (nil ("ERRMSG") ("FIRSTBLOCK") ("NO_BADHEADER") ("SILENT") ("SKIPDATA")))
    ("mrd_fxpar" pro nil (lib "mrdfits.pro" nil "Astrolib") "%s, hdr, xten, nfld, nrow, rsize, fnames, fforms, scales, offsets" (nil))
    ("mrd_dofn" fun nil (lib "mrdfits.pro" nil "Astrolib") "Result = %s(name, index, use_colnum)" (nil ("alias")))
    ("mrd_doff" pro nil (lib "mrdfits.pro" nil "Astrolib") "%s, form, dim, type" (nil))

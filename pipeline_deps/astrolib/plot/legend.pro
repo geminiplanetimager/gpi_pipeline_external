@@ -66,8 +66,8 @@
 ;               procedure usersym is called with vertices define in the
 ;               keyword usersym.   If psym[i] = 88, then use the previously
 ;               defined user symbol.    If 11 <= psym[i] <= 46 then David
-;               Fanning's function SYMCAT() will be used for additional symbols.
-;               (http://www.dfanning.com/programs/symcat.pro).   Note that
+;               Fanning's function CGSYMCAT() will be used for additional.
+;               symbols.   Note that
 ;               PSYM=10 (histogram plot mode) is not allowed since it 
 ;               cannot be used with the PLOTS command.
 ;       vectorfont = vector-drawn characters for the sym/line column, e.g.,
@@ -220,7 +220,7 @@
 ;       Default spacing, pspacing should be relative to charsize. M. Perrin, July 2007
 ;       Don't modify position keyword  A. Kimball/ W. Landsman Jul 2007
 ;       Small update to Jul 2007 for /NORMAL coords.  W. Landsman Aug 2007
-;       Use SYMCAT() plotting symbols for 11<=PSYM<=46   W. Landsman  Nov 2009
+;       Use CGSYMCAT() plotting symbols for 11<=PSYM<=46   W. Landsman  Nov 2009
 ;       Make a sharper box edge T. Robishaw/W.Landsman July 2010
 ;       Added BTHICK keyword W. Landsman October 2010
 ;       Added LINESIZ keyword W.L./V.Gonzalez   May 2011
@@ -437,7 +437,7 @@ for iclr = 0,clear do begin
  if psym[i] eq 88 then p_sym =8 else $
  if psym[i] EQ 10 then $
          message,'PSYM=10 (histogram mode) not allowed to legend.pro' $
- else  if psym[i] GT 8 then p_sym = symcat(psym[i]) else p_sym= psym[i]
+ else  if psym[i] GT 8 then p_sym = cgsymcat(psym[i]) else p_sym= psym[i]
 
   if vectorfont[i] ne '' then begin
 ;    if (num eq 1) and vertical then xp = x + xt/2      ; IF 1, CENTERED.

@@ -144,6 +144,8 @@
 ;       Version 8, Craig Markwardt, GSFC, 08 Oct 2003,
 ;               Added DATATYPE keyword to cast vector keywords type
 ;       Version 9, Paul Hick, 22 Oct 2003, Corrected bug (NHEADER-1)
+;       Version 10, W. Landsman, GSFC  2 May 2012
+;               Keywords of form "name_0" cound confuse vector extractions
 ;-
 ;------------------------------------------------------------------------------
 ;
@@ -223,7 +225,9 @@
                 IF MATCHES GT 0 THEN BEGIN
                     NFOUND = NFOUND[IGOOD]
                     NUMBER = NUMBER[IGOOD]
-                ENDIF
+ 		    G = WHERE(NUMBER GT 0, MATCHES)
+ 		    IF MATCHES GT 0 THEN NUMBER = NUMBER[G]     
+		ENDIF
             ENDIF
 ;
 ;  Otherwise, find all the instances of the requested keyword.  If more than
@@ -363,7 +367,7 @@ NOT_COMPLEX:
                                 END ELSE VALUE = FLOAT(VALUE)
                         ENDIF ELSE BEGIN
                             LMAX = 2.0D^31 - 1.0D
-                            LMIN = -2.0D31
+                            LMIN = -2.0D^31       ;Typo fixed Feb 2010
                             VALUE = DOUBLE(VALUE)
                             if (VALUE GE LMIN) and (VALUE LE LMAX) THEN $
                                 VALUE = LONG(VALUE)

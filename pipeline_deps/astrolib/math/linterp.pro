@@ -5,7 +5,7 @@ pro linterp, Xtab, Ytab, Xint, Yint, MISSING = missing, NoInterp = NoInterp
 ; PURPOSE: 
 ;       Linearly interpolate tabulated 1-d data from one grid to a new one.
 ; EXPLANATION:
-;       The results of LINTERP are numerically equivalent to the RSI
+;       The results of LINTERP are numerically equivalent to the IDL intrinsic
 ;       INTERPOL() function, but note the following:
 ;         (1) LINTERP is a procedure rather than a function
 ;         (2) INTERPOL() extrapolates beyond the end points whereas LINTERP
@@ -49,13 +49,13 @@ pro linterp, Xtab, Ytab, Xint, Yint, MISSING = missing, NoInterp = NoInterp
 ;
 ; EXAMPLE:
 ;       To linearly interpolate from a spectrum wavelength-flux pair
-;       WAVE, FLUX to another wavelength grid defined as:
-;       WGRID = [1540., 1541., 1542., 1543., 1544, 1545.]
+;       Wave, Flux to another wavelength grid defined as:
+;       WGrid = [1540., 1541., 1542., 1543., 1544, 1545.]
 ;   
-;       IDL>  LINTERP, WAVE, FLUX, WGRID, FGRID  
+;       IDL>  LINTERP, Wave, Flux, WGrid, FGrid  
 ;
-;       FGRID will be a 6 element vector containing the values of FLUX 
-;       linearly interpolated onto the WGRID wavelength scale
+;       FGRID will be a 6 element vector containing the values of Flux
+;       linearly interpolated onto the WGrid wavelength scale
 ;
 ; PROCEDURE: 
 ;       Uses TABINV to calculate the effective index of the values
@@ -76,6 +76,7 @@ pro linterp, Xtab, Ytab, Xint, Yint, MISSING = missing, NoInterp = NoInterp
 ;       Work for unsigned, 64 bit integers  W. Landsman  October 2001
 ;-
  On_error,2
+ compile_opt idl2
 
  if N_params() LT 4 then begin
    print,'Syntax - LINTERP, Xtab, Ytab, Xint, Yint, [ MISSING = ]' 
@@ -99,7 +100,7 @@ pro linterp, Xtab, Ytab, Xint, Yint, MISSING = missing, NoInterp = NoInterp
 
 ; Perform linear interpolation
 
- if (ytype LE 3) or (ytype GE 12) then  $             ;Integer or byte input?
+ if (ytype LE 3) || (ytype GE 12) then  $             ;Integer or byte input?
      Yint = interpolate( float(Ytab), r) else $
      Yint = interpolate( Ytab, r)
 

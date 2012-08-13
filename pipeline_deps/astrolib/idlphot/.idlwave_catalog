@@ -1,11 +1,11 @@
 ;;
 ;; IDLWAVE catalog for library Astrolib
 ;; Automatically Generated -- do not edit.
-;; Created by idlwave_catalog on Wed Jul 20 12:43:25 2011
+;; Created by idlwave_catalog on Sun Aug 12 19:32:03 2012
 ;;
 (setq idlwave-library-catalog-libname "Astrolib")
 (setq idlwave-library-catalog-routines
- '(("aper" pro nil (lib "aper.pro" nil "Astrolib") "%s, image, xc, yc, mags, errap, sky, skyerr, phpadu, apr, skyrad, badpix" (nil ("CLIPSIG") ("CONVERGE_NUM") ("EXACT") ("FLUX") ("MAXITER") ("MEANBACK") ("Nan") ("PRINT") ("READNOISE") ("SETSKYVAL") ("SILENT")))
+ '(("aper" pro nil (lib "aper.pro" nil "Astrolib") "%s, image, xc, yc, mags, errap, sky, skyerr, phpadu, apr, skyrad, badpix" (nil ("CLIPSIG") ("CONVERGE_NUM") ("EXACT") ("FLUX") ("MAXITER") ("MEANBACK") ("MINSKY") ("Nan") ("PRINT") ("READNOISE") ("SETSKYVAL") ("SILENT")))
    ("cntrd" pro nil (lib "cntrd.pro" nil "Astrolib") "%s, img, x, y, xcen, ycen, fwhm" (nil ("DEBUG") ("EXTENDBOX") ("KeepCenter") ("SILENT")))
    ("DAO_VALUE" fun nil (lib "dao_value.pro" nil "Astrolib") "Result = %s(XX, YY, GAUSS, PSF, DVDX, DVDY)" (nil))
    ("daoerf" pro nil (lib "daoerf.pro" nil "Astrolib") "%s, x, y, a, f, pder" (nil))
@@ -13,7 +13,7 @@
    ("gcntrd" pro nil (lib "gcntrd.pro" nil "Astrolib") "%s, img, x, y, xcen, ycen, fwhm" (nil ("DEBUG") ("keepcenter") ("maxgood") ("SILENT")))
    ("getpsf" pro nil (lib "getpsf.pro" nil "Astrolib") "%s, image, xc, yc, apmag, sky, ronois, phpadu, gauss, psf, idpsf, psfrad, fitrad, psfname" (nil ("DEBUG")))
    ("GROUP" pro nil (lib "group.pro" nil "Astrolib") "%s, X, Y, RCRIT, NGROUP" (nil))
-   ("mmm" pro nil (lib "mmm.pro" nil "Astrolib") "%s, sky_vector, skymod, sigma, skew" (nil ("DEBUG") ("HIGHBAD") ("INTEGER") ("Nsky") ("ReadNoise") ("SILENT")))
+   ("mmm" pro nil (lib "mmm.pro" nil "Astrolib") "%s, sky_vector, skymod, sigma, skew" (nil ("DEBUG") ("HIGHBAD") ("INTEGER") ("MAXITER") ("MINSKY") ("Nsky") ("ReadNoise") ("SILENT")))
    ("nstar" pro nil (lib "nstar.pro" nil "Astrolib") "%s, image, id, xc, yc, mags, sky, group, phpadu, readns, psfname, errmag, iter, chisq, peak" (nil ("DEBUG") ("PRINT") ("SILENT") ("VARSKY")))
    ("Arc" fun nil (lib "pixwt.pro" nil "Astrolib") "Result = %s(x, y0, y1, r)" (nil))
    ("Chord" fun nil (lib "pixwt.pro" nil "Astrolib") "Result = %s(x, y0, y1)" (nil))

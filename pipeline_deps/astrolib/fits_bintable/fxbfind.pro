@@ -69,10 +69,12 @@
 ; Modified    : 
 ;	Version 1, William Thompson, GSFC, 12 April 1993.
 ;		Incorporated into CDS library.
-; Version     : 
-;	Version 1, 12 April 1993.
 ;       Vectorized implementation improves performance, CM 18 Nov 1999
 ;       Added COMMENTS keyword CM Nov 2003
+;       Remove use of obsolete !ERR system variable W. Landsman April 2010
+;       Fix error introduced April 2010  W. Landsman
+; Version     : 
+;	Version 3, April 2010.
 ;-
 ;
 @fxbintable
@@ -100,17 +102,23 @@
 ;  Extract the keyword values all in one pass
 ;        
         KEYVALUES = FXPAR(HEADER, STRTRIM(KEYWORD,2)+'*', $
-                          COMMENT=COMMENT_STRS, DATATYPE=DEFAULT)
+                          COMMENT=COMMENT_STRS, DATATYPE=DEFAULT, COUNT=NKEY)
         N_FOUND = 0L
 
 ;
 ;  INDEX is used as an array index to fill in the final output
-;
-        IF !ERR GE 0 THEN BEGIN
+;   
+        IF NKEY GT 0 THEN BEGIN
             N_FOUND = N_ELEMENTS(KEYVALUES)
             INDEX   = LINDGEN(N_FOUND)
         ENDIF
 
+
+;
+;  INDEX is used as an array index to fill in the final output
+;
+        IF N_FOUND GT 0 THEN INDEX   = LINDGEN(N_FOUND)
+ 
 ;
 ;  If a default was given, then we are a little more careful to 
 ;  reproduce the correct number of values.
@@ -118,7 +126,7 @@
         IF N_ELEMENTS(DEFAULT) GT 0 THEN BEGIN
             ;; If no values were found we need to fill KEYVALUES with
             ;; *something*.
-            IF !ERR LE 0 THEN KEYVALUES = DEFAULT
+            IF N_FOUND LE 0 THEN KEYVALUES = DEFAULT
             COLUMNS  = LINDGEN(TFIELDS0) + 1
 
             ;; Make an array with the number of columns in the table

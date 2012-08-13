@@ -102,11 +102,11 @@ function Queryvizier, catalog, target, dis, VERBOSE=verbose, CANADA = canada, $
 ;          IDL>  info = queryvizier('2MASS-PSC','m13',10)
 ;          IDL> plothist,info.jmag,xran=[10,20]
 ;
-;          (2)  Find the brightest R magnitude GSC2.3 source within 3' of the 
+;          (2)  Find the brightest J mag GSC2.3 source within 3' of the 
 ;               J2000 position ra = 10:12:34, dec = -23:34:35
 ;          
 ;          IDL> str = queryvizier('GSC2.3',[ten(10,12,34)*15,ten(-23,34,35)],3)
-;          IDL> print,min(str.rmag,/NAN)
+;          IDL> print,min(str.jmag,/NAN)
 ;
 ;          (3) Find sources with V < 19 in the Magellanic Clouds Photometric 
 ;              Survey (Zaritsky+, 2002) within 5 arc minutes of  the position 
@@ -154,6 +154,7 @@ function Queryvizier, catalog, target, dis, VERBOSE=verbose, CANADA = canada, $
 ;         Added /SILENT keyword  W.L.  Jan 2009
 ;         Avoid error if output columns but not data returned W.L. Mar 2010
 ;         Ignore vector tags (e.g. SED spectra) W.L.   April 2011
+;         Better checking when more than one catalog returned W.L. June 2012
 ;-
   compile_opt idl2
   if N_params() LT 2 then begin
@@ -187,7 +188,7 @@ function Queryvizier, catalog, target, dis, VERBOSE=verbose, CANADA = canada, $
        targname = 1b 
   endelse
 
-; Add any addition constraints to the search.    Convert an URL special 
+; Add any additional constraints to the search. Convert any URL special 
 ; special characters in the constraint string.
 
  if N_elements(constraint) EQ 0 then constraint = '' 
@@ -227,27 +228,28 @@ function Queryvizier, catalog, target, dis, VERBOSE=verbose, CANADA = canada, $
   linecon = where(keyword EQ '#---Lis', Ncon)
   if Ncon GT 0 then remove,linecon, t, keyword
  
+; Check to see if more than one catalog has been searched
+; Use only the first catalog found
 
+  rcol = where(keyword Eq '#RESOUR', Nfound) 
+  if N_elements(rcol) GT 1 then begin 
+       t = t[0:rcol[1]-1 ]
+       keyword = keyword[0:rcol[1]-1]
+  endif     
   lcol = where(keyword EQ "#Column", Nfound)
   if Nfound EQ 0 then begin
        if max(strpos(strlowcase(t),'errors')) GE 0 then begin 
             message,'ERROR - Unsuccessful VIZIER query',/CON 
             print,t
-       endif else if not silent then $
+       endif else if ~silent then $
             message,'No sources found within specified radius',/INF
        return,-1
   endif
   
-; Check to see if more than one catalog has been searched
-  if N_elements(lcol) GT 1 then begin
-      diff  = lcol[1:*] - lcol
-      g = where(diff GT 1, Ng)
-      if Ng GT 0 then lcol = lcol[0:g[0]]
-  endif
 
   if keyword_set(verbose) then begin
-    titcol = where(keyword EQ '#Title:', Ntit)    
-    if Ntit GT 0 then message,/inform, $
+    titcol = where(keyword EQ '#Title:', Ntit)
+        if Ntit GT 0 then message,/inform, $
         strtrim(strmid(t[titcol[0]],8),2)
   endif
 ;Check if any Warnings or fatal errors in the VIZIER output
@@ -291,12 +293,11 @@ function Queryvizier, catalog, target, dis, VERBOSE=verbose, CANADA = canada, $
   'A': cval = ' '
   'I': cval = (val[i] LE 4) ? 0 : 0L         ;16 bit integer if 4 chars or less
   'F': cval = (val[i] LE 7) ? 0. : 0.0d      ;floating point if 7 chars or less
-  'E': cval = (val[i] LE 7) ? 0. : 0.0d 
+   'E': cval = (val[i] LE 7) ? 0. : 0.0d 
   'D': cval = (val[i] LE 7) ? 0. : 0.0d 
    else: message,'ERROR - unrecognized format ' + fmt[i]
  
   endcase
-
 
    if i EQ 0 then   info = create_struct(colname[0], cval) else begin
 	   ; If you set the /ALLCOLUMNS flag, in some cases (2MASS) you
@@ -307,7 +308,7 @@ function Queryvizier, catalog, target, dis, VERBOSE=verbose, CANADA = canada, $
    info =  create_struct(temporary(info), colname[i],cval)
    endelse
  endfor
-
+ 
   i0 = max(lcol) + 4  
   if i0 GT (N_elements(t)-1) then begin 
        message,'No sources found within specified radius',/INF
@@ -328,7 +329,7 @@ function Queryvizier, catalog, target, dis, VERBOSE=verbose, CANADA = canada, $
        if dtype NE 7 then begin
        bad = where(strlen(x) EQ 0, Nbad)
       if (Nbad GT 0) then $
-           if (dtype EQ 4) or (dtype EQ 5) then x[bad] = 'NaN' $
+           if (dtype EQ 4) || (dtype EQ 5) then x[bad] = 'NaN' $
                                            else x[bad] = -1
       endif
       info.(j) = x 

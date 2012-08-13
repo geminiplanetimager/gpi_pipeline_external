@@ -238,7 +238,7 @@
 ;   VELFAC keyword gives scale factor between POSUNITS and VELUNITS, 
 ;     12 Jan 2009, CM
 ;
-;  $Id: jplephinterp.pro,v 1.1.1.1 2011/10/19 16:28:55 LAB Exp $
+;  $Id: jplephinterp.pro,v 1.18 2009/01/13 04:53:26 craigm Exp $
 ;
 ;-
 ; Copyright (C) 2001, 2002, 2004, 2008, 2009, Craig Markwardt
@@ -251,7 +251,7 @@
 pro jplephinterp_calc, info, raw, obj, t, x, y, z, vx, vy, vz, $
                        velocity=vel, tbase=tbase
 
-  ; '$Id: jplephinterp.pro,v 1.1.1.1 2011/10/19 16:28:55 LAB Exp $'
+  ; '$Id: jplephinterp.pro,v 1.18 2009/01/13 04:53:26 craigm Exp $'
 
   if n_elements(tbase) EQ 0 then tbase = 0D
   ;; Number of coefficients (x3), number of subintervals, num of rows

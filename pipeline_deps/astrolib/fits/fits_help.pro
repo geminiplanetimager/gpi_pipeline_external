@@ -33,6 +33,7 @@ pro fits_help,file_or_fcb
 ;       Written by:     D. Lindler      August, 1995
 ;       Converted to IDL V5.0   W. Landsman   September 1997
 ;       Don't truncate EXTNAME values at 10 chars  W. Landsman Feb. 2005
+;       Use V6.0 notation W. Landsman Jan 2012
 ;-
 ;-----------------------------------------------------------------------------
  compile_opt idl2
@@ -48,7 +49,7 @@ pro fits_help,file_or_fcb
 ;
         fcbtype = size(file_or_fcb,/type) 
         fcbsize = n_elements(file_or_fcb)
-        if (fcbsize ne 1) or ((fcbtype ne 7) and (fcbtype ne 8)) then begin
+        if (fcbsize ne 1) || ((fcbtype ne 7) && (fcbtype ne 8)) then begin
                 message, 'Invalid Filename or FCB supplied',/con
                 return
         end
@@ -81,32 +82,32 @@ pro fits_help,file_or_fcb
 ;
                 if i gt 0 then begin
                         t = fcb.xtension[i]
-                        while strlen(t) lt 8 do t = t + ' '
-                        st = st + ' '+ strmid(t,0,8)
+                        while strlen(t) lt 8 do t += ' '
+                        st +=  ' '+ strmid(t,0,8)
                         t = fcb.extname[i]
-                        while strlen(t) lt maxlen do t = t + ' '
-                        st = st + ' '+ strmid(t,0,maxlen)               
+                        while strlen(t) lt maxlen do t += ' '
+                        st += ' '+ strmid(t,0,maxlen)               
                         t = fcb.extver[i]
-                        if t eq 0 then st = st + '     ' $
-                                  else st = st + string(t,'(I5)')
+                        if t eq 0 then st += '     ' $
+                                  else st += string(t,'(I5)')
                         t = fcb.extlevel[i]
-                        if t eq 0 then st = st + '        ' $
-                                  else st = st + string(t,'(I8)')
-                end else st = st + '                                 ' + space
+                        if t eq 0 then st +=  '        ' $
+                                  else st += string(t,'(I8)')
+                end else st += '                                 ' + space
 ;
 ; bitpix, gcount, pcount, naxis
 ;
-                st = st + string(fcb.bitpix[i],'(I6)')
-                st = st + string(fcb.gcount[i],'(I7)')
-                st = st + string(fcb.pcount[i],'(I7)')
-                st = st + string(fcb.naxis[i],'(I6)')
+                st += string(fcb.bitpix[i],'(I6)')
+                st += string(fcb.gcount[i],'(I7)')
+                st += string(fcb.pcount[i],'(I7)')
+                st += string(fcb.naxis[i],'(I6)')
 ;
 ; naxis*
 ;
-                st = st + '  '
+                st += '  '
                 if fcb.naxis[i] gt 0 then begin
                     nax1 = fcb.naxis[i] - 1
-                    st = st + strjoin(strtrim(fcb.axis[0:nax1,i],2),' x ')
+                    st += strjoin(strtrim(fcb.axis[0:nax1,i],2),' x ')
                 endif
 ;
 ; print the info

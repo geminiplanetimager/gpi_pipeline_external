@@ -9,7 +9,7 @@ pro plotsym, psym, psize, FILL=fill,thick=thick,Color = color
 ;     follow with either PSYM = 8 or !P.PSYM = 8 (see USERSYM)
 ;
 ;     For additional rotationally symmetric plotting symbols, see VSYM.PRO
-;     or http://www.idlcoyote.com/documents/programs.html#SYMCAT
+;     Also see CGSYMCAT in the/coyote directory.
 ; CALLING SEQUENCE:
 ;     PLOTSYM, PSYM,[ PSIZE, /FILL, THICK=, COLOR=]
 ;

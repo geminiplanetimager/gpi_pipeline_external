@@ -28,8 +28,9 @@
 ;              If POST is not set, the normal HTTP GET is used to
 ;              retrieve the URL.
 ;       /SILENT - If set, the information error messages are suppressed
-;       TIMEOUT - Integer scalar giving number of seconds to wait for data to
-;                arrive before giving up and issuing an error.    Default=30 
+;       TIMEOUT - Integer scalar giving number of seconds to wait to connect 
+;                or for data to arrive before giving up and issuing an error.
+;                Default=15 seconds 
 ; OUTPUTS: A structure with the following fields:
 ;
 ;            .Header - the HTTP header sent by the server
@@ -100,6 +101,9 @@
 ;     Assume since V5.6, sockets always available  W. Landsman Nov 2007
 ;     Fix problem when using proxy server   W. Landsman July 2008
 ;     Fix problem with /SILENT keyword  W. Landsman  Jan 2009
+;     Added check for missing Mime TYPE in CLASSANDTYPE, Zarro, December 2011
+;     Timeout applies to connecting as well as reading, default is now 15
+;               seconds  W Landsman January 2012
 ;-
 
 PRO MimeType,  Header, Class, Type, Length
@@ -112,8 +116,9 @@ PRO MimeType,  Header, Class, Type, Length
   g = where(def EQ 'CONTENT-TYPE:', Ng)
   if Ng GT 0 then begin
        ClassAndType = strmid(Header[g[0]], 14, strlen(Header[g[0]])-1)
-       Class = (strsplit(ClassAndType, '/', /extract))[0]
-       Type = (strsplit(ClassAndType, '/', /extract))[1]
+       temp=strsplit(ClassAndType, '/', /extract)
+       Class=temp[0]
+       if n_elements(temp) gt 1 then Type=temp[1]
   ENDIF 
   def = strupcase(strmid(header,0,15))
   g = where(def EQ 'CONTENT-LENGTH:', Ng)
@@ -157,7 +162,7 @@ FUNCTION webget,  url,  SILENT=silent, COPYFILE=copyfile, POST=post, $
   Proxy = getenv('http_proxy')
   slash1 = StrPos(strmid(url, 7), '/')    ;Position of first slash
   Server = StrMid(url, 7, slash1 )
-  if N_elements(timeout) EQ 0 then timeout=30
+  if N_elements(timeout) EQ 0 then timeout=15
 
   IF Proxy NE '' THEN BEGIN 
      ;;
@@ -168,7 +173,7 @@ FUNCTION webget,  url,  SILENT=silent, COPYFILE=copyfile, POST=post, $
      ProxyServer = StrMid(Proxy, 7, LastColon-7)
      ;; open the connection and send the 'GET' command
      socket, unit, ProxyServer,  ProxyPort, /get_lun, /swap_if_little_endian, $
-             read_timeout=timeout
+             read_timeout=timeout,connect_timeout=timeout
      printf, unit, method+' '+url+ProtocolString
   ENDIF ELSE BEGIN 
      ;;
@@ -177,7 +182,7 @@ FUNCTION webget,  url,  SILENT=silent, COPYFILE=copyfile, POST=post, $
      purl = strmid(url,slash1+7)
      Port = 80
      socket, unit, Server,  Port, /get_lun,/swap_if_little_endian, $
-          read_timeout=timeout
+          connect_timeout=timeout,read_timeout=timeout
      printf, unit, method+' '+purl + ProtocolString
   ENDELSE 
   ;; These lines are the same for either with or without proxy.

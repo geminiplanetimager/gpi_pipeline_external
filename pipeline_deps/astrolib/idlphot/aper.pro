@@ -1,7 +1,8 @@
 pro aper,image,xc,yc,mags,errap,sky,skyerr,phpadu,apr,skyrad,badpix, $
        SETSKYVAL = setskyval,PRINT = print, SILENT = silent, FLUX=flux, $
        EXACT = exact, Nan = nan, READNOISE = readnoise, MEANBACK = meanback, $
-       CLIPSIG=clipsig, MAXITER=maxiter,CONVERGE_NUM=converge_num
+       CLIPSIG=clipsig, MAXITER=maxiter,CONVERGE_NUM=converge_num, $
+       MINSKY = minsky
 ;+
 ; NAME:
 ;      APER
@@ -15,7 +16,7 @@ pro aper,image,xc,yc,mags,errap,sky,skyerr,phpadu,apr,skyrad,badpix, $
 ; CALLING SEQUENCE:
 ;     APER, image, xc, yc, [ mags, errap, sky, skyerr, phpadu, apr, skyrad, 
 ;                       badpix, /NAN, /EXACT, /FLUX, PRINT = , /SILENT, 
-;                       /MEANBACK, SETSKYVAL = ]
+;                       /MEANBACK, MINSKY=, SETSKYVAL = ]
 ; INPUTS:
 ;     IMAGE -  input image array
 ;     XC     - vector of x coordinates. 
@@ -61,6 +62,9 @@ pro aper,image,xc,yc,mags,errap,sky,skyerr,phpadu,apr,skyrad,badpix, $
 ;             clipped mean (using meanclip.pro) rather than using the mode 
 ;             computed with mmm.pro.    This keyword is useful for the Poisson 
 ;             count regime or where contamination is known  to be minimal.
+;      MINSKY - Integer giving mininum number of sky values to be used with MMM
+;             APER will not compute a flux if fewer valid sky elements are 
+;               within the sky annulus.   Default = 20.
 ;     /NAN  - If set then APER will check for NAN values in the image.   /NAN
 ;             takes precedence over the BADPIX parameter.   Note that fluxes 
 ;             will not be computed for any star with a NAN pixel within the 
@@ -149,18 +153,20 @@ pro aper,image,xc,yc,mags,errap,sky,skyerr,phpadu,apr,skyrad,badpix, $
 ;       Allow negative fluxes if /FLUX is set  W.L.  Mar 2008
 ;       Previous update would crash if first star was out of range  W.L. Mar 2008
 ;       Fix floating equality test for bad magnitudes W.L./J.van Eyken Jul 2009
+;       Added MINSKY keyword W.L. Dec 2011
 ;-
  COMPILE_OPT IDL2
  On_error,2
 ;             Set parameter limits
- minsky = 20   ;Smallest number of pixels from which the sky may be determined
+ ;Smallest number of pixels from which the sky may be determined
+ if N_elements(minsky) EQ 0 then minsky = 20   
  maxsky = 10000         ;Maximum number of pixels allowed in the sky annulus.
 ;                                
 if N_params() LT 3 then begin    ;Enough parameters supplied?
   print, $
   'Syntax - APER, image, xc, yc, [ mags, errap, sky, skyerr, phpadu, apr, '
   print,'             skyrad, badpix, /EXACT, /FLUX, SETSKYVAL = ,PRINT=, ]'
-  print,'             /SILENT, /NAN'
+  print,'             /SILENT, /NAN, MINSKY='
   return
 endif 
 
@@ -171,7 +177,7 @@ endif
 
   silent = keyword_set(SILENT)
 
- if not keyword_set(nan) then begin
+ if ~keyword_set(nan) then begin
  if (N_elements(badpix) NE 2) then begin ;Bad pixel values supplied
 GET_BADPIX:  
    ans = ''
@@ -271,8 +277,8 @@ DONE:
  print = keyword_set(PRINT)
 
 ;         Print header
- if not SILENT then begin
-    if (KEYWORD_SET(FLUX)) then begin
+ if ~SILENT then begin
+    if KEYWORD_SET(FLUX) then begin
        print, format="(/1X,'Star',5X,'X',7X,'Y',6X,'Sky',8X,'Fluxes')"
     endif else print, $ 
        format="(/1X,'Star',5X,'X',7X,'Y',6X,'Sky',8X,'Magnitudes')" 
@@ -341,7 +347,7 @@ DONE:
  sindex =  where(skypix, Nsky) 
  Nsky =   Nsky < maxsky   ;Must be less than MAXSKY pixels
  if ( nsky LT minsky ) then begin                       ;Sufficient sky pixels?
-    if not silent then $
+    if ~silent then $
         message,'There aren''t enough valid pixels in the sky annulus.',/con
     goto, BADSTAR
  endif
@@ -350,7 +356,7 @@ DONE:
   if keyword_set(meanback) then $
    meanclip,skybuf,skymod,skysig, $ 
          CLIPSIG=clipsig, MAXITER=maxiter, CONVERGE_NUM=converge_num  else $
-     mmm, skybuf, skymod, skysig, skyskw, readnoise=readnoise
+     mmm, skybuf, skymod, skysig, skyskw, readnoise=readnoise,minsky=minsky
            
  
 
@@ -417,7 +423,7 @@ endelse
      badflux = (minthisapd LE badpix[0] ) or ( maxthisapd GE badpix[1])
    endif else badflux = 0
   
-   if not badflux then $ 
+   if ~badflux then $ 
                  apmag[k] = total(thisapd*fractn) ;Total over irregular aperture
   endif
 endfor ;k
@@ -426,12 +432,20 @@ endfor ;k
    if Ng GT 0 then begin 
   apmag[g] = apmag[g] - skymod*area[g]  ;Subtract sky from the integrated brightnesses
 
+; Add in quadrature 3 sources of error: (1) random noise inside the star 
+; aperture, including readout noise and the degree of contamination by other 
+; stars in the neighborhood, as estimated by the scatter in the sky values 
+; (this standard error increases as the square root of the area of the
+; aperture); (2) the Poisson statistics of the observed star brightness;
+; (3) the uncertainty of the mean sky brightness (this standard error
+; increases directly with the area of the aperture).
+
    error1[g] = area[g]*skyvar   ;Scatter in sky values
    error2[g] = (apmag[g] > 0)/phpadu  ;Random photon noise 
    error3[g] = sigsq*area[g]^2  ;Uncertainty in mean sky brightness
    magerr[g] = sqrt(error1[g] + error2[g] + error3[g])
 
-  if not keyword_set(FLUX) then begin
+  if ~keyword_set(FLUX) then begin
     good = where (apmag GT 0.0, Ngood)     ;Are there any valid integrated fluxes?
     if ( Ngood GT 0 ) then begin               ;If YES then compute errors
       magerr[good] = 1.0857*magerr[good]/apmag[good]   ;1.0857 = log(10)/2.5
@@ -449,7 +463,7 @@ endfor ;k
     ms[ii] = string( apmag[ii],'+-',magerr[ii], FORM = fmt)
    if PRINT then  printf,lun, $      ;Write results to file?
       form = fmt3,  i, xc[i], yc[i], skymod, skysig, skyskw, ms
-   if not SILENT then print,form = fmt2, $       ;Write results to terminal?
+   if ~SILENT then print,form = fmt2, $       ;Write results to terminal?
           i,xc[i],yc[i],skymod,ms
 
    sky[i] = skymod    &  skyerr[i] = skysig  ;Store in output variable

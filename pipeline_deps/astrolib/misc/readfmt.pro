@@ -53,7 +53,7 @@ pro readfmt,name,fmt,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15, $
 ;
 ; EXAMPLES:
 ;       Each row in a fixed-format file POSITION.DAT contains a 5 character 
-;       star name  and 6 columns of data giving an RA and Dec in sexigesimal 
+;       star name  and 6 columns of data giving an RA and Dec in sexagesimal 
 ;       format.   A possible format for such data might be
 ;
 ;       IDL> FMT = 'A5,2I3,F5.1,2x,3I3'    
@@ -84,10 +84,11 @@ pro readfmt,name,fmt,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15, $
 ;       Added SKIPLINE and NUMLINE keywords         March 92
 ;       Allow up to 25 columns to be read           June 92
 ;       Call NUMLINES() function                    Feb 1996
-;       Converted to IDL V5.0   W. Landsman   September 1997
 ;       Recognize 'O' and 'Z' formats  W. Landsman   September 1997
+;       Recognize 'G' format, use SKIP_LUN   W. Landsman  May 2010
 ;-
   On_error,2
+  compile_opt idl2
 
   if N_params() LT 3 then begin
       print,'Syntax - readfmt, name, fmt, v1,[ v2, v3, v4...v25, '
@@ -100,18 +101,17 @@ pro readfmt,name,fmt,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15, $
 ; Get number of lines in file 
 
    nlines = FILE_LINES( name )
-   if nlines LE 0 then begin
-        message,'ERROR - File ' + name+' contains no data',/CON
-	return
-   endif     
  
   if not keyword_set( SKIPLINE ) then skipline = 0
   if keyword_set( NUMLINE) then nlines = numline < nlines else $
                nlines = nlines - skipline
-
+ 
+  if nlines LE 0 then begin
+        message,'ERROR - File ' + name+' contains no valid data',/CON
+	return
+   endif   
   ncol = N_params() - 2           ;Number of columns of data expected
-  ii = strarr( ncol )
-  for k = 1L,ncol do ii[k-1] = strtrim(k,2)
+  ii = strtrim(indgen(ncol)+1,2)
   frmt = strtrim( strupcase(fmt), 2 )      ;Working FORMAT string
 
 ; If format string is of the form "$(...)"  then remove dollar sign and
@@ -170,6 +170,8 @@ pro readfmt,name,fmt,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15, $
    'E':  idltype = 4
 
    'F':  idltype = 4
+   
+   'G':  idltype = 4
 
    'I':  begin                       ;Decide whether BYTE, INTEGER or LONG
 
@@ -213,9 +215,7 @@ DONE:
   
   openr, LUN, name, /get_lun
   ngood = 0L
-  temp = ' '
-  if skipline GT 0 then $
-      for i = 0L, skipline-1 do readf, LUN, temp   ; Skip lines
+  skip_lun,lun,skipline,/lines
 
   On_IOerror, BAD_LINE  
 
@@ -274,14 +274,14 @@ DONE:
      ngood = ngood + 1
      badline = 0
 BAD_LINE: 
-     if badline then if not keyword_set(SILENT) then $
-                 print,'Error reading line ' + strtrim(skipline+ j+1,2)
+     if badline then if ~keyword_set(SILENT) then $
+                 message,'Error reading line ' + strtrim(skipline+ j+1,2),/CON
   endfor
   free_lun, LUN
 
   if ngood EQ 0L then message, $
                 'ERROR - No valid lines found with specified format'
-  if not keyword_set( SILENT)  then $
+  if ~keyword_set( SILENT)  then $
           message, strtrim(ngood,2) + ' valid lines read',/INF
 
 ; Compress arrays to match actual number of valid lines

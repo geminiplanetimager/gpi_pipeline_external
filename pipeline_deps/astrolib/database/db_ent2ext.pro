@@ -27,6 +27,7 @@
 ;			Fixed bug where only the first element in a
 ;			multidimensional array was converted.
 ;       Version 2.1 W. Landsman August 2010 Fix for multidimensional strings
+;       Version 2.2 W. Landsman Sep 2011 Work with new DB format
 ;-
 ;
 	ON_ERROR,2
@@ -95,9 +96,13 @@
 ;
 ;  Extract information about the individual items.
 ;
+         newdb = qdb[118, 0]
+        
 	IDLTYPE = FIX(QITEMS[20:21,*],0,N_ITEMS)
-	NVALUES = FIX(QITEMS[22:23,*],0,N_ITEMS)
-	SBYTE	= FIX(QITEMS[24:25,*],0,N_ITEMS)
+	NVALUES = NEWDB ? LONG(QITEMS[179:182,*],0,N_ITEMS) : $
+	                  FIX(QITEMS[22:23,*],0,N_ITEMS)
+	SBYTE	= NEWDB ? LONG(QITEMS[183:186,*],0,N_ITEMS) : $
+	                  FIX(QITEMS[24:25,*],0,N_ITEMS)
 	NBYTES	= FIX(QITEMS[26:27,*],0,N_ITEMS)*NVALUES
         BSWAP =  (IDLTYPE NE 7) AND (IDLTYPE NE 1)
 ;
@@ -105,6 +110,7 @@
 ;
 	FOR I = 0, N_ITEMS-1 DO BEGIN	      
 	    IF BSWAP[I] THEN BEGIN
+	    
 		ITEM = DBXVAL(ENTRY,IDLTYPE[I],NVALUES[I],SBYTE[I],NBYTES[I])
 		SWAP_ENDIAN_INPLACE, ITEM, /SWAP_IF_LITTLE
 		DBXPUT, ITEM, ENTRY, IDLTYPE[I], SBYTE[I], NBYTES[I]
