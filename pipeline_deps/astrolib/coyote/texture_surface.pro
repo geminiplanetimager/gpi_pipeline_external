@@ -15,8 +15,8 @@
 ;       1645 Sheely Drive
 ;       Fort Collins, CO 80526 USA
 ;       Phone: 970-221-0438
-;       E-mail: davidf@dfanning.com
-;       Coyote's Guide to IDL Programming: http://www.dfanning.com
+;       E-mail: david@idlcoyote.com
+;       Coyote's Guide to IDL Programming: http://www.idlcoyote.com
 ;
 ; CATEGORY:
 ;
@@ -88,15 +88,15 @@
 ;
 ;       To use this program with your surface data and 2D image, type:
 ;
-;        IDL> data = Loaddata(2)
-;        IDL> image = Loaddata(7)
+;        IDL> data = cgDemoData(2)
+;        IDL> image = cgDemoData(7)
 ;        IDL> Texture_Surface, data, Image=image, Colortable=33
 ;
 ; RESTRICTIONS:
 ;
 ;        Requires the ASPECT program from the Coyote Library:
 ;
-;           http://www.dfanning.com/programs/aspect.pro
+;           http://www.idlcoyote.com/programs/aspect.pro
 ;
 ; MODIFICATION HISTORY
 ;

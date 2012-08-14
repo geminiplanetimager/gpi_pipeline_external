@@ -13,8 +13,8 @@
 ;       1645 Sheely Drive
 ;       Fort Collins, CO 80526 USA
 ;       Phone: 970-221-0438
-;       E-mail: davidf@dfanning.com
-;       Coyote's Guide to IDL Programming: http://www.dfanning.com
+;       E-mail: david@idlcoyote.com
+;       Coyote's Guide to IDL Programming: http://www.idlcoyote.com
 ;
 ; CATEGORY:
 ;
@@ -49,15 +49,9 @@
 ;
 ;   None.
 ;
-; RESTRICTIONS:
-;
-;   Requires FSC_COLOR from the Coyote Library.
-;
-;        http://www.dfanning.com/programs/fsc_color.pro
-;
 ; EXAMPLE:
 ;
-;        IDL> TVImage, Checkerboard()
+;        IDL> cgImage, Checkerboard()
 ;
 ; MODIFICATION HISTORY:
 ;

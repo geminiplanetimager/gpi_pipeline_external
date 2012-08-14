@@ -5,7 +5,7 @@
 ; PURPOSE:
 ;
 ;       The purpose of this program is to log program errors or text messages during
-;       program execution as an aid it debugging such a program at a later date. The
+;       program execution as an aid to debugging such a program at a later date. The
 ;       ErrorLogger program is written as an object so that it will persist in the IDL
 ;       session until it is destroyed.
 ;
@@ -16,8 +16,8 @@
 ;       1645 Sheely Drive
 ;       Fort Collins, CO 80526 USA
 ;       Phone: 970-221-0438
-;       E-mail: davidf@dfanning.com
-;       Coyote's Guide to IDL Programming: http://www.dfanning.com
+;       E-mail: david@idlcoyote.com
+;       Coyote's Guide to IDL Programming: http://www.idlcoyote.com
 ;
 ; CATEGORY:
 ;
@@ -36,14 +36,23 @@
 ;
 ;       ALERT:       The default behavior of the error logger is simply to write text to a file.
 ;                    But if the ALERT keyword is set, the program will alert the user via a
-;                    message dialog that an error has occurred when using the AddError method. (Input)
+;                    message dialog that an error has occurred when using the AddError method. 
+;                    Default is 0. (Input)
 ;
 ;      DELETE_ON_DESTROY: If this keyword is set, the error log file will be deleted when the
 ;                    ErrorLogger object is destroyed, but only if the ErrorLogger object is not
-;                    in an error state at that time.
+;                    in an error state at that time (error status = 2). Default is 0. (Input)
+;
+;       NOCLUTTER:   Believe it or not, some people who use an ErrorLogger prefer that an error log
+;                    file is never left behind. (They prefer that the program act like ERROR_MESSAGE.)
+;                    For those people, the NOCLUTTER keyword provides a way for them to automatically
+;                    set the ALERT and DESTROY_ON_DELETE keywords to 1. It also prevents the error 
+;                    logger from ever setting the error status to 2. Thus, when the ErrorLogger is
+;                    destroyed, the file is always deleted. Default is 0. When set, overrides ALERT
+;                    and DELETE_ON_DESTROY settings. (Input)
 ;
 ;       NOTRACEBACK: Set this keyword to suppress traceback information in the error log output
-;                    and in any alerts issued by the program. (Input)
+;                    and in any alerts issued by the program. Default is 0. (Input)
 ;
 ;       TIMESTAMP:   Set this keyword if you wish a time stamp to be appended to the provided
 ;                    filename. Otherwise, the filename is used as defined. Default filenames
@@ -60,6 +69,8 @@
 ;        ClearLog:   Erases all the text currently in the error log file. (Procedure)
 ;
 ;        CloseFile:  Closes the currently open error log file. (Procedure)
+;
+;        Flush:      Forces a write of any current information to the disk (Procedure)
 ;
 ;        GetProperty: Gets properties of the object. (Procedure)
 ;
@@ -87,11 +98,21 @@
 ;          DELETE_ON_DESTROY and NOTRACEBACK keywords to the INIT and SetProperty
 ;          methods. 28 Jan 2010. DWF.
 ;        Modified default filenames so that I am now guaranteed to get unique file names 
-;           by using Timestamp program from the Coyote Library. 8 Feb 2010. DWF
+;           by using Timestamp program from the Coyote Library. 8 Feb 2010. DWF.
+;        Added NOCLUTTER keyword. 15 February 2010. DWF.
+;        Added PRINT keyword to AddText method to allow users to log statements that should
+;           also be printed easily to a file. 17 February 2010. DWF.
+;        Small documentation changes to the program. 22 June 2010. DWF.
+;        Made a change so that the file is not opened until something needs to be written 
+;            to it. 22 June 2010. DWF.
+;        Added FLUSH method and keyword IMMEDIATE to the INIT method (defaults to 1) which
+;            will immediately flush the log information to disk when log information is
+;            added to the object. This will prevent missing information that is buffered
+;            when a program crashes. Matt Savoie suggestion. DWF, 10 Sept 2010.
 ;-
 ;
 ;******************************************************************************************;
-;  Copyright (c) 2009, by Fanning Software Consulting, Inc.                                ;
+;  Copyright (c) 2009-2010, by Fanning Software Consulting, Inc.                           ;
 ;  All rights reserved.                                                                    ;
 ;                                                                                          ;
 ;  Redistribution and use in source and binary forms, with or without                      ;
@@ -117,7 +138,7 @@
 ;  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS           ;
 ;  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                            ;
 ;******************************************************************************************;
-;+
+;
 ; NAME:
 ;       ErrorLogger::AddError
 ;
@@ -141,10 +162,11 @@
 ; KEYWORDS:
 ;
 ;       None.
-;-
+;
 ;******************************************************************************************;
 PRO ErrorLogger::AddError, theText
 
+ 
    ; The text will equal the ERROR_STATE messsage string if not available.
    IF N_Elements(theText) EQ 0 THEN theText = !Error_State.Msg
    
@@ -258,7 +280,7 @@ END
 
 
 ;******************************************************************************************;
-;+
+;
 ; NAME:
 ;       ErrorLogger::AddText
 ;
@@ -276,11 +298,15 @@ END
 ;       theText :    The message text you wish to add to the file. 
 ;
 ; KEYWORDS:
+; 
+;       ADD_CALLER:   If this keyword is set, the name of the caller routine is
+;                     prepended to the text message.
 ;
-;       None.
-;-
+;       PRINT:        If this keyword is set, the added text is also sent to standard
+;                     output.
+;
 ;******************************************************************************************;
-PRO ErrorLogger::AddText, theText
+PRO ErrorLogger::AddText, theText, PRINT=print, ADD_CALLER=add_caller
     
     Compile_Opt idl2
     
@@ -299,25 +325,41 @@ PRO ErrorLogger::AddText, theText
     thisType = Size(theText, /TNAME)
     IF thisType NE 'STRING' THEN Message, 'Only strings can be written into the error log file.'
     
-    ; Write the text to the file.
+    IF Keyword_Set(add_caller) THEN BEGIN
+        ; Get the call stack and the calling routine's name.
+        Help, Calls=callStack
+        callingRoutine = (StrSplit(StrCompress(callStack[1])," ", /Extract))[0]
+        theText = callingRoutine + ': ' + theText
+    ENDIF
+    
+    ; Write the text to the file and to standard output, if requested.
+    IF self.lun EQ 0 THEN BEGIN
+            success = self -> OpenFile(self.filename)
+            IF ~success THEN Message, 'Cannot successfully open the error log file.'
+    ENDIF
     numLines = N_Elements(theText)
-    PrintF, self.lun, ""
     FOR j=0L, N_Elements(theText) -1 DO BEGIN
         PrintF, self.lun, theText[j]
+        IF Keyword_Set( print ) THEN Print, theText[ j ]
     ENDFOR
     
-    ; Update the error logger status to normal.
-    self.status = 1
+    ; Write to disk immediately?
+    IF self.immediate NE 0  THEN self -> Flush
+
+    ; Update the error logger status to normal. If this method is called
+    ; from AddError, then when we return to AddError, the status will be
+    ; set to 2, or error status. But setting to 1 here allows us to add
+    ; text to the file whenever we like.
+    self -> SetStatus, 1
     
     ; Save the last message for later recall.
     *self.lastMessage = theText
-    
     
 END 
 
 
 ;******************************************************************************************;
-;+
+;
 ; NAME:
 ;       ErrorLogger::ClearLog
 ;
@@ -336,7 +378,7 @@ END
 ; KEYWORDS:
 ;
 ;       None.
-;-
+;
 ;******************************************************************************************;
 PRO ErrorLogger::ClearLog
 
@@ -348,13 +390,38 @@ PRO ErrorLogger::ClearLog
     self -> OpenFile, self.filename
     
     ; Set the error logger status to waiting.
-    self.status = 0
+    self -> SetStatus, 0
     
 END 
 
+;******************************************************************************************;
+;
+; NAME:
+;       ErrorLogger::Flush
+;
+; PURPOSE:
+;
+;       Flushes the current error logger information to the file in case of crash.
+;
+; CALLING SEQUENCE:
+;
+;       errorLogger -> Flush
+;
+; ARGUMENTS:
+;
+;       None.
+;
+; KEYWORDS:
+;
+;       None.
+;
+;******************************************************************************************;
+PRO ErrorLogger::Flush
+   IF self.lun GE 100 THEN Flush,  self.lun
+END 
 
 ;******************************************************************************************;
-;+
+;
 ; NAME:
 ;       ErrorLogger::CloseFile
 ;
@@ -373,7 +440,7 @@ END
 ; KEYWORDS:
 ;
 ;       None.
-;-
+;
 ;******************************************************************************************;
 PRO ErrorLogger::CloseFile
     IF self.lun GE 100 THEN Free_Lun, self.lun ELSE IF self.lun GT 0 THEN Close, self.lun
@@ -381,7 +448,7 @@ END
 
 
 ;******************************************************************************************;
-;+
+;
 ; NAME:
 ;       ErrorLogger::GetFileName
 ;
@@ -404,7 +471,7 @@ END
 ; KEYWORDS:
 ;
 ;       None.
-;-
+;
 ;******************************************************************************************;
 FUNCTION ErrorLogger::GetFileName
     RETURN, self.filename
@@ -413,7 +480,7 @@ END
 
 
 ;******************************************************************************************;
-;+
+;
 ; NAME:
 ;       ErrorLogger::Status
 ;
@@ -439,7 +506,7 @@ END
 ; KEYWORDS:
 ;
 ;       None.
-;-
+;
 ;******************************************************************************************;
 FUNCTION ErrorLogger::Status
     RETURN, self.status
@@ -447,7 +514,7 @@ END
 
 
 ;******************************************************************************************;
-;+
+;
 ; NAME:
 ;       ErrorLogger::SetStatus
 ;
@@ -469,16 +536,22 @@ END
 ; KEYWORDS:
 ;
 ;       None.
-;-
+;
 ;******************************************************************************************;
 PRO ErrorLogger::SetStatus, status
-    IF N_Elements(status) NE 0 THEN self.status = 0 > status < 2
+    IF N_Elements(status) NE 0 THEN BEGIN
+        IF (self.noclutter AND (status EQ 2)) THEN BEGIN
+            self.status = 1 
+        ENDIF ELSE BEGIN
+            self.status = 0 > status < 2
+        ENDELSE
+    ENDIF
 END 
 
 
 
 ;******************************************************************************************;
-;+
+;
 ; NAME:
 ;       ErrorLogger::OpenFile
 ;
@@ -498,7 +571,7 @@ END
 ;
 ;       DELETE_CURRENT_FILE:  If this keyword is set, the current error log file is closed
 ;                      and deleted before the new file is opened for writing.
-;-
+;
 ;******************************************************************************************;
 FUNCTION ErrorLogger::OpenFile, newLogFilename, DELETE_CURRENT_FILE=delete_current_file
     
@@ -543,7 +616,7 @@ END
 
 
 ;******************************************************************************************;
-;+
+;
 ; NAME:
 ;       ErrorLogger::LastMessage
 ;
@@ -566,7 +639,7 @@ END
 ; KEYWORDS:
 ;
 ;       None.
-;-
+;
 ;******************************************************************************************;
 FUNCTION ErrorLogger::LastMessage
     
@@ -577,7 +650,7 @@ END
 
 
 ;******************************************************************************************;
-;+
+;
 ; NAME:
 ;       ErrorLogger::PrintLastMessage
 ;
@@ -596,7 +669,7 @@ END
 ; KEYWORDS:
 ;
 ;       None.
-;-
+;
 ;******************************************************************************************;
 PRO ErrorLogger::PrintLastMessage
     
@@ -609,7 +682,7 @@ END
 
 
 ;******************************************************************************************;
-;+
+;
 ; NAME:
 ;       ErrorLogger::GetProperty
 ;
@@ -641,7 +714,7 @@ END
 ;
 ;       NOTRACEBACK:    The notraceback flag in the object. (Output)
 ;
-;-
+;
 ;******************************************************************************************;
 PRO ErrorLogger::GetProperty, $
     ALERT=alert, $
@@ -649,6 +722,7 @@ PRO ErrorLogger::GetProperty, $
     FILENAME=filename, $
     LAST_MESSAGE=last_message, $
     LUN=lun, $
+    NOCLUTTER=noclutter, $
     NOTRACEBACK=notraceback, $
     STATUS=status
     
@@ -657,6 +731,7 @@ PRO ErrorLogger::GetProperty, $
     filename = self.filename
     last_message = self -> LastMessage()
     lun = self.lun
+    noclutter = self.noclutter
     notraceback = ~self.traceback
     status = self.status
 
@@ -665,7 +740,7 @@ END
 
 
 ;******************************************************************************************;
-;+
+;
 ; NAME:
 ;       ErrorLogger::SetProperty
 ;
@@ -686,31 +761,40 @@ END
 ;       ALERT:          The alert flag in the object. (Input)
 ;       
 ;       DELETE_ON_DESTROY:  The delete on destroy flag in the object. (Input)
+;
+;       NOCLUTTER:      Set the object up for no file cluttering. (Input).
 ;       
 ;       NOTRACEBACK:    The notraceback flag in the object. (Input)
 ;
 ;       STATUS:         The current error log status. (Input)
-;-
+;
 ;******************************************************************************************;
 PRO ErrorLogger::SetProperty, $
     ALERT=alert, $
     DELETE_ON_DESTROY=delete_on_destroy, $
+    NOCLUTTER=noclutter, $
     NOTRACEBACK=notraceback, $
     STATUS=status
     
     IF N_Elements(alert) NE 0 THEN self.alert = Keyword_Set(alert)
-    IF N_Elements(status) NE 0 THEN self.status = 0 > status < 2
     IF N_Elements(delete_on_destroy) NE 0 THEN $
         self.delete_on_destroy = Keyword_Set(delete_on_destroy)
     IF N_Elements(notraceback) NE 0 THEN self.tracebace = 1 - Keyword_Set(notraceback)
-    IF N_Elements(status) NE 0 THEN self.status = 0 > status < 2
+    IF N_Elements(status) NE 0 THEN self -> SetStatus, status
+    IF N_Elements(noclutter) NE 0 THEN BEGIN
+        self.noclutter = Keyword_Set(noclutter)
+        IF self.noclutter THEN BEGIN
+            self.alert = 1
+            self.delete_on_destroy = 1
+        ENDIF
+    ENDIF
 
 END 
 
 
 
 ;******************************************************************************************;
-;+
+;
 ; NAME:
 ;       ErrorLogger::CLEANUP
 ;
@@ -729,13 +813,13 @@ END
 ; KEYWORDS:
 ;
 ;       None.
-;-
+;
 ;******************************************************************************************;
 PRO ErrorLogger::CLEANUP
 
-    ; Be sure the file is close. Otherwise, it can't be deleted.
-    IF self.lun GE 100 THEN Free_Lun, self.lun ELSE IF self.lun GT 0 THEN Close, self.lun
-    
+    ; Be sure the file is closed. Otherwise, it can't be deleted.
+    self -> CloseFile
+
     ; If the file is not in an error state, and the delete_on_destroy flag
     ; is set, delete the error log file.
     IF self.delete_on_destroy THEN BEGIN
@@ -749,7 +833,7 @@ END
 
 
 ;******************************************************************************************;
-;+
+;
 ; NAME:
 ;       ErrorLogger::INIT
 ;
@@ -770,24 +854,37 @@ END
 ;
 ;       ALERT:       The default behavior of the error logger is simply to write text to a file.
 ;                    But if the ALERT keyword is set, the program will alert the user via a
-;                    message dialog that an error has occurred when using the AddError method. (Input)
-;                    
+;                    message dialog that an error has occurred when using the AddError method. 
+;                    Default is 0. (Input)
+;
 ;      DELETE_ON_DESTROY: If this keyword is set, the error log file will be deleted when the
 ;                    ErrorLogger object is destroyed, but only if the ErrorLogger object is not
-;                    in an error state at that time.
+;                    in an error state at that time (error status = 2. Default is 0. (Input)
+;
+;      IMMEDIATE:    All messages will flush to disk as soon as they are
+;                    logged. Default is 1 (Input)
+;
+;       NOCLUTTER:   Believe it or not, some people who use an ErrorLogger prefer that an error log
+;                    file is never left behind. (They prefer that the program act like ERROR_MESSAGE.)
+;                    For those people, the NOCLUTTER keyword provides a way for them to automatically
+;                    set the ALERT and DESTROY_ON_DELETE keywords to 1. It also prevents the error 
+;                    logger from ever setting the error status to 2. Thus, when the ErrorLogger is
+;                    destroyed, the file is always deleted. Default is 0. When set, overrides ALERT
+;                    and DELETE_ON_DESTROY settings. (Input)
 ;
 ;       NOTRACEBACK: Set this keyword to suppress traceback information in the error log output
-;                    and in any alerts issued by the program. (Input)
+;                    and in any alerts issued by the program. Default is 0. (Input)
 ;
 ;       TIMESTAMP:   Set this keyword if you wish a time stamp to be appended to the provided
 ;                    filename. Otherwise, the filename is used as defined. Default filenames
-;                    always have a timestamp appended to the file name. (Input)
-;                    
-;-
+;                    always have a timestamp appended to the file name. (Input)                  
+;
 ;******************************************************************************************;
 FUNCTION ErrorLogger::INIT, filename, $
     ALERT=alert, $
     DELETE_ON_DESTROY=delete_on_destroy, $
+    IMMEDIATE = immediate, $
+    NOCLUTTER=noclutter, $
     NOTRACEBACK=notraceback, $
     TIMESTAMP=timestamp
     
@@ -804,6 +901,10 @@ FUNCTION ErrorLogger::INIT, filename, $
         RETURN, 0
     ENDIF
 
+    ; Flushing should always be turned on unless there is a good reason
+    ; not to do it.
+    SetDefaultValue,  immediate,  1
+
     ; Does the filename exist?
     IF N_Elements(filename) EQ 0 THEN BEGIN
        CD, CURRENT=currentDir
@@ -812,7 +913,7 @@ FUNCTION ErrorLogger::INIT, filename, $
        filename = logFilename
        timestamp = 0
     ENDIF
-
+    
     ; Is this a fully qualified filename?
     baseName = File_BaseName(filename)
     IF baseName EQ filename THEN BEGIN
@@ -829,10 +930,6 @@ FUNCTION ErrorLogger::INIT, filename, $
        IF ext NE "" THEN logFilename = logFilename + '.' + ext
     END
 
-    ; Open the file.
-    success = self -> OpenFile(logFilename)
-    IF ~success THEN RETURN, 0
-    
     ; Store the filename.
     self.filename = logFilename
     
@@ -848,6 +945,16 @@ FUNCTION ErrorLogger::INIT, filename, $
     ; Delete file on destroy?
     self.delete_on_destroy = Keyword_Set(delete_on_destroy)
     
+    ; No clutter desired?
+    IF Keyword_Set(noclutter) THEN BEGIN
+        self.alert = 1
+        self.delete_on_destroy = 1
+        self.noclutter = 1
+     ENDIF
+
+    ; Flushing?
+    self.immediate = immediate
+    
     ; Successful completion.
     RETURN, 1
     
@@ -862,7 +969,9 @@ PRO ErrorLogger__Define, class
              alert: 0L, $               ; A flag, if set, will give user alerts on errors.
              traceback: 0L, $           ; If set, will include traceback information into the log file.
              lastMessage: Ptr_New(), $  ; The last message written into the file.
+             immediate: 0L, $           ; A flag causing messages to flush to disk immediately
              delete_on_destroy: 0L, $   ; A flag causing log file to be deleted when object is destroyed.
+             noclutter: 0L, $           ; A flag that sets up file deletion on destroy.
              status: 0L }               ; The current status of the error logger. 0-waiting, 1-normal, 2-error.
              
 END

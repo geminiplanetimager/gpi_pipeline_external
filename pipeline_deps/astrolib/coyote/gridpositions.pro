@@ -15,8 +15,8 @@
 ;       1645 Sheely Drive
 ;       Fort Collins, CO 80526 USA
 ;       Phone: 970-221-0438
-;       E-mail: davidf@dfanning.com
-;       Coyote's Guide to IDL Programming: http://www.dfanning.com
+;       E-mail: david@idlcoyote.com
+;       Coyote's Guide to IDL Programming: http://www.idlcoyote.com
 ;
 ; CATEGORY:
 
@@ -48,6 +48,14 @@
 ;
 ;     ORDER:            If this keyword is set to 0, the positions are calculated in row order. If
 ;                       set to 1, the positions are calculated in column order.
+;                       
+;     PS_KEYWORDS:      Rather than specifying individual PostScript keywords (e.g., XSIZE, YSIZE,
+;                       LANDSCAPE, etc), it is much easier to pass a structure of PostScript keywords
+;                       as collected by PSConfig or PS_Start. This keyword allows you to pass such
+;                       a structure of PostScript keywords. For example, like this:
+;                       
+;                           PS_Start, 'myfile.ps', Keywords=keywordStruct
+;                           positions = GridPositions(PS_Keywords=keywordStruct)
 ;
 ;     XEXTENT:          A one or two element array, with values from 0 to 1, giving the extent of
 ;                       the grid in the X direction. For example XEXTENT=[.2, .8] will position
@@ -103,18 +111,40 @@
 ;       for a color bar:
 ;
 ;           positions = GridPositions(2, 2, YEXTENT=[0.15,0.85], XEXTENT=[0.2,0.8])
-;           image = LoadData(11)
-;           Erase, COLOR=FSC_Color('rose')
-;           CTLoad, 25, /Brewer
-;           TVImage, image, POSITION=positions[*,0]
-;           TVImage, BytScl(Sobel(image)), POSITION=positions[*,1]
-;           TVImage, BytScl(Hist_Equal(image)), POSITION=positions[*,2]
-;           TVImage, BytScl(Median(image,7)), POSITION=positions[*,3]
+;           image = cgDemoData(11)
+;           cgErase, 'rose'
+;           cgLoadCt, 25, /Brewer
+;           cgImage, image, POSITION=positions[*,0]
+;           cgImage, BytScl(Sobel(image)), POSITION=positions[*,1], /NoErase
+;           cgImage, BytScl(Hist_Equal(image)), POSITION=positions[*,2], /NoErase
+;           cgImage, BytScl(Median(image,7)), POSITION=positions[*,3], /NoErase
 ;
+;       To do the same thing in a PostScript file:
+;       
+;           PS_Start, 'test.ps', Keywords=psStruct
+;           positions = GridPositions(2, 2, YEXTENT=[0.15,0.85], $
+;              XEXTENT=[0.2,0.8], PS_KEYWORDS=psStruct)
+;           image = cgDemoData(11)
+;           cgErase, 'rose'
+;           cgLoadCt, 25, /Brewer
+;           cgImage, image, POSITION=positions[*,0]
+;           cgImage, BytScl(Sobel(image)), POSITION=positions[*,1], /NoErase
+;           cgImage, BytScl(Hist_Equal(image)), POSITION=positions[*,2], /NoErase
+;           cgImage, BytScl(Median(image,7)), POSITION=positions[*,3], /NoErase
+;           PS_End ; /PNG, WIDTH=600
 ;
 ; MODIFICATION HISTORY:
 ;
 ;       Written by David W. Fanning, 17 March 2009.
+;       Fixed problems in calculating default window sizes in the Z and PS devices. 25 June 2011. DWF.
+;       Fixed the example code to work with Coyote Graphics routines. 27 June 2011.
+;       Although GridPositions was not intended to be used to configure the PostScript
+;          device, I find that people are using it to do just that. To that end, I am now
+;          allowing PostScript device keywords to be collected and passed along to the
+;          PostScript device through the GridPositions interface. This is strictly a 
+;          convenience, and not the way I would recommend using the program, to be truthful. 
+;          29 Aug 2011. DWF
+;       Added PS_Keywords keyword to allow use of PSConfig and PS_Start with the program. 24 Apr 2012. DWF.
 ;-
 ;******************************************************************************************;
 ;  Copyright (c) 2009, by Fanning Software Consulting, Inc.                                ;
@@ -147,12 +177,14 @@ Function GridPositions, columns, rows, $
     INCHES=inches, $
     LANDSCAPE=landscape, $
     ORDER=order, $
+    PS_Keywords=ps_keywords, $
     XEXTENT=xextent, $
     XMARGIN=xmargin, $
     XSIZE=xsize, $
     YEXTENT=yextent, $
     YMARGIN=ymargin, $
-    YSIZE=ysize
+    YSIZE=ysize, $
+    _EXTRA=extra
     
     Compile_Opt idl2
     
@@ -163,8 +195,31 @@ Function GridPositions, columns, rows, $
     inches = Keyword_Set(inches)
     landscape = Keyword_Set(landscape)
     order = Keyword_Set(order)
-    IF N_Elements(xsize) EQ 0 THEN xsize = !D.X_Size
-    IF N_Elements(ysize) EQ 0 THEN ysize = !D.Y_Size
+    IF N_Elements(xsize) EQ 0 THEN BEGIN
+        CASE !D.NAME OF
+            'PS': BEGIN
+                CASE inches OF
+                    0: xsize = !D.X_Size / Float(!D.X_PX_CM)
+                    1: xsize = !D.X_Size / Float(!D.X_PX_CM) / 2.54
+                ENDCASE
+                END
+            'Z': xsize = 640
+            ELSE: xsize = !D.X_Size
+        ENDCASE
+    ENDIF
+    IF N_Elements(ysize) EQ 0 THEN BEGIN
+        CASE !D.NAME OF
+            'PS': BEGIN
+                CASE inches OF
+                    0: ysize = !D.Y_Size / Float(!D.Y_PX_CM)
+                    1: ysize = !D.Y_Size / Float(!D.Y_PX_CM) / 2.54
+                ENDCASE
+                END
+            'Z': ysize = 512
+            ELSE: ysize = !D.Y_Size
+        ENDCASE
+    ENDIF
+       
     IF N_Elements(xextent) EQ 0 THEN xextent = [0.0, 1.0]
     IF N_Elements(xextent) EQ 1 THEN xextent = [0, xextent]
     xextent = 0.0 > xextent < 1.0
@@ -188,7 +243,9 @@ Function GridPositions, columns, rows, $
     ; Set up appropriately for the right device.
     CASE !D.NAME OF
         'PS': BEGIN
-              Device, XSIZE=xs, YSIZE=ys, INCHES=inches, PORTRAIT=1-landscape, LANDSCAPE=landscape
+             Print, 'Resolution: ', [xs,ys]
+              Device, XSIZE=xs, YSIZE=ys, INCHES=inches, PORTRAIT=1-landscape, $
+                 LANDSCAPE=landscape, _Extra=ps_keywords
               END
               
         'Z':  BEGIN
@@ -206,7 +263,7 @@ Function GridPositions, columns, rows, $
     !P.MULTI = [0, columns, rows, 0, order]
     FOR j=0,numpos-1 DO BEGIN
         Plot, Findgen(11), XStyle=4, YStyle=4, /NoData, XMargin=xmargin, YMargin=ymargin
-              thePositions[*,j] = [!X.Window[0], !Y.Window[0], !X.Window[1], !Y.Window[1]] 
+        thePositions[*,j] = [!X.Window[0], !Y.Window[0], !X.Window[1], !Y.Window[1]] 
     ENDFOR
     !P.MULTI =0
     thePositions[[0,2], *] = thePositions[[0,2], *] *  (xextent[1] - xextent[0]) + xextent[0]
@@ -214,7 +271,7 @@ Function GridPositions, columns, rows, $
     
     ; Clean up
     CASE !D.NAME OF
-        'PS': Device, XSIZE=xsize, YSIZE=ysize, INCHES=inches, PORTRAIT=1-landscape, LANDSCAPE=landscape          
+        'PS': 
         'Z':       
         ELSE: BEGIN
               WDelete, !D.Window

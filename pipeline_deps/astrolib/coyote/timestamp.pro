@@ -13,8 +13,8 @@
 ;       1645 Sheely Drive
 ;       Fort Collins, CO 80526 USA
 ;       Phone: 970-221-0438
-;       E-mail: davidf@dfanning.com
-;       Coyote's Guide to IDL Programming: http://www.dfanning.com
+;       E-mail: david@idlcoyote.com
+;       Coyote's Guide to IDL Programming: http://www.idlcoyote.com
 ;
 ; CATEGORY:
 ;
@@ -40,9 +40,10 @@
 ;                       5: _07Feb2010_10:56:37
 ;                       6: _07feb2010_10:56:37
 ;                       7: _07FEB2010_10:56:37
-;                       8: _02_07_2010_10:56:3
+;                       8: _02_07_2010_10:56:37
 ;                       9: _02072010_10:56:37
 ;                      10: _02072010
+;                      11: _20100207@10:56:37
 ;
 ;  KEYWORDS:
 ;
@@ -57,16 +58,25 @@
 ;                      in IDL variable names are replaced by ones that are allowed. In other
 ;                      words, characters like ":" are turned in to "_".
 ;
+;       NO_PREFIX:     Don't prepend an underscore to the output, defaults to 0
+;
 ; REQUIRES:
 ; 
 ;       This program requires (at least) the following Coyote Library routines.
 ;       
-;          http://www.dfanning.com/programs/themonths.pro
-;          http://www.dfanning.com/programs/randomnumbergenerator__define.pro
+;          http://www.idlcoyote.com/programs/themonths.pro
+;          http://www.idlcoyote.com/programs/randomnumbergenerator__define.pro
 ;          
 ; MODIFICATION HISTORY:
 ;
 ;       Written by David W. Fanning, 7 February 2010.
+;       Added format number 11: YYYYMMDD@HH:MM:SS so that when files are created they
+;          will list in descending time order. Matt Savoie suggestion. DWF. 10 Sept 2010.
+;       Added NO_PREFIX keyword that, if set, will prevent an underscore character from being
+;          added to the time stamp. 10 Sept 2010. DWF.
+;       Discovered that Windows and UNIX computers report the UTC time differently, resulting
+;          in the day string being a one digit integer on UNIX and a two digit integer on
+;          Windows. Fixed so the day string is always forced to be two digits. 8 October 2010.
 ;
 ;******************************************************************************************;
 ;  Copyright (c) 2010, by Fanning Software Consulting, Inc.                                ;
@@ -95,12 +105,17 @@
 ;  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS           ;
 ;  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                            ;
 ;******************************************************************************************;
-FUNCTION TimeStamp, format, RANDOM_DIGITS=random_digits, UTC=utc, VALID=valid
+FUNCTION TimeStamp, format, $
+    NO_PREFIX=no_prefix, $
+    RANDOM_DIGITS=random_digits, $
+    UTC=utc, $
+    VALID=valid
 
     On_Error, 2
-    
+
+    ; Set keyword values.
+    no_prefix = Keyword_Set(no_prefix)
     IF N_Elements(format) EQ 0 THEN format = 0
-    
     IF N_Elements(random_digits) GT 0  THEN BEGIN
         DEFSYSV, '!FSC_RandomNumbers', EXISTS=exists
         IF exists THEN BEGIN
@@ -114,7 +129,7 @@ FUNCTION TimeStamp, format, RANDOM_DIGITS=random_digits, UTC=utc, VALID=valid
     ; Get some values for the current time.
     time = Systime(UTC=Keyword_Set(utc))
     day = Strmid(time, 0, 3)
-    date = Strmid(time, 8, 2)
+    date = String(StrMid(time, 8, 2), Format='(I2.2)') ; Required because UNIX and Windows differ in time format.
     month = Strmid(time, 4, 3)
     year = Strmid(time, 20, 4)
     stamp = Strmid(time, 11, 8)
@@ -133,12 +148,15 @@ FUNCTION TimeStamp, format, RANDOM_DIGITS=random_digits, UTC=utc, VALID=valid
         8:  timestamp = String(m, FORMAT='(I2.2)') + '_' + date + '_' + year + '_' + stamp
         9:  timestamp = String(m, FORMAT='(I2.2)') + date + year + '_' + stamp        
         10: timestamp = String(m, FORMAT='(I2.2)') + date + year
+        11: timestamp = year + String(m, FORMAT='(I2.2)') + date + '@' + stamp
         ELSE: timeStamp = StrLowCase(day) + '_' + StrLowCase(month) + '_' + date + '_' + stamp + '_' + year
     ENDCASE
 
-    ; Add an first-letter underscore.
-    timestamp = '_' + timestamp
-    
+    ; Add an first-letter underscore, unless the user explicitly asked not to.
+    IF ~no_prefix THEN BEGIN 
+       timestamp = '_' + timestamp
+    ENDIF
+
     ; Convert to a valid string, if required.
     IF Keyword_Set(valid) THEN timestamp = IDL_Validname(timeStamp, /CONVERT_ALL)
     

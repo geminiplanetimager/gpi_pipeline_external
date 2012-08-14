@@ -15,8 +15,8 @@
 ;       1645 Sheely Drive
 ;       Fort Collins, CO 80526 USA
 ;       Phone: 970-221-0438
-;       E-mail: davidf@dfanning.com
-;       Coyote's Guide to IDL Programming: http://www.dfanning.com
+;       E-mail: david@idlcoyote.com
+;       Coyote's Guide to IDL Programming: http://www.idlcoyote.com
 ;
 ; CATEGORY:
 ;
@@ -132,27 +132,27 @@
 ;        The following programs are required to reside in your !PATH. They can be
 ;        obtained from the Coyote Library:
 ;
-;                     http://www.dfanning.com/programs/adjustposition.pro
-;                     http://www.dfanning.com/programs/cw_drawcolor.pro
-;                     http://www.dfanning.com/programs/cw_spacer.pro
-;                     http://www.dfanning.com/programs/error_message.pro
-;                     http://www.dfanning.com/programs/fsc_color.pro
-;                     http://www.dfanning.com/programs/fsc_droplist.pro
-;                     http://www.dfanning.com/programs/fsc_field.pro
-;                     http://www.dfanning.com/programs/fsc_fileselect.pro
-;                     http://www.dfanning.com/programs/fsc_inputfield.pro
-;                     http://www.dfanning.com/programs/fsc_psconfig__define.pro
-;                     http://www.dfanning.com/programs/mpi_plotconfig__define.pro
-;                     http://www.dfanning.com/programs/mpi_axis.pro
-;                     http://www.dfanning.com/programs/mpi_axis__define.pro
-;                     http://www.dfanning.com/programs/pickcolorname.pro
-;                     http://www.dfanning.com/programs/psconfig.pro
-;                     http://www.dfanning.com/programs/pswindow.pro
-;                     http://www.dfanning.com/programs/tvread.pro
+;                     http://www.idlcoyote.com/programs/adjustposition.pro
+;                     http://www.idlcoyote.com/programs/cw_drawcolor.pro
+;                     http://www.idlcoyote.com/programs/cw_spacer.pro
+;                     http://www.idlcoyote.com/programs/error_message.pro
+;                     http://www.idlcoyote.com/programs/cgColor.pro
+;                     http://www.idlcoyote.com/programs/fsc_droplist.pro
+;                     http://www.idlcoyote.com/programs/fsc_field.pro
+;                     http://www.idlcoyote.com/programs/fsc_fileselect.pro
+;                     http://www.idlcoyote.com/programs/fsc_inputfield.pro
+;                     http://www.idlcoyote.com/programs/fsc_psconfig__define.pro
+;                     http://www.idlcoyote.com/programs/mpi_plotconfig__define.pro
+;                     http://www.idlcoyote.com/programs/mpi_axis.pro
+;                     http://www.idlcoyote.com/programs/mpi_axis__define.pro
+;                     http://www.idlcoyote.com/programs/pickcolorname.pro
+;                     http://www.idlcoyote.com/programs/psconfig.pro
+;                     http://www.idlcoyote.com/programs/pswindow.pro
+;                     http://www.idlcoyote.com/programs/cgsnapshot.pro
 ;
 ;         All these programs can be obtained at once by downloading the MPI_PLOT zip file:
 ;
-;                     http://www.dfanning.com/programs/mpi_plot.zip
+;                     http://www.idlcoyote.com/programs/mpi_plot.zip
 ;
 ;
 ; COMMON BLOCK:
@@ -304,7 +304,7 @@ IF Ptr_Valid((*infoptr).oplotinfo) THEN BEGIN
    FOR j=0,N_Elements(*(*infoptr).oplotinfo)-1 DO BEGIN
       struct = (*(*infoptr).oplotinfo)[j]
       OPlot, *struct.indep, *struct.dep, _Extra=*struct.extra, $
-         Color=FSC_Color(struct.color, !D.Table_Size-4+j), $
+         Color=cgColor(struct.color, !D.Table_Size-4+j), $
          PSym=(*infoptr).plotconfig->Symbol(struct.psym)
    ENDFOR
 ENDIF
@@ -371,7 +371,7 @@ IF Ptr_Valid((*infoptr).oplotinfo) THEN BEGIN
    FOR j=0,N_Elements(*(*infoptr).oplotinfo)-1 DO BEGIN
       struct = (*(*infoptr).oplotinfo)[j]
       OPlot, *struct.indep, *struct.dep, _Extra=*struct.extra, $
-         Color=FSC_Color(struct.color, !D.Table_Size-4+j), $
+         Color=cgColor(struct.color, !D.Table_Size-4+j), $
          PSym=(*infoptr).plotconfig->Symbol(struct.psym)
    ENDFOR
 ENDIF
@@ -413,13 +413,13 @@ WSet, (*infoptr).wid
    ; but there is no help for it. :-(
 
 plotkeywords = (*infoptr).plotconfig->GetKeywords()
-TVLCT, FSC_Color(plotkeywords.name_background, /Triple), !P.Background
-TVLCT, FSC_Color(plotkeywords.name_color, /Triple), !D.Table_Size-2
-TVLCT, FSC_Color(plotkeywords.name_datacolor, /Triple), !D.Table_Size-3
+TVLCT, cgColor(plotkeywords.name_background, /Triple), !P.Background
+TVLCT, cgColor(plotkeywords.name_color, /Triple), !D.Table_Size-2
+TVLCT, cgColor(plotkeywords.name_datacolor, /Triple), !D.Table_Size-3
 IF Ptr_Valid((*infoptr).oplotinfo) THEN BEGIN
    FOR j=0,N_Elements(*(*infoptr).oplotinfo)-1 DO BEGIN
       struct = (*(*infoptr).oplotinfo)[j]
-      TVLCT, FSC_Color(struct.color, /Triple),!D.Table_Size-4+j
+      TVLCT, cgColor(struct.color, /Triple),!D.Table_Size-4+j
    ENDFOR
 ENDIF
 
@@ -470,12 +470,12 @@ basename = 'mpi_plot'
 
 WSet, (*infoptr).wid
 CASE file_extension OF
-   'BMP'  : image = TVREAD(Filename = basename, /BMP)
-   'GIF'  : image = TVREAD(Filename = basename, /GIF)
-   'PICT' : image = TVREAD(Filename = basename, /PICT)
-   'JPG'  : image = TVREAD(Filename = basename, /JPEG)
-   'TIF'  : image = TVREAD(Filename = basename, /TIFF)
-   'PNG'  : image = TVREAD(Filename = basename, /PNG)
+   'BMP'  : image = cgSnapshot(Filename = basename, /BMP)
+   'GIF'  : image = cgSnapshot(Filename = basename, /GIF)
+   'PICT' : image = cgSnapshot(Filename = basename, /PICT)
+   'JPG'  : image = cgSnapshot(Filename = basename, /JPEG)
+   'TIF'  : image = cgSnapshot(Filename = basename, /TIFF)
+   'PNG'  : image = cgSnapshot(Filename = basename, /PNG)
 ENDCASE
 
 END ;----------------------------------------------------------------------------------------

@@ -112,11 +112,11 @@
 ;                of the Input array.
 ;       ISCALE   Scale floats or longs to short integer (see LSCALE)
 ;       LOGICAL_COLS=  An array of indices of the logical column numbers.
-;                These should start with the first column having index *1*.
+;                These should start with the first column having index 0.
 ;                The structure element should either be an array of characters
 ;                with the values 'T' or 'F', or an array of bytes having the 
-;                values byte('T')=84b, byte('F')=70b or 0b.     The use of bytes
-;                allows the specification of undefined values (0b).
+;                values byte('T'), byte('F') or 0b.     The use of bytes allows
+;                the specification of undefined values (0b).
 ;       LSCALE   Scale floating point numbers to long integers.
 ;                This keyword may be specified in three ways.
 ;                /LSCALE (or LSCALE=1) asks for scaling to be automatically
@@ -271,14 +271,12 @@
 ;               Allow TTYPE values of 'T' and 'F', fix USE_COLNUM for bin tables
 ;       Version 1.11 W. Landsman 2010-11-18
 ;               Allow LONG64 number of bytes, use V6.0 notation 
-;       Version 1.11a W. Landsman 2012-08-12
-;               Better documentation, error checking for logical columns
 ;-
 
 ; What is the current version of this program?
 function mwr_version
      compile_opt idl2,hidden
-    return, '1.11a'
+    return, '1.11'
 end
     
 
@@ -712,9 +710,6 @@ pro mwr_tablehdr, lun, input, header, vtypes,     $
 
     nbyte = 0ULL
 
-    islogical = bytarr(nfld)
-    if keyword_set(logical_cols) then islogical[logical_cols-1] = 1b
-   
     for i=0, nfld-1 do begin
 
        a = input[0].(i)
@@ -723,28 +718,10 @@ pro mwr_tablehdr, lun, input, header, vtypes,     $
        
        nelem    = sz[sz[0]+2]
        type_ele = sz[sz[0]+1]
-       if type_ele EQ 7 then maxstr = max(strlen(input.(i)) > 1)
        
-       if islogical[i]  then begin        
-          if (type_ele EQ 1) then begin
-          gg = (input.(i) EQ 0b) or (input.(i) EQ 84b) or (input.(i) EQ 0b) 
-	       if ~array_equal(gg,1b) then begin 
-	       islogical[i] = 0b
-	       message,/CON, 'Warning - ' + $ 
-	  "Allowed Logical Column byte values are byte('T'),byte('F'), or 0b"
-	   endif
-	endif else if (type_ele EQ 7) then begin   	  	 
-           gg =  (input.(i) eq 'T') or (input.(i) eq 'F')
-	       if ~array_equal(gg,1b) then begin
-	       islogical[i] = 0b
-	       message,/CON, 'Warning - ' + $ 
-	  'Allowed Logical column string values are "T" and "F"'
-	   endif
-	endif else begin 
-	    message,/CON, $
-	    'Warning - Logical Columns must be of type string or byte'
-	    islogical[i] = 0b
-	 endelse   	  
+       if type_ele eq 7 then begin     
+           maxstr = max(strlen(input.(i)) > 1 )
+            islogical = min(input.(i) eq 'T' or input.(i) eq 'F') eq 1
        endif               
        dims[i] = nelem
        
@@ -764,7 +741,8 @@ pro mwr_tablehdr, lun, input, header, vtypes,     $
            
            tdims[i] = tdims[i] + ')'
        endelse
-             
+       
+       
        case type_ele of
           1:        begin
                      types[i] = 'B'
@@ -791,8 +769,7 @@ pro mwr_tablehdr, lun, input, header, vtypes,     $
                      nbyte = nbyte + 8*nelem
               end
           7:       begin
-                     maxstr = max(strlen(input.(i)) > 1 )
-                     types[i] = 'A'
+                     types[i] = islogical? 'L':'A'
                      nbyte = nbyte + maxstr*nelem
                      dims[i] = maxstr*nelem		    
               end
@@ -883,8 +860,18 @@ pro mwr_tablehdr, lun, input, header, vtypes,     $
     ;
     ; Handle the special cases.
     ;
-    g = where(islogical,Nlogic)
-    if Nlogic GT 0 then types[g] = 'L'
+    if keyword_set(logical_cols) then begin
+       nl = n_elements(logical_cols)
+       for i = 0, nl-1 do begin
+           icol = logical_cols[i]
+	   if types[icol-1] ne 'A' and types[icol-1] ne 'B' then begin
+              print,'WARNING: Invalid attempt to create Logical column:',icol
+                    goto, next_logical
+           endif
+           types[icol-1] = 'L'
+  next_logical:
+       endfor
+    endif
        
     if keyword_set(bit_cols) then begin
        nb = n_elements(bit_cols)
@@ -1602,7 +1589,7 @@ pro mwrfits, xinput, file, header,              $
     compile_opt idl2
     status = -1                     ;Status changes to 0 upon completion
     if (keyword_set(Version)) then begin
-        print, "MWRFITS V"+mwr_version()+":  August 12, 2012"
+        print, "MWRFITS V"+mwr_version()+":  April 10, 2009"
     endif
 
     if n_elements(file) eq 0 then begin

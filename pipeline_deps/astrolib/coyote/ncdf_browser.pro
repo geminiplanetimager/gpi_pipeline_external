@@ -27,8 +27,8 @@
 ;       1645 Sheely Drive
 ;       Fort Collins, CO 80526 USA
 ;       Phone: 970-221-0438
-;       E-mail: davidf@dfanning.com
-;       Coyote's Guide to IDL Programming: http://www.dfanning.com
+;       E-mail: david@idlcoyote.com
+;       Coyote's Guide to IDL Programming: http://www.idlcoyote.com
 ;
 ; CATEGORY:
 
@@ -80,13 +80,13 @@
 ;
 ;        The following programs are required from the Coyote Library.
 ;
-;              http://www.dfanning.com/netcdf_data__define.pro
-;              http://www.dfanning.com/error_message.pro
-;              http://www.dfanning.com/centertlb.pro
-;              http://www.dfanning.com/undefine.pro
-;              http://www.dfanning.com/textbox.pro
-;              http://www.dfanning.com/fsc_base_filename.pro
-;              http://www.dfanning.com/textlineformat.pro
+;              http://www.idlcoyote.com/netcdf_data__define.pro
+;              http://www.idlcoyote.com/error_message.pro
+;              http://www.idlcoyote.com/centertlb.pro
+;              http://www.idlcoyote.com/undefine.pro
+;              http://www.idlcoyote.com/textbox.pro
+;              http://www.idlcoyote.com/fsc_base_filename.pro
+;              http://www.idlcoyote.com/textlineformat.pro
 ;
 ; MODIFICATION HISTORY:
 ;       Written by:  David W. Fanning, 03 Feb 2008. Used ideas from many
@@ -99,6 +99,7 @@
 ;       Made the default value of NO_READ_ON_PARSE set to 1. 25 June 2009. DWF.
 ;       Added NO_NEW_FILE keyword to suppress the Open File button. 3 February 2010. DWF.
 ;       Added TITLE, XOFFSET, and YOFFSET keywords. 5 February 2010. DWF.
+;       Fixed a problem with memory leakage when the input file cannot be read. 1 May 2010. DWF.
 ;-
 ;******************************************************************************************;
 ;  Copyright (c) 2008-2010, by Fanning Software Consulting, Inc.                           ;
@@ -148,17 +149,18 @@ PRO NCDF_BROWSER, filename, $
 
    ; Need a filename?
    IF N_Elements(filename) EQ 0 THEN BEGIN
-      filename = Dialog_Pickfile(/READ, TITLE='Select a File to Open', $
+      filename = cgPickfile(/READ, TITLE='Select a File to Open', $
          FILTER=extension)
-      IF filename EQ "" THEN RETURN
     ENDIF
+    IF filename EQ "" THEN RETURN
     
    ; Create an nCDF_DATA browse object.
    ncdfObj = Obj_New('NCDF_DATA', filename, /Destroy_From_Browser, EXTENSION=extension, $
         NO_READ_ON_PARSE=no_read_on_parse)
    IF Obj_Valid(ncdfObj) THEN BEGIN
         ncdfObj -> Browse, NO_NEW_FILE=Keyword_Set(no_new_file), $
-            XOFFSET=xoffset, YOFFSET=yoffset, TITLE=title
+            XOFFSET=xoffset, YOFFSET=yoffset, SUCCESS=success, TITLE=title
+        IF ~success THEN Obj_Destroy, ncdfObj
    ENDIF
    
 END

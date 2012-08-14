@@ -17,8 +17,8 @@
 ;       1645 Sheely Drive
 ;       Fort Collins, CO 80526 USA
 ;       Phone: 970-221-0438
-;       E-mail: davidf@dfanning.com
-;       Coyote's Guide to IDL Programming: http://www.dfanning.com
+;       E-mail: david@idlcoyote.com
+;       Coyote's Guide to IDL Programming: http://www.idlcoyote.com
 ;
 ; CATEGORY:
 ;
@@ -58,36 +58,45 @@
 ;
 ; MODIFICATION HISTORY:
 ;       Written by:  David W. Fanning, 3 Feb 2010.
+;       Changes to the way dimensions of length 0 are handled. 11 Feb 2010. DWF.
+;       Added GetInfo method. 20 Mar 2010. DWF.
+;       Added MISSINGINDICES and FILLVALUE keywords to GetValue method to return the indices 
+;           and the value of missing data. 20 Mar 2010. DWF.
+;       Modified the GetValue method so that if the data returned is scaled and/or offset
+;           then the "missing" data value is preserved, although its data type may change.
+;           In other words, the "missing" data is not scaled or offset. 20 Mar 2010. DWF.
+;       Added output keywords SCALE_FACTOR, ADD_OFFSET, and DATATYPE to the GetValue method
+;           so that these values can be returned to the caller at run-time. 29 April 2010. DWF.
 ;-
 ;******************************************************************************************;
-;  Copyright (c)2010, by Fanning Software Consulting, Inc.                     
-;  All rights reserved.                                                        
-;                                                                              
-;  Redistribution and use in source and binary forms, with or without          
-;  modification, are permitted provided that the following conditions are met: 
-;                                                                              
-;      * Redistributions of source code must retain the above copyright        
-;        notice, this list of conditions and the following disclaimer.         
-;      * Redistributions in binary form must reproduce the above copyright     
-;        notice, this list of conditions and the following disclaimer in the   
-;        documentation and/or other materials provided with the distribution.  
+;  Copyright (c) 2010, by Fanning Software Consulting, Inc.                                ;
+;  All rights reserved.                                                                    ;
+;                                                                                          ;
+;  Redistribution and use in source and binary forms, with or without                      ;
+;  modification, are permitted provided that the following conditions are met:             ;
+;                                                                                          ;
+;      * Redistributions of source code must retain the above copyright                    ;
+;        notice, this list of conditions and the following disclaimer.                     ;
+;      * Redistributions in binary form must reproduce the above copyright                 ;
+;        notice, this list of conditions and the following disclaimer in the               ;
+;        documentation and/or other materials provided with the distribution.              ;
 ;      * Neither the name of Fanning Software Consulting, Inc. nor the names of its        ;
 ;        contributors may be used to endorse or promote products derived from this         ;
-;        software without specific prior written permission.                   
-;                                                                              
+;        software without specific prior written permission.                               ;
+;                                                                                          ;
 ;  THIS SOFTWARE IS PROVIDED BY FANNING SOFTWARE CONSULTING, INC. ''AS IS'' AND ANY        ;
 ;  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES    ;
 ;  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT     ;
-;  SHALL FANNING SOFTWARE CONSULTING, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, 
+;  SHALL FANNING SOFTWARE CONSULTING, INC. BE LIABLE FOR ANY DIRECT, INDIRECT,             ;
 ;  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED    ;
 ;  TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;         ;
-;  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND 
-;  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT  
+;  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND             ;
+;  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT              ;
 ;  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS           ;
-;  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                
+;  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                            ;
 ;******************************************************************************************;
 
-;+-----------------------------------------------------------------------------------------;
+;------------------------------------------------------------------------------------------;
 ;                                                                              
 ; NAME:                                                                         
 ;    NCDF_Variable::AddAttr                                                                   
@@ -175,14 +184,16 @@ PRO NCDF_Variable::AddAttr, attrName, attrValue, DATATYPE=datatype
         LONG=tlong, $
         SHORT=tshort
     
-    ; Add the attribute to this object's attribute list.
-    attrObj = Obj_New('NCDF_Attribute', attrName, self.parent, VARNAME=self.name)
+    ; Add the attribute to this object's attribute list. Use "self" rather
+    ; then the variable name to avoid excess trips through ParseFile from the
+    ; HASVAR method.
+    attrObj = Obj_New('NCDF_Attribute', attrName, self.parent, VARNAME=self)
     self.attrs -> Add, attrObj
 
 END
 
 
-;+-----------------------------------------------------------------------------------------;
+;------------------------------------------------------------------------------------------;
 ;                                                                              
 ; NAME:                                                                         
 ;    NCDF_Variable::GetAttrNames                                                              
@@ -201,12 +212,12 @@ END
 ;                                                                              
 ; Keywords:                                                                    
 ;                                                                              
-;    COUNT:      An output keyword containing the number of attribute names found.         ;  
+;    COUNT:      An output keyword containing the number of attribute names found.           
 ;                                                                              
 ;                                                                              
 ; Return Value:                                                                
 ;                                                                              
-;    attrNames:  A string array with the names of all the variable's attributes.           ;
+;    attrNames:  A string array with the names of all the variable's attributes.           
 ;                                                                              
 ;------------------------------------------------------------------------------------------;
 FUNCTION NCDF_Variable::GetAttrNames, COUNT=attrCount
@@ -246,7 +257,7 @@ FUNCTION NCDF_Variable::GetAttrNames, COUNT=attrCount
 END
 
 
-;+-----------------------------------------------------------------------------------------;
+;------------------------------------------------------------------------------------------;
 ;                                                                              
 ; NAME:                                                                         
 ;    NCDF_Variable::GetAttrValue                                                              
@@ -317,7 +328,7 @@ FUNCTION NCDF_Variable::GetAttrValue, attrName, DATATYPE=datatype
 END
 
 
-;+-----------------------------------------------------------------------------------------;
+;------------------------------------------------------------------------------------------;
 ;                                                                              
 ; NAME:                                                                         
 ;    NCDF_Variable::GetDimIDs                                                                 
@@ -363,7 +374,7 @@ FUNCTION NCDF_Variable::GetDimIDs, COUNT=dimCount
     ; Get the dimension IDs.
     IF Ptr_Valid(self.dims) THEN BEGIN
         dimIDs = *self.dims 
-        dimCount = N_Elements(dimIDs)
+        dimCount = self.ndims
     ENDIF ELSE BEGIN
         dimIDs = -1
         dimCount = 0
@@ -374,7 +385,7 @@ FUNCTION NCDF_Variable::GetDimIDs, COUNT=dimCount
 END
 
 
-;+-----------------------------------------------------------------------------------------;
+;------------------------------------------------------------------------------------------;
 ;                                                                              
 ; NAME:                                                                         
 ;    NCDF_Variable::GetDimNames                                                               
@@ -393,7 +404,7 @@ END
 ;                                                                              
 ; Keywords:                                                                    
 ;                                                                              
-;    COUNT:     An ouput keyword that contains number of dimension names returned.         ;  
+;    COUNT:     An ouput keyword that contains number of dimension names returned.          
 ;                                                                              
 ; Return Value:                                                                
 ;                                                                              
@@ -420,8 +431,8 @@ FUNCTION NCDF_Variable::GetDimNames, COUNT=dimCount
     ; Get the dimension names.
     IF Ptr_Valid(self.dimNames) THEN BEGIN
         dimNames = *self.dimNames
-        dimCount = N_Elements(dimNames)
-    ENDIF ELSE BEGIN
+        dimCount = self.ndims
+     ENDIF ELSE BEGIN
         dimNames = ""
         dimCount = 0
     ENDELSE
@@ -431,7 +442,7 @@ FUNCTION NCDF_Variable::GetDimNames, COUNT=dimCount
 END
 
 
-;+-----------------------------------------------------------------------------------------;
+;------------------------------------------------------------------------------------------;
 ;                                                                              
 ; NAME:                                                                         
 ;    NCDF_Variable::GetDimSizes                                                               
@@ -450,7 +461,7 @@ END
 ;                                                                              
 ; Keywords:                                                                    
 ;                                                                              
-;    COUNT:     An ouput keyword that contains number of dimension sizes returned.         ;  
+;    COUNT:     An ouput keyword that contains number of dimension sizes returned.           
 ;                                                                              
 ; Return Value:                                                                
 ;                                                                              
@@ -488,7 +499,7 @@ FUNCTION NCDF_Variable::GetDimSizes, COUNT=dimCount
 END
 
 
-;+-----------------------------------------------------------------------------------------;
+;------------------------------------------------------------------------------------------;
 ;                                                                              
 ; NAME:                                                                         
 ;    NCDF_Variable::GetID                                                                     
@@ -519,7 +530,90 @@ FUNCTION NCDF_Variable::GetID
 END
 
 
-;+-----------------------------------------------------------------------------------------;
+;------------------------------------------------------------------------------------------;
+;                                                                           
+; NAME:                                                                     
+;    NCDF_Variable::GetInfo                                                                
+;                                                                           
+; Purpose:                                                                  
+;                                                                           
+;    Returns information about the variable from the file.                               
+;                                                                           
+; Method Syntax:                                                            
+;                                                                           
+;    info = obj -> GetInfo()       
+;                                                                           
+; Auguments:                                                                
+;                                                                           
+;    None.   
+;                                                                           
+; Keywords:                                                                 
+;                                                                           
+;    None.
+;         
+; Return Value:                                                             
+;                                                                           
+;    info:       A structure contains the following fields.
+;    
+;                    info = { dims: varObj -> GetDimSizes(), $
+;                             dimNames: varObj -> GetDimNames(), $
+;                             attrNames: varObj -> GetAttrNames(), $
+;                             dataType: varObj -> GetProperty('datatype'), $
+;                             nattrs: varObj -> GetProperty('nattrs'), $
+;                             ndims: varObj -> GetProperty('ndims') }
+;                            
+;                In addition, the structure will contain the fields "scale_factor," "add_offset,"
+;                and "_FillValue" if these attributes are available for the variable.
+;                                                                           
+;------------------------------------------------------------------------------------------;
+FUNCTION NCDF_Variable::GetInfo
+
+    ; Compiler options.
+    Compile_Opt DEFINT32
+    Compile_Opt STRICTARR
+    Compile_Opt STRICTARRSUBS
+    Compile_Opt LOGICAL_PREDICATE
+
+    ; Error handling.
+    Catch, theError
+    IF theError NE 0 THEN BEGIN
+        Catch, /CANCEL
+        errorLogger = self.parent -> GetProperty('ErrorLogger')
+        errorLogger -> AddError
+        RETURN, ""
+    ENDIF
+    
+
+    ; Collect and return information about the variable.
+    info = { dims: self -> GetDimSizes(), $
+             dimNames: self -> GetDimNames(), $
+             attrNames: self -> GetAttrNames(), $
+             dataType: self -> GetProperty('datatype'), $
+             nattrs: self -> GetProperty('nattrs'), $
+             ndims: self -> GetProperty('ndims') }
+             
+    ; Add additional information to the info structure, if it is available.
+    ; This will include scale_factor, add_offset, and _FillValue attribute values.
+    attrNames = self -> GetAttrNames()
+    attrIndex = Where(attrNames EQ 'scale_factor', count)
+    IF count GT 0 THEN info = Create_Struct(info, 'scale_factor', $
+        self -> GetAttrValue('scale_factor'))
+    attrIndex = Where(attrNames EQ 'add_offset', count)
+    IF count GT 0 THEN info = Create_Struct(info, 'add_offset', $
+        self -> GetAttrValue('add_offset'))
+    attrIndex = Where(attrNames EQ 'missing_value', count)
+    IF count GT 0 THEN info = Create_Struct(info, '_FillValue', $
+        self -> GetAttrValue('missing_value'))
+    attrIndex = Where(attrNames EQ '_FillValue', count)
+    IF count GT 0 THEN info = Create_Struct(info, '_FillValue', $
+        self -> GetAttrValue('_FillValue'))
+    
+    RETURN, info
+    
+END
+
+
+;------------------------------------------------------------------------------------------;
 ;                                                                              
 ; NAME:                                                                         
 ;    NCDF_Variable::GetName                                                                   
@@ -550,15 +644,15 @@ FUNCTION NCDF_Variable::GetName
 END
 
 
-;+-----------------------------------------------------------------------------------------;
+;------------------------------------------------------------------------------------------;
 ;                                                                              
 ; NAME:                                                                         
 ;    NCDF_Variable::GetProperty                                                               
 ;                                                                              
 ; Purpose:                                                                     
 ;                                                                              
-;    Returns various properties of the object one at a time. This is a shorthand and       ;
-;    generic way to get the value of an object's "properties", which are defined as        ;
+;    Returns various properties of the object one at a time. This is a shorthand and       
+;    generic way to get the value of an object's "properties", which are defined as        
 ;    the IDL variables in the object's class structure.                        
 ;                                                                              
 ; Method Syntax:                                                               
@@ -567,8 +661,8 @@ END
 ;                                                                              
 ; Auguments:                                                                   
 ;                                                                              
-;    thisProperty:   A string variable that is equivalent to a field in the object's       ;
-;                    class structure. See the *__DEFINE procedure for which properties     ;
+;    thisProperty:   A string variable that is equivalent to a field in the object's       
+;                    class structure. See the *__DEFINE procedure for which properties     
 ;                    can be returned. The property is case insensitive.        
 ;                                                                              
 ; Keywords:                                                                    
@@ -577,7 +671,7 @@ END
 ;                                                                              
 ; Return Value:                                                                
 ;                                                                              
-;    propertyValue:  The value of a particular object property. Note that pointer          ;
+;    propertyValue:  The value of a particular object property. Note that pointer          
 ;                    properties will return the variable the pointer points to.
 ;                                                                              
 ;------------------------------------------------------------------------------------------;
@@ -615,7 +709,7 @@ FUNCTION NCDF_Variable::GetProperty, thisProperty
 END
 
 
-;+-----------------------------------------------------------------------------------------;
+;------------------------------------------------------------------------------------------;
 ;                                                                              
 ; NAME:                                                                         
 ;    NCDF_Variable::GetValue                                                                  
@@ -626,32 +720,57 @@ END
 ;                                                                              
 ; Method Syntax:                                                               
 ;                                                                              
-;    varValue = GetValue(COUNT=count, OFFSET=offset, STRIDE=stride)            
+;    varValue = GetValue(COUNT=count, OFFSET=offset, STRIDE=stride, MISSING=missing)            
 ;                                                                              
 ; Auguments:                                                                   
 ;                                                                              
 ;    None.                                                                     
 ;                                                                              
-; Keywords:                                                                    
+; Input Keywords:                                                                    
 ;                                                                              
-;    COUNT:      An optional vector containing the counts to be used in reading the        ;
-;                variable. Count is a 1-based vector with an element for each dimension.   ; 
-;                The default matches the size of the variable so that all data is          ;
+;    COUNT:      An optional vector containing the counts to be used in reading the        
+;                variable. Count is a 1-based vector with an element for each dimension.    
+;                The default matches the size of the variable so that all data is          
 ;                written out.                                                    
-;    OFFSET:     An optional vector containing the starting position for the read.         ;
-;                The default start position is [0, 0, ...].                      
-;    STRIDE:     An optional vector containing the strides, or sampling intervals,         ;
-;                between accessed values of the netCDF variable. The default stride        ;
+;    OFFSET:     An optional vector containing the starting position for the read.         
+;                The default start position is [0, 0, ...].      
+;    STRIDE:     An optional vector containing the strides, or sampling intervals,         
+;                between accessed values of the netCDF variable. The default stride        
 ;                vector is that for a contiguous read, [1, 1, ...].              
 ;                                                                              
+; Output Keywords:   
+;
+;    ADD_OFFSET:  The add_offset value for the variable, if there is one.
+;
+;    DATATYPE:    The data type of the variable, before the scale and offset are applied.
+;                 The same as what comes back from datatype = Size(rawVariable, /TNAME).
+;
+;    FILLVALUE:   The value that is being used for the "missing" value in this variable.
+;                                                                              
+;    MISSINGINDICES: A vector containing the missing indices in the returned data. Missing
+;                 data is identified by either the depreciated "missing_value" attribute
+;                 or the approved "_FillValue" attribute.  
+;       
+;    SCALE_FACTOR: The scale factor for the variable, if there is one.
+; 
 ; Return Value:                                                                
 ;                                                                              
-;    varValue:    The actual data of the variable. If scale_factor and add_offset          ;
-;                 attributes are present, the data is scaled and offset before it          ;
-;                 is returned to the caller.                                   
+;    varValue:    The actual data of the variable. If scale_factor and add_offset          
+;                 attributes are present, the data is scaled and offset before it          
+;                 is returned to the caller. The "missing" data (see the MISSING 
+;                 keyword) value is not changed, although its data type might change
+;                 in the scaling and offset process.                                  
 ;                                                                              
 ;------------------------------------------------------------------------------------------;
-FUNCTION NCDF_Variable::GetValue, COUNT=count, OFFSET=offset, STRIDE=stride
+FUNCTION NCDF_Variable::GetValue, $
+    ADD_OFFSET=add_offset, $
+    COUNT=count, $
+    DATATYPE=datatype, $
+    FILLVALUE=missingvalue, $
+    OFFSET=offset, $
+    SCALE_FACTOR=scale_factor, $
+    STRIDE=stride, $
+    MISSINGINDICES=missingIndices
 
     ; Compiler options.
     Compile_Opt DEFINT32
@@ -670,13 +789,28 @@ FUNCTION NCDF_Variable::GetValue, COUNT=count, OFFSET=offset, STRIDE=stride
 
     ; Read the data for this variable.
     NCDF_VarGet, self.parent->GetFileID(), self.id, data, COUNT=count, OFFSET=offset, STRIDE=stride
+    dataType = Size(data, /TNAME)
+    
+    ; Does this variable contain "missing" values. If so, identify and return
+    ; the missing data indices so they can be identified after scaling.
+    missingCount = 0
+    IF self -> HasAttr('missing_value') THEN BEGIN
+        missingValue = self -> GetAttrValue('missing_value')
+        missingIndices = Where(data EQ missingValue, missingCount)
+    ENDIF
+    IF self -> HasAttr('_FillValue') THEN BEGIN
+        missingValue = self -> GetAttrValue('_FillValue')
+        missingIndices = Where(data EQ missingValue, missingCount)
+    ENDIF
     
     ; If there are scale_factor and add_offset attributes defined for this variable, the
-    ; data will be scaled and offset before it is returned.
-    IF (self -> HasAttr('scale_factor') AND self -> HasAttr('add_offset')) THEN BEGIN
-        scale = self -> GetAttrValue('scale_factor')
-        offset = self -> GetAttrValue('add_offset')
-        data = (data * scale) + offset
+    ; data will be scaled and offset before it is returned. Take care to preserve missing
+    ; values in the data. (Data type may change!) 
+    IF (self -> HasAttr('scale_factor') OR self -> HasAttr('add_offset')) THEN BEGIN
+        IF self -> HasAttr('scale_factor') THEN scale_factor = self -> GetAttrValue('scale_factor') ELSE scale_factor = 1B
+        IF self -> HasAttr('add_offset') THEN add_offset = self -> GetAttrValue('add_offset') ELSE add_offset = 0B
+        data = (data * scale_factor) + add_offset
+        IF missingCount GT 0 THEN data[missingIndices] = missingValue
     ENDIF
     
     ; Is this CHAR data? If so, convert it back to a string.
@@ -688,7 +822,7 @@ FUNCTION NCDF_Variable::GetValue, COUNT=count, OFFSET=offset, STRIDE=stride
 END 
 
 
-;+-----------------------------------------------------------------------------------------;
+;------------------------------------------------------------------------------------------;
 ;                                                                              
 ; NAME:                                                                         
 ;    NCDF_Variable::HasAttr                                                                   
@@ -708,12 +842,12 @@ END
 ;                                                                              
 ; Keywords:                                                                    
 ;                                                                              
-;    OBJECT:        If the attribute exists, this keyword returns the attribute's          ;
+;    OBJECT:        If the attribute exists, this keyword returns the attribute's          
 ;                   object reference.                                          
 ;                                                                              
 ; Return Value:                                                                
 ;                                                                              
-;    isFound:       If a variable attribute with this name is found, this variable         ;
+;    isFound:       If a variable attribute with this name is found, this variable         
 ;                   is set to 1. It is set to 0 otherwise.                     
 ;                                                                              
 ;------------------------------------------------------------------------------------------;
@@ -742,7 +876,7 @@ FUNCTION NCDF_Variable::HasAttr, attrName, OBJECT=object
 END
 
 
-;+-----------------------------------------------------------------------------------------;
+;------------------------------------------------------------------------------------------;
 ;                                                                              
 ; NAME:                                                                         
 ;    NCDF_Variable::ParseVariable                                                             
@@ -786,14 +920,16 @@ PRO NCDF_Variable::ParseVariable
     ; Get the actual dimensions of the variable.
     IF self.ndims GT 0 THEN BEGIN
         dimensions = LonArr(self.ndims)
-        dimNames = StrARr(self.ndims)
+        dimNames = StrArr(self.ndims)
         FOR j=0,self.ndims-1 DO BEGIN
-            NCDF_DIMINQ, fileID, j, dimName, dimSize
+            NCDF_DIMINQ, fileID, (*self.dims)[j], dimName, dimSize
             dimensions[j] = dimSize
             dimNames[j] = dimName
         ENDFOR
-        
-    ENDIF ELSE dimensions = 0
+    ENDIF ELSE BEGIN
+        dimensions = 0
+        dimNames = ""
+    ENDELSE
     self.dimensions = Ptr_New(dimensions)
     self.dimNames = Ptr_New(dimNames)
         
@@ -856,14 +992,14 @@ END
 PRO NCDF_Variable__DEFINE, class
     
     class = { NCDF_VARIABLE, $
-              name: "", $      The variable name.
-              ID: 0L, $        The variable ID.
+              name: "", $                 ; The variable name.
+              ID: 0L, $                   ; The variable ID.
               dimensions: Ptr_New(), $    ; The actual dimensions of the variable.
               dimNames: Ptr_New(), $      ; A vector of dimension names.
               dims: Ptr_New(), $          ; The dimension IDs of the dimensions
-              nattrs: 0L, $    The number of attributes the variable has.
-              ndims: 0L, $     The number of dimensions the variable has.
-              datatype: "",  $ The netCDF data byte of this variable.
+              nattrs: 0L, $               ; The number of attributes the variable has.
+              ndims: 0L, $                ; The number of dimensions the variable has.
+              datatype: "",  $            ; The netCDF data byte of this variable.
               parent: Obj_New(), $        ; The NCDF_FILE object where this variable resides.
               attrs: Obj_New() $          ; The variable attributes (objects).
             }

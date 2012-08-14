@@ -16,8 +16,8 @@
 ;       1645 Sheely Drive
 ;       Fort Collins, CO 80526 USA
 ;       Phone: 970-221-0438
-;       E-mail: davidf@dfanning.com
-;       Coyote's Guide to IDL Programming: http://www.dfanning.com
+;       E-mail: david@idlcoyote.com
+;       Coyote's Guide to IDL Programming: http://www.idlcoyote.com
 ;
 ; CATEGORY:
 
@@ -52,6 +52,8 @@
 ;
 ;       Written by David W. Fanning, 13 November 2009.
 ;       Added GetRandomDigits method. 7 February 2010. DWF.
+;       Incorrect cleanup of the seed pointer fixed in the CLEANUP procedure. 
+;           25 February 2010, DWF.
 ;-
 ;******************************************************************************************;
 ;  Copyright (c) 2009-2010, by Fanning Software Consulting, Inc.                           ;
@@ -80,7 +82,7 @@
 ;  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS           ;
 ;  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                            ;
 ;******************************************************************************************;
-;+-----------------------------------------------------------------------------------------;
+;------------------------------------------------------------------------------------------;
 ; NAME:                                                                                
 ;    RandomNumberGenerator::GetRandomDigits                                                                   
 ;                                                                                      
@@ -144,7 +146,7 @@ FUNCTION RandomNumberGenerator::GetRandomDigits, digits, BYTES=bytes
 END
     
     
-;+-----------------------------------------------------------------------------------------;
+;------------------------------------------------------------------------------------------;
 ; NAME:                                                                                
 ;    RandomNumberGenerator::GetRandomNumbers                                                                  
 ;                                                                                      
@@ -287,7 +289,7 @@ PRO RandomNumberGenerator::SetSeed, theSeed
 
 PRO RandomNumberGenerator::CLEANUP
 
-    Ptr_Free, seed
+    Ptr_Free, self.seed
 
 END ;----------------------------------------------------------------
 

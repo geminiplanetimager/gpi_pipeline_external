@@ -15,8 +15,8 @@
 ;       1645 Sheely Drive
 ;       Fort Collins, CO 80526 USA
 ;       Phone: 970-221-0438
-;       E-mail: davidf@dfanning.com
-;       Coyote's Guide to IDL Programming: http://www.dfanning.com
+;       E-mail: david@idlcoyote.com
+;       Coyote's Guide to IDL Programming: http://www.idlcoyote.com
 ;
 ; CATEGORY:
 ;
@@ -66,10 +66,10 @@
 ;
 ; DEPENDENCIES:
 ;
-;       Reqires FSC_COLOR and PICKCOLORNAME from the Coyote Library:
+;       Reqires cgColor and PICKCOLORNAME from the Coyote Library:
 ;
-;                     http://www.dfanning.com/programs/fsc_color.pro
-;                     http://www.dfanning.com/programs/pickcolorname.pro
+;                     http://www.idlcoyote.com/programs/cgColor.pro
+;                     http://www.idlcoyote.com/programs/pickcolorname.pro
 ;
 ; MODIFICATION HISTORY:
 ;
@@ -195,7 +195,7 @@ Widget_Control, self.drawID, Get_Value=wid
 self.wid = wid
 currentwindow = !D.Window
 WSet, wid
-PolyFill, [0, 0, 1, 1, 0], [0, 1, 1, 0, 0], /Normal, Color=FSC_Color(self.color, self.index)
+PolyFill, [0, 0, 1, 1, 0], [0, 1, 1, 0, 0], /Normal, Color=cgColor(self.color, self.index)
 IF currentwindow NE -1 THEN WSet, currentwindow
 END ;-----------------------------------------------------------------------------------------------------------------------------
 
@@ -262,7 +262,7 @@ event = { CW_DRAWCOLOR_EVENT, $
    ; Load the new color in the color patch.
 
 WSet, self.wid
-PolyFill, [0,0,1,1,0], [0,1,1,0,0], /Normal, Color=FSC_Color(self.color, self.index)
+PolyFill, [0,0,1,1,0], [0,1,1,0,0], /Normal, Color=cgColor(self.color, self.index)
 
    ; If an event handler is specified, call it.
 
@@ -298,11 +298,11 @@ END ;---------------------------------------------------------------------------
 
 PRO CW_DrawColor::Set_Value, newcolor
 
-   ; Check if the color is defined in the FSC_Color program
+   ; Check if the color is defined in the cgColor program
 
 IF N_Elements(newcolor) EQ 0 THEN Message, /NoName, 'Please pass a color name.'
 newcolor = StrCompress(StrTrim(newcolor, 2))
-IF where(StrUpCase(newcolor) EQ StrUpCase(FSC_Color(/Names))) EQ -1 THEN newColor = 'White'
+IF where(StrUpCase(newcolor) EQ StrUpCase(cgColor(/Names))) EQ -1 THEN newColor = 'White'
 
    ; Store the value
 
@@ -313,7 +313,7 @@ self.color = newColor
 realized = Widget_Info(self.tlb, /Realize) ; Check if realized already
 IF realized THEN BEGIN
     WSet, self.wid
-    PolyFill, [0,0,1,1,0], [0,1,1,0,0], /Normal, Color=FSC_Color(self.color, self.index)
+    PolyFill, [0,0,1,1,0], [0,1,1,0,0], /Normal, Color=cgColor(self.color, self.index)
 ENDIF
 
 END

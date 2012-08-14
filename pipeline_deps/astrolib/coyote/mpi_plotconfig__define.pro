@@ -14,8 +14,8 @@
 ;       1645 Sheely Drive
 ;       Fort Collins, CO 80526 USA
 ;       Phone: 970-221-0438
-;       E-mail: davidf@dfanning.com
-;       Coyote's Guide to IDL Programming: http://www.dfanning.com
+;       E-mail: david@idlcoyote.com
+;       Coyote's Guide to IDL Programming: http://www.idlcoyote.com
 ;
 ; CATEGORY:
 ;
@@ -171,7 +171,7 @@
 ;
 ; PROGRAM NOTES:
 ;
-;      Color Names: Color names are those used with FSC_Color and PickColorName. See the
+;      Color Names: Color names are those used with cgColor and PickColorName. See the
 ;         documentation for those programs for instuctions on loading your own colors.
 ;         To see the default colors and names, type this:
 ;
@@ -207,18 +207,18 @@
 ;      Required Programs: The following programs are required to reside in your !PATH. They can be
 ;         obtained from the Coyote Library:
 ;
-;                     http://www.dfanning.com/programs/adjustposition.pro
-;                     http://www.dfanning.com/programs/cw_drawcolor.pro
-;                     http://www.dfanning.com/programs/cw_spacer.pro
-;                     http://www.dfanning.com/programs/error_message.pro
-;                     http://www.dfanning.com/programs/fsc_color.pro
-;                     http://www.dfanning.com/programs/fsc_droplist.pro
-;                     http://www.dfanning.com/programs/fsc_field.pro
-;                     http://www.dfanning.com/programs/fsc_plotwindow.pro
-;                     http://www.dfanning.com/programs/mpi_axis__define.pro
-;                     http://www.dfanning.com/programs/pickcolorname.pro
-;                     http://www.dfanning.com/programs/pswindow.pro
-;                     http://www.dfanning.com/programs/tvread.pro
+;                     http://www.idlcoyote.com/programs/adjustposition.pro
+;                     http://www.idlcoyote.com/programs/cw_drawcolor.pro
+;                     http://www.idlcoyote.com/programs/cw_spacer.pro
+;                     http://www.idlcoyote.com/programs/error_message.pro
+;                     http://www.idlcoyote.com/programs/cgColor.pro
+;                     http://www.idlcoyote.com/programs/fsc_droplist.pro
+;                     http://www.idlcoyote.com/programs/fsc_field.pro
+;                     http://www.idlcoyote.com/programs/fsc_plotwindow.pro
+;                     http://www.idlcoyote.com/programs/mpi_axis__define.pro
+;                     http://www.idlcoyote.com/programs/pickcolorname.pro
+;                     http://www.idlcoyote.com/programs/pswindow.pro
+;                     http://www.idlcoyote.com/programs/cgsnapshot.pro
 ;
 ; EXAMPLE:
 ;
@@ -227,7 +227,7 @@
 ;       it can be used as a wrapper program for the PLOT command that you can use with
 ;       your own data. The program can be downloaded here:
 ;
-;                     http://www.dfanning.com/programs/mpi_plot.pro
+;                     http://www.idlcoyote.com/programs/mpi_plot.pro
 ;
 ; MODIFICATION HISTORY:
 ;
@@ -495,10 +495,10 @@ ENDIF
 
 self->UpdateObject
 struct = Create_Struct( $
-   'background', FSC_Color(self.background, !P.Background), $
+   'background', cgColor(self.background, !P.Background), $
    'charthick', self.charthick, $
    'charsize', self.charsize, $
-   'color', FSC_Color(self.color, !D.Table_Size-2), $
+   'color', cgColor(self.color, !D.Table_Size-2), $
    'font', self.font, $
    'linestyle', self.linestyle, $
    'position', self.position, $
@@ -514,7 +514,7 @@ struct = Create_Struct( $
    ; Add axis color information, if required.
 
 IF self.usedatacolor THEN $
-   struct = Create_Struct(struct, 'datacolor', FSC_Color(self.dataColor, !D.Table_Size-3), $
+   struct = Create_Struct(struct, 'datacolor', cgColor(self.dataColor, !D.Table_Size-3), $
       'name_datacolor', self.datacolor)
 
    ; Done unless axis information is required.
