@@ -52,6 +52,9 @@ if keyword_set(findshift) then begin
    bad = where(pinds gt sz_fin-1,ct)
    if ct gt 0 then pinds[bad] = 0
 
+   bad = where(minds lt 0,ct)
+   if ct gt 0 then minds[bad] = 0
+
    out = make_array(2,type=typ)
    out[0] = -0.5*(invcps[minds[0],inds[1]] - invcps[pinds[0],inds[1]])/$
          (invcps[minds[0],inds[1]] + invcps[pinds[0],inds[1]] - 2*invcps[inds[0],inds[1]])
