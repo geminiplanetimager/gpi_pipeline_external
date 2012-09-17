@@ -7,7 +7,7 @@ img1 = im1
 img2 = im2
 
 ;;get sizes and types
-typ = max([size(im1,/type),size(im2,/type)])
+typ = max([size(img1,/type),size(img2,/type)])
 sz_img1 = size(img1,/dim)
 sz_img2 = size(img2,/dim)
 if total((sz_img1 mod 2.) - (sz_img2 mod 2.)) ne 0 then begin
@@ -43,17 +43,17 @@ cps = ft1 * conj(ft2)
 if keyword_set(findshift) then begin
    invcps = real_part(fft(cps,1))
    
-   ;;find largest value
+   ;;find largest value & surrounding indices
    val = max(invcps, ind)
-   inds = array_indices(invcps,ind)
-   
+   inds = array_indices(invcps,ind)  
    minds = inds - 1
    pinds = inds + 1
+
+   ;;any +1 values get set to 0, any -1 values get set to n-1
    bad = where(pinds gt sz_fin-1,ct)
    if ct gt 0 then pinds[bad] = 0
-
    bad = where(minds lt 0,ct)
-   if ct gt 0 then minds[bad] = 0
+   if ct gt 0 then minds[bad] = sz_fin[1]-1
 
    out = make_array(2,type=typ)
    out[0] = -0.5*(invcps[minds[0],inds[1]] - invcps[pinds[0],inds[1]])/$
