@@ -47,6 +47,10 @@
 ; 24 Oct 2007 - If result is a single number, return scalar value
 ;               instead of an 1-element array. Thanks Mike Liu.
 ;  2 Apr 2008 - Fixed 1-element array issue, but for real this time.
+;
+; Modified by Marshall Perrin, 2013-02-07
+;    Add robustness: if called without setting nfig, will print
+;    a warning message and then default to 3, rather than crashing.
 ;-
 
 ;;; SF_STR - The way STRING() should behave by default
@@ -92,6 +96,14 @@ function sigfig, NumIn, Nfig $
                  , scientific=scientific $
                  , numerical=numerical $
                  , plusses=plusses
+
+
+if ~(keyword_set(nfig)) then begin
+	message,/info, "WARNING: You called sigfig.pro without specifying how many"
+	message,/info, "         significant figures to display. Defaulting to 3."
+	nfig=3
+endif
+
 
 Num = double(NumIn)
 Nel = n_elements(Num)
