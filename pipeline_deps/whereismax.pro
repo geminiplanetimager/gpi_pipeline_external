@@ -27,6 +27,8 @@ pro whereismax, image, x, y, maxv, mark=mark, silent=silent,single=single
 ; 2001-07-06 MDP
 ;
 ; 2003-03-04 MDP 	added /NaN keyword to max
+; 2013-10-07 MDP    Updated to use IDL's array_indices, which was added
+;					sometime since this was first written...
 ;-
 ;###########################################################################
 ;
@@ -65,10 +67,19 @@ if n_params() lt 1 then begin
 	message,'pro whereismax,image,(x),(y),(maxv),[mark],[silent],[single]'
 endif
 
-
 maxv = max(image,/NaN)
 
-whereis,image,where(image eq maxv),x,y
+;whereis,image,where(image eq maxv),x,y
+
+indices = array_indices(image, where(image eq maxv))
+
+if (size(indices))[0] eq 1 then begin
+	x = indices[0]
+	y = indices[1]
+endif else begin
+	x = indices[*,0]
+	y = indices[*,1]
+endelse
 
 if ((n_elements(x) eq 1) or  keyword_set(single) ) then begin
 	if (n_elements(x) gt 1 and keyword_set(single) and ~(keyword_set(silent))) then $
