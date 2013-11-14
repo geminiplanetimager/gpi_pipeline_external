@@ -3440,8 +3440,8 @@ case state.scaling of
 		scaled_image = asinhscl( main_image, $
 				min = state.min_value, $
 				max = state.max_value,$
-				omax = state.ncolors - 1,$
-				nonlinearity = state.nonlinearity_value) + 8*nan_mask
+				omax = state.ncolors - 1) + 8*nan_mask
+			;	nonlinearity = state.nonlinearity_value) + 8*nan_mask
 
 	end
     4: begin                            ; square root stretch
