@@ -51,6 +51,11 @@
 ; Modified by Marshall Perrin, 2013-02-07
 ;    Add robustness: if called without setting nfig, will print
 ;    a warning message and then default to 3, rather than crashing.
+;
+; Modified by Jason Wang, 2013-12-10
+;    To get the order, now parses the rest of the string rather than
+;    just the next two characters. In windows, formatting a number in 
+;    scientific notation gives e+000 instead of e+00 as in UNIX.  
 ;-
 
 ;;; SF_STR - The way STRING() should behave by default
@@ -124,7 +129,7 @@ Negative = where(Num lt 0, Nneg)
 if Nneg gt 0 then NegSign[Negative] = '-'
 
 ;;; What are the orders of magnitude of the values?
-Order = fix(sf_str(strmid(TestString, Epos+2, 2)))
+Order = fix(sf_str(strmid(TestString, Epos+2)))
 
 ;;; Convert all values to order unity for rounding
 NumUnit = strmid(TestString,0,epos)
