@@ -57,7 +57,14 @@ cw_progress.pro
 distarr.pro
 	Public domain, no copyright. From Naval Research Lab
 
-
+nchoosek.pro
+     This is a port of the Octave function nchoosek.m.  The original
+     function is Copyright (C) 2001, 2006, 2007, 2009 Rolf Fabian and
+     Paul Kienzle Copyright (C) 2008 Jaroslav Hajek 
+    
+     Octave is free software licensed under the terms of the GNU General
+     Public License, version 3 as published by  the Free Software
+     Foundation 
 
 ------- Section 2: Files with no explicit license -----
 ------- but written by GPI team members, prior to GPI  ----
