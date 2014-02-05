@@ -11,24 +11,115 @@ for download and use, but without giving an explicit license.
 
 
 Item		Source and License notes
--------
-    	----------------------------------------------------
+======= ====================================================
+------- Section 1: Files with an explicit license ----------
 
 astrolib:	
 	Goddard IDL astro library, from http://idlastro.gsfc.nasa.gov/
     	BSD 2-clause license. 		
 
+hreverse2.pro
+hrot2.pro
+hrotate2.pro
+remcharf.pro
+	Modified versions of files from IDL astro library
+	slightly modified by GPI team members 
+    	BSD 2-clause license. 		
+
+
+gmt_offsec.pro
+	JHUAPL library; http://fermi.jhuapl.edu/s1r/idl/s1rlib/local_idl.html
+	unnamed open source license included in source:
+	"Copyright (C) 1993, Johns Hopkins University/Applied Physics Laboratory
+	This software may be used, copied, or redistributed as long as it is not
+	sold and this copyright notice is reproduced on each copy made. This
+	routine is provided as is without any express or implied warranties
+	whatsoever.  Other limitations apply as described in the file disclaimer.txt"
+
+
+imdisp.pro
+	Liam Gumley http://cimss.ssec.wisc.edu/~gumley
+	GNU GPL v2
+
+
+whereis.pro
+	James Graham and Michael Liu
+	Zlib Open source license 
+
+whereismax.pro
+	Michael Liu and Marshall Perrin
+	Zlib Open source license 
+
+
+cw_progress.pro
+	Public domain, no copyright. From NIST
+
+distarr.pro
+	Public domain, no copyright. From Naval Research Lab
+
+
+
+------- Section 2: Files with no explicit license -----
+------- but written by GPI team members, prior to GPI  ----
+
+imdisp_with_contours.pro
+	Wrapper for imdisp, by Marshall
+	No explicit license
+
 bool_is_integer.pro
 bool_is_string.pro
-	Utility functions originally from the Keck OSIRIS pipeline
+	Utility functions originally from the Keck OSIRIS pipeline, Larkin et al.
 	Available from http://www2.keck.hawaii.edu/inst/osiris/tools/
 	No explicit license
+
+fftrot.pro
+	by David Lafreniere and Christian Marois
+	No explicit license
+
+fftscale.pro
+	by Christian Marois, updated by Marshall and Dmitry
+	No explicit license
+
+fftshift.pro
+	by Marshall
+	No explicit license
+
+mrecenter.pro
+	by Marshall
+	No explicit license
+
+mtfpix.pro
+	by Christian
+	No explicit license
+
+
+------- Section 3: Files Originally by others, modified by GPI team members -----
 		
+
 atv.pro	
 	ATV from Aaron Barth. http://www.physics.uci.edu/~barth/atv/
 	This is a modified version of atv 2.0 with some customizations by Marshall Perrin. 
 	No explicit license
 	
+
+cw_pdmenu_checkable.pro
+	Modified version of cw_pdmenu from Excelis in the IDL system library.
+	Modified by Marshall Perrin
+	No explicit license
+
+sigfig.pro
+	Also originally by John Johnson with no explicit license
+	This version subsequently modified by Marshall Perrin and Jason Wang
+	No explicit license
+
+
+parangle.pro
+	by Tim Robishaw, modified slightly by Dmitry Savransky
+	No explicit license
+
+
+------- Section 4: Files with no explicit license, by others -----
+
 centroid.pro
 	David Fanning	http://www.idlcoyote.com/
 	In particular http://www.idlcoyote.com/tips/centroid.html
@@ -47,17 +138,9 @@ statusline.pro
 confirm.pro	
 	??
 
-cw_pdmenu_checkable.pro
-	Modified version of cw_pdmenu from Excelis in the IDL system library.
-
-cw_progress.pro
-	Public domain, from NIST
-
 diagonal_matrix.pro
 	??
 
-distarr.pro
-	Public domain, from Naval Research Lab
 
 djs_iterstat.pro
 splog.pro
@@ -71,43 +154,8 @@ makearr.pro
 	by John Johnson, available from http://astro.berkeley.edu/~johnjohn/idl.html
 	No explicit license but "I have provided these programs free of charge as a service to the Astronomy and IDL community. Take what you need and I hope you find something useful. "
 
-sigfig.pro
-	Also originally by John Johnson with no explicit license
-	This version subsequently modified by Marshall Perrin and Jason Wang
-
-fftrot.pro
-	by David Lafreniere and Christian Marois
-	No explicit license
-
-fftscale.pro
-	by Christian Marois, updated by Marshall and Dmitry
-
-fftshift.pro
-	by Marshall
-
 fourier_coreg.pro
 	???
-
-gmt_offsec.pro
-	JHUAPL library; http://fermi.jhuapl.edu/s1r/idl/s1rlib/local_idl.html
-	unnamed open source license included in source:
-	"Copyright (C) 1993, Johns Hopkins University/Applied Physics Laboratory
-	This software may be used, copied, or redistributed as long as it is not
-	sold and this copyright notice is reproduced on each copy made. This
-	routine is provided as is without any express or implied warranties
-	whatsoever.  Other limitations apply as described in the file disclaimer.txt"
-
-hreverse2.pro
-hrot2.pro
-hrotate2.pro
-	Modified from hreverse and hrot in the Goddard library
-
-imdisp.pro
-	Liam Gumley http://cimss.ssec.wisc.edu/~gumley
-	GNU GPL v2
-
-imdisp_with_contours.pro
-	Wrapper for imdisp, by Marshall
 
 intersect.pro
 	???
@@ -117,27 +165,14 @@ mg_open_url.pro
 	M. Galloy. Available in Galloy IDL library posted to http://www.exelisvis.com/docs/routines-147.html
 	No explicit license
 
-mrecenter.pro
-	by Marshall
-
-mtfpix.pro
-	by Christian
-
 ns_fixpix.pro
 	Tom Murphy at Caltech, for Keck NIRSpec
-	No explicit license
-
-parangle.pro
-	by Tim Robishaw, modified slightly by Dmitry Savransky
 	No explicit license
 
 rd_tfile.pro
 	Available online from http://www.astro.washington.edu/docs/idl/cgi-bin/getpro/library32.html?RD_TFILE
 	No explicit license
 
-remcharf.pro
-	Modified version of remchar.pro from IDL astro library
-	slightly modified by Jerome
  
 resample.pro
 	Available from http://www.astro.washington.edu/docs/idl/cgi-bin/getpro/library29.html?RESAMPLE
@@ -158,14 +193,6 @@ strepex.pro
 
 strreplace.pro
 	No explicit license
-
-whereis.pro
-	James Graham and Michael Liu
-	Zlib Open source license 
-
-whereismax.pro
-	Michael Liu and Marshall Perrin
-	Zlib Open source license 
 
 which.pro
 	Jeff Valenti (now at STScI)

@@ -79,7 +79,7 @@ num = 2*npix/3 + 1
 ; the averages of two pairs of points approximately 2/3 of the 
 ; entire array length apart
 
-noise = min(imsort(num-1:npix-1)+imsort(num-2:npix-2)-imsort(0:npix-num)-imsort(1:npix-num+1))/2.0
+noise = min(imsort(num-1:npix-1)+imsort(num-2:npix-2)-imsort(0:npix-num)-imsort(1:npix-num+1),/nan)/2.0
 
 ; now correct the noise for the fact that it's not exactly over 2/3 of the 
 ; elements
@@ -192,6 +192,7 @@ endfor
 medsig = median(sigma,/even)
 sigsig = noise(sigma) 
 
+print, "Medsig, sigsig:", medsig, sigsig
 ; BEGIN SCANNING FOR HOT & COLD PIXELS
 
 ; start at (4,4) (so that any pixel in the box can have a 5x5 

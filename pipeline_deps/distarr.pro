@@ -53,6 +53,9 @@ FUNCTION distarr, xsize, ysize, xcen, ycen, dxs, dys, mem=mem
 ;
 ;
 ;	%W% %H% LASCO IDL LIBRARY
+;
+; LICENSE:
+;   From Naval Research Lab, therefore public domain work of the US Government
 ;-
 	if n_params() lt 1 then xsize=1024	;set to defaults if some parameters missing
 	if n_params() lt 2 then ysize=xsize
