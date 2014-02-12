@@ -84,6 +84,7 @@ fftrot.pro
 	No explicit license
 
 fftscale.pro
+smartshift.pro
 	by Christian Marois, updated by Marshall and Dmitry
 	No explicit license
 
@@ -210,5 +211,8 @@ x_chkfil.pro
 	Available from https://svn.ucolick.org/xidl/trunk/General/x_chkfil.pro
 	No explicit license
 
+planefit.pro 
+	H.T. Freudenreich, HSTX
+	No explicit license
 
 
