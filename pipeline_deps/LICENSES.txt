@@ -92,6 +92,10 @@ fftshift.pro
 	by Marshall
 	No explicit license
 
+fourier_coreg.pro
+    By Dmitry based on code by Lisa Poyneer
+    No explicit license
+
 mrecenter.pro
 	by Marshall
 	No explicit license
@@ -144,11 +148,12 @@ statusline.pro
         No explicit license
 
 confirm.pro	
-	??
+	by N.Ikeda & sawada
+    No explicit license
 
 diagonal_matrix.pro
-	??
-
+    by A. Riccardi, INAF-Osservatorio Astrofisico di Arcetri (Italy)
+    No explicit license
 
 djs_iterstat.pro
 splog.pro
@@ -162,11 +167,9 @@ makearr.pro
 	by John Johnson, available from http://astro.berkeley.edu/~johnjohn/idl.html
 	No explicit license but "I have provided these programs free of charge as a service to the Astronomy and IDL community. Take what you need and I hope you find something useful. "
 
-fourier_coreg.pro
-	???
-
 intersect.pro
-	???
+	by Jeff Hicke
+    No explicit license
 
 mg_filename.pro
 mg_open_url.pro

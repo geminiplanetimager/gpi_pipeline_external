@@ -1,6 +1,36 @@
 pro fourier_coreg,im1,im2,out,window=window,findshift=findshift
-;;im1 - image
-;;im2 - template
+;+
+; NAME:
+;      FOURIER_COREG
+;
+; PURPOSE:
+;      Return the parallactic angle of a source in degrees.
+;
+; CALLING SEQUENCE:
+;      fourier_coreg,im1,im2,out,[/window,/findshift]
+;
+; INPUTS:
+;      im1 - Image
+;      im2 - Template
+;
+; KEYWORD PARAMETERS:
+;      /window - Apply hanning window.
+;      /findshift - Return offset between images
+;
+; OUTPUTS:
+;      out - Either offset between images (if /findshift is set) or 
+;      the convolution of the images.
+;
+; COMMON BLOCKS:
+;      None.
+;
+; NOTES:
+;      If input images have odd and even numbers of pixels, respectively, 
+;      you will get half pixel shifts. 
+;
+; MODIFICATION HISTORY:
+;      Written by Dmitry Savransky based partially on code by Lisa Poyneer.
+;-
 
 ;;preserve original inputs
 img1 = im1
