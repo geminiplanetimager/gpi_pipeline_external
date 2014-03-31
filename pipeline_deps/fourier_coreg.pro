@@ -42,7 +42,7 @@ sz_img1 = size(img1,/dim)
 sz_img2 = size(img2,/dim)
 if total((sz_img1 mod 2.) - (sz_img2 mod 2.)) ne 0 then begin
    message,'WARNING: Input images have non-matching odd and even numbers of pixels in at least one dimension.',/continue
-   message,'This will result in a half pixel shift.' /continue
+   message,'This will result in a half pixel shift.', /continue
 endif
 
 ;;define final sizes and calculate centers
