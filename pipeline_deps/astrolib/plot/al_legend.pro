@@ -4,17 +4,16 @@
 ; PURPOSE:
 ;       Create an annotation legend for a plot.
 ; EXPLANATION:
-;       This procedure was originally named LEGEND, but a distinct LEGEND() 
-;       function was introduced into IDL V8.0.   Therefore, the      
-;       original LEGEND procedure in the Astronomy Library is renamed to
-;       AL_LEGEND.    
 ;           
 ;       This procedure makes a legend for a plot.  The legend can contain
 ;       a mixture of symbols, linestyles, Hershey characters (vectorfont),
-;       and filled polygons (usersym).  A test procedure, legendtest.pro,
+;       and filled polygons (usersym).  A test procedure, al_legendtest.pro,
 ;       shows legend's capabilities.  Placement of the legend is controlled
 ;       with keywords like /right, /top, and /center or by using a position
 ;       keyword for exact placement (position=[x,y]) or via mouse (/position).
+;
+;       The procedure CGLEGEND in the Coyote library provides a similar 
+;       capability.     https://www.idlcoyote.com/idldoc/cg/cglegend.html
 ; CALLING SEQUENCE:
 ;       AL_LEGEND [,items][,keyword options]
 ; EXAMPLES:
@@ -57,7 +56,9 @@
 ; INPUTS:
 ;       items = text for the items in the legend, a string array.
 ;               For example, items = ['diamond','asterisk','square'].
-;               You can omit items if you don't want any text labels.
+;               You can omit items if you don't want any text labels.  The
+;               text can include many LaTeX symbols (e.g. $\leq$) for a less
+;               than equals symbol) as described in cgsymbol.pro. 
 ; OPTIONAL INPUT KEYWORDS:
 ;
 ;       linestyle = array of linestyle numbers  If linestyle[i] < 0, then omit
@@ -69,9 +70,8 @@
 ;               keyword usersym.   If psym[i] = 88, then use the previously
 ;               defined user symbol.    If 11 <= psym[i] <= 46 then David
 ;               Fanning's function CGSYMCAT() will be used for additional 
-;               symbols.   Note that
-;               PSYM=10 (histogram plot mode) is not allowed since it 
-;               cannot be used with the cgPlots command.
+;               symbols.   Note that PSYM=10 (histogram plot mode) is not 
+;               allowed since it cannot be used with the cgPlots command.
 ;       vectorfont = vector-drawn characters for the sym/line column, e.g.,
 ;               ['!9B!3','!9C!3','!9D!3'] produces an open square, a checkmark,
 ;               and a partial derivative, which might have accompanying items
@@ -196,7 +196,11 @@
 ;         the symbol and linestyle is linestyle[i] = -1.
 ;       - There is no ability to make a title line containing any of titles
 ;         for the legend, for the symbols, or for the text.
-; Side Effects:
+; Notes:
+;       This procedure was originally named LEGEND, but a distinct LEGEND() 
+;       function was introduced into IDL V8.0.   Therefore, the      
+;       original LEGEND procedure was renamed to AL_LEGEND to avoid conflict.  
+;
 ; Modification history:
 ;       write, 24-25 Aug 92, F K Knight (knight@ll.mit.edu)
 ;       allow omission of items or omission of both psym and linestyle, add
@@ -248,6 +252,9 @@
 ;       now default to BACKGROUND for background color. 1 Feb 2012 David Fanning
 ;       Allow 1 element SYMSIZE for vector input, WL Apr 2012.
 ;       Allow to specify symbols by cgSYMCAT() name WL Aug 2012 
+;       Fixed bug when linsize, /right called simultaneously, Dec 2012, K.Stewart
+;       Added a check for embedded symbols in the items string array. March 2013. David Fanning
+;       
 ;-
 pro al_legend, items, BOTTOM_LEGEND=bottom, BOX = box, CENTER_LEGEND=center, $
     CHARTHICK=charthick, CHARSIZE = charsize, CLEAR = clear, COLORS = colorsi, $
@@ -303,6 +310,8 @@ endif else begin
       'First parameter must be a string array.  For help, type al_legend,/help.'
   if ni ne n then message,'Must have number of items equal to '+strn
 endelse
+
+items = cgCheckForSymbols(items) ; Check for embedded symbols in the items array.
 symline = (np ne 0) || (nl ne 0)                        ; FLAG TO PLOT SYM/LINE
  if (np ne 0) && (np ne n) && (np NE 1) then message, $
         'Must have 0, 1 or '+strn+' elements in PSYM array.'
@@ -492,7 +501,8 @@ for iclr = 0,clear do begin
   yp = y + intarr(num)
   if vectorfont[i] eq '' then yp +=  yoff
   if psym[i] eq 0 then begin
-      xp = [min(xp),max(xp) -(max(xp)-min(xp))*(1.-linsize)]   
+      if ltor eq 1 then xp = [min(xp),max(xp) -(max(xp)-min(xp))*(1.-linsize)]   
+      if ltor ne 1 then xp = [min(xp) +(max(xp)-min(xp))*(1.-linsize),max(xp)]
       yp = [min(yp),max(yp)]                      ; DITTO
   endif
   if (psym[i] eq 8) && (N_elements(usersym) GT 1) then $
@@ -560,4 +570,3 @@ for iclr = 0,clear do begin
 endfor
 
 end
-
